@@ -46,22 +46,30 @@ export default function AddAssetModal() {
     e.preventDefault();
     setIsLoading(true);
 
-    const { error } = await supabase.from("assets").insert([
-      {
-        name: formData.name,
-        purchase_price: parseFloat(formData.purchase_price),
-        purchase_date: formData.purchase_date,
-        depreciation_rate: parseFloat(formData.depreciation_rate),
-        salvage_value: parseFloat(formData.salvage_value || "0"), 
-      },
-    ]);
+    try {
+      // 1. Explicitly grab the logged-in user to satisfy RLS
+      const { data: { user } } = await supabase.auth.getUser();
 
-    setIsLoading(false);
+      if (!user) {
+        throw new Error("You must be logged in to save an asset.");
+      }
 
-    if (error) {
-      console.error("Error saving asset:", error.message);
-      alert("Failed to save asset.");
-    } else {
+      // 2. Insert the data with the explicit user_id AND a fallback for your old 'value' column
+      const { error } = await supabase.from("assets").insert([
+        {
+          user_id: user.id, // Explicitly hands the ID to the bouncer
+          name: formData.name,
+          purchase_price: parseFloat(formData.purchase_price),
+          purchase_date: formData.purchase_date,
+          depreciation_rate: parseFloat(formData.depreciation_rate),
+          salvage_value: parseFloat(formData.salvage_value || "0"),
+          value: parseFloat(formData.purchase_price) // Fills your old column just in case it's required!
+        },
+      ]);
+
+      if (error) throw error; // If Supabase complains, throw it to the catch block!
+
+      // 3. Success! Close modal and reset form
       setIsOpen(false);
       setFormData({
         name: "",
@@ -71,11 +79,17 @@ export default function AddAssetModal() {
         salvage_value: "0", 
       });
       window.dispatchEvent(new Event("assetUpdated")); 
+      
+    } catch (error: any) {
+      // THE MAGIC FIX: This will now show you the EXACT database error in the alert!
+      console.error("EXACT DATABASE ERROR:", error);
+      alert(`Database Error: ${error.message}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    // THE FIX: Added "relative" right here!
     <div className="relative">
       
       <button 
