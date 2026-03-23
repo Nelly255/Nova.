@@ -5,8 +5,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Tracker. | Premium Finance",
-  description: "Manage your finances with style.",
+  title: "Nova. | Intelligent Wealth Management",
+  description: "Your financial life, beautifully organized. Track assets, crush debt, and monitor cash flow from one powerful dashboard.",
 };
 
 export default function RootLayout({
