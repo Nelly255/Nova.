@@ -46,45 +46,31 @@ export default function AddAssetModal() {
     e.preventDefault();
     setIsLoading(true);
 
-    try {
-      // 1. Get the current user session securely
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session?.user) {
-        throw new Error("You must be logged in to add an asset.");
-      }
+    const { error } = await supabase.from("assets").insert([
+      {
+        name: formData.name,
+        purchase_price: parseFloat(formData.purchase_price),
+        purchase_date: formData.purchase_date,
+        depreciation_rate: parseFloat(formData.depreciation_rate),
+        salvage_value: parseFloat(formData.salvage_value || "0"), 
+      },
+    ]);
 
-      // 2. Insert the asset WITH the user_id attached so RLS allows it
-      const { error } = await supabase.from("assets").insert([
-        {
-          user_id: session.user.id, // <--- THE CRUCIAL FIX
-          name: formData.name,
-          purchase_price: parseFloat(formData.purchase_price),
-          purchase_date: formData.purchase_date,
-          depreciation_rate: parseFloat(formData.depreciation_rate),
-          salvage_value: parseFloat(formData.salvage_value || "0"), 
-        },
-      ]);
+    setIsLoading(false);
 
-      if (error) {
-        console.error("Error saving asset:", error.message);
-        alert(`Failed to save asset: ${error.message}`);
-      } else {
-        setIsOpen(false);
-        setFormData({
-          name: "",
-          purchase_price: "", 
-          purchase_date: "",
-          depreciation_rate: "25", 
-          salvage_value: "0", 
-        });
-        window.dispatchEvent(new Event("assetUpdated")); 
-      }
-    } catch (error: any) {
-      console.error("Unexpected error:", error);
-      alert(error.message || "An unexpected error occurred.");
-    } finally {
-      setIsLoading(false);
+    if (error) {
+      console.error("Error saving asset:", error.message);
+      alert("Failed to save asset.");
+    } else {
+      setIsOpen(false);
+      setFormData({
+        name: "",
+        purchase_price: "", 
+        purchase_date: "",
+        depreciation_rate: "25", 
+        salvage_value: "0", 
+      });
+      window.dispatchEvent(new Event("assetUpdated")); 
     }
   };
 

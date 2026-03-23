@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import AddAssetModal from "@/components/AddAssetModal";
 import DepreciationReportModal from "@/components/DepreciationReportModal"; 
-import { Laptop, Car, Home, Camera, Briefcase, Trash2, TrendingDown, CalendarDays, ChevronDown, Loader2 } from "lucide-react";
+// PATCHED: Added ChevronDown for the custom dropdown
+import { Laptop, Car, Home, Camera, Briefcase, Trash2, TrendingDown, CalendarDays, BarChart3, ChevronDown } from "lucide-react";
 
 const getAssetIcon = (name: string) => {
   const lower = name.toLowerCase();
@@ -21,52 +22,42 @@ export default function AssetsPage() {
   const [currencySymbol, setCurrencySymbol] = useState("$");
   
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  // UPGRADED: State for our custom frosted glass dropdown
   const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false);
 
   const fetchAssets = async () => {
-    try {
-      // 1. Securely get the current user
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.user) {
-        setLoading(false);
-        return;
-      }
+    const { data, error } = await supabase.from("assets").select("*").order("purchase_date", { ascending: false });
+    
+    if (!error && data) {
+      const calculatedAssets = data.map((asset) => {
+        const purchaseDate = new Date(asset.purchase_date);
+        const purchaseYear = purchaseDate.getFullYear();
+        const rate = asset.depreciation_rate / 100;
+        
+        const yearsOwnedTotal = Math.max(0, (new Date().getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25));
+        const totalAccumulated = asset.purchase_price * (1 - Math.pow(1 - rate, yearsOwnedTotal));
+        const currentNBV = asset.purchase_price - totalAccumulated;
 
-      // 2. Fetch ONLY this user's assets
-      const { data, error } = await supabase
-        .from("assets")
-        .select("*")
-        .eq("user_id", session.user.id)
-        .order("purchase_date", { ascending: false });
-      
-      if (!error && data) {
-        // FIXED: Removed automatic depreciation rate math. 
-        // Now it just uses current_value (if it exists) or defaults to purchase_price.
-        const calculatedAssets = data.map((asset) => {
-          const purchasePrice = Number(asset.purchase_price) || 0;
-          const currentVal = asset.current_value !== null && asset.current_value !== undefined 
-            ? Number(asset.current_value) 
-            : purchasePrice;
+        let valueLostInSelectedYear = 0;
+        if (selectedYear >= purchaseYear) {
+          const yearsBeforeSelected = Math.max(0, selectedYear - purchaseYear);
+          const openingValueForYear = asset.purchase_price * Math.pow(1 - rate, yearsBeforeSelected);
           
-          const totalLost = Math.max(0, purchasePrice - currentVal);
-          const percentageLost = purchasePrice > 0 ? (totalLost / purchasePrice) * 100 : 0;
+          const monthsOwnedInStartYear = selectedYear === purchaseYear ? (12 - purchaseDate.getMonth()) / 12 : 1;
+          valueLostInSelectedYear = openingValueForYear * rate * monthsOwnedInStartYear;
+        }
 
-          return {
-            ...asset,
-            currentValue: currentVal,
-            valueLostThisYear: 0, // Removed complex yearly math
-            percentageLost: percentageLost,
-          };
-        });
+        return {
+          ...asset,
+          currentValue: currentNBV,
+          valueLostThisYear: valueLostInSelectedYear,
+          percentageLost: (totalAccumulated / asset.purchase_price) * 100,
+        };
+      });
 
-        setAssets(calculatedAssets);
-      }
-    } catch (error) {
-      console.error("Error fetching assets:", error);
-    } finally {
-      setLoading(false);
+      setAssets(calculatedAssets);
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -84,8 +75,7 @@ export default function AssetsPage() {
   };
 
   const totalCurrentValue = assets.reduce((acc, asset) => acc + asset.currentValue, 0);
-  const totalPurchaseValue = assets.reduce((acc, asset) => acc + Number(asset.purchase_price), 0);
-  const totalValueLost = Math.max(0, totalPurchaseValue - totalCurrentValue);
+  const totalValueLostInYear = assets.reduce((acc, asset) => acc + asset.valueLostThisYear, 0);
 
   const years = Array.from({ length: 11 }, (_, i) => 2020 + i);
 
@@ -94,11 +84,13 @@ export default function AssetsPage() {
       
       <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 transition-colors">Asset Tracker</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1 transition-colors">Track your physical assets and their current market value.</p>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 transition-colors">Asset Depreciation</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1 transition-colors">Track your Net Book Value and yearly tax write-offs.</p>
         </div>
         
         <div className="flex items-center gap-3">
+          
+          {/* UPGRADED: Custom Frosted Glass Year Dropdown */}
           <div className="relative z-50">
             <button 
               onClick={() => setIsYearDropdownOpen(!isYearDropdownOpen)}
@@ -113,11 +105,13 @@ export default function AssetsPage() {
 
             {isYearDropdownOpen && (
               <>
+                {/* The Blur Overlay (closes dropdown when clicking outside) */}
                 <div 
                   className="fixed inset-0 z-40 bg-slate-900/5 dark:bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
                   onClick={() => setIsYearDropdownOpen(false)}
                 />
 
+                {/* The Dropdown Menu */}
                 <div className="absolute right-0 top-full mt-2 z-50 w-48 bg-white/80 dark:bg-slate-900/80 backdrop-blur-[64px] border border-white/60 dark:border-white/10 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] p-2 animate-in fade-in zoom-in-95 origin-top-right duration-200 max-h-64 overflow-y-auto custom-scrollbar">
                   {years.map(y => (
                     <button 
@@ -148,7 +142,7 @@ export default function AssetsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="glass-card p-8 rounded-[2rem] relative overflow-hidden flex justify-between items-center transition-colors">
           <div className="relative z-10">
-            <p className="text-slate-500 dark:text-slate-400 font-medium mb-1 transition-colors">Total Market Value</p>
+            <p className="text-slate-500 dark:text-slate-400 font-medium mb-1 transition-colors">Total Net Book Value (Today)</p>
             <h2 className="text-4xl font-bold text-slate-900 dark:text-slate-50 transition-colors">{currencySymbol}{totalCurrentValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
           </div>
           <div className="w-16 h-16 rounded-full bg-emerald-50/80 dark:bg-emerald-500/10 flex items-center justify-center border border-emerald-100/50 dark:border-emerald-500/20 text-emerald-500 dark:text-emerald-400 relative z-10 transition-colors backdrop-blur-sm">
@@ -158,8 +152,8 @@ export default function AssetsPage() {
         
         <div className="glass-card p-8 rounded-[2rem] flex justify-between items-center transition-colors relative overflow-hidden">
           <div className="relative z-10">
-            <p className="text-slate-500 dark:text-slate-400 font-medium mb-1 transition-colors">All-Time Value Lost</p>
-            <h2 className="text-4xl font-bold text-rose-600 dark:text-rose-400 transition-colors">-{currencySymbol}{totalValueLost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
+            <p className="text-slate-500 dark:text-slate-400 font-medium mb-1 transition-colors">Value Lost in {selectedYear}</p>
+            <h2 className="text-4xl font-bold text-rose-600 dark:text-rose-400 transition-colors">-{currencySymbol}{totalValueLostInYear.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
           </div>
           <div className="w-16 h-16 rounded-full bg-rose-50/80 dark:bg-rose-500/10 flex items-center justify-center border border-rose-100/50 dark:border-rose-500/20 text-rose-500 dark:text-rose-400 transition-colors backdrop-blur-sm relative z-10">
             <TrendingDown size={28} />
@@ -170,10 +164,7 @@ export default function AssetsPage() {
       {/* Asset List */}
       <div className="mt-8">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mb-4" />
-            <p className="text-slate-500 transition-colors font-medium">Loading assets...</p>
-          </div>
+          <p className="text-slate-500 transition-colors font-medium">Calculating valuations...</p>
         ) : assets.length === 0 ? (
           <div className="glass-card p-16 text-center rounded-[2rem] flex flex-col items-center transition-colors">
             <Laptop size={48} className="mx-auto text-slate-400 dark:text-slate-600 mb-4 transition-colors" />
@@ -209,25 +200,23 @@ export default function AssetsPage() {
                       <p className="font-semibold text-slate-700 dark:text-slate-300 transition-colors truncate">{currencySymbol}{Number(asset.purchase_price).toLocaleString()}</p>
                     </div>
                     <div className="bg-indigo-50/80 dark:bg-indigo-500/10 p-3 rounded-xl border border-indigo-100/50 dark:border-indigo-500/20 transition-colors backdrop-blur-sm">
-                      <p className="text-xs text-indigo-600 dark:text-indigo-400/80 mb-1 transition-colors font-medium">Current Value</p>
+                      <p className="text-xs text-indigo-600 dark:text-indigo-400/80 mb-1 transition-colors font-medium">Today's NBV</p>
                       <p className="font-bold text-indigo-700 dark:text-indigo-300 transition-colors truncate">{currencySymbol}{asset.currentValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                     </div>
                   </div>
                   
-                  {asset.percentageLost > 0 && (
-                    <div>
-                      <div className="flex justify-between text-xs mb-1 transition-colors">
-                        <span className="text-rose-600 dark:text-rose-400 font-medium transition-colors">Loss</span>
-                        <span className="text-slate-500 dark:text-slate-400 transition-colors font-medium">{asset.percentageLost.toFixed(1)}% Down</span>
-                      </div>
-                      <div className="h-2 w-full bg-slate-100/80 dark:bg-slate-800/50 rounded-full overflow-hidden transition-colors shadow-inner backdrop-blur-sm border border-transparent dark:border-white/5">
-                        <div 
-                          className="h-full bg-rose-500 transition-all duration-1000 ease-out shadow-rose-500/50 shadow-[0_0_10px]" 
-                          style={{ width: `${Math.min(asset.percentageLost, 100)}%` }}
-                        ></div>
-                      </div>
+                  <div>
+                    <div className="flex justify-between text-xs mb-1 transition-colors">
+                      <span className="text-rose-600 dark:text-rose-400 font-medium transition-colors">All-time Loss</span>
+                      <span className="text-slate-500 dark:text-slate-400 transition-colors font-medium">{asset.percentageLost.toFixed(1)}% Depreciated</span>
                     </div>
-                  )}
+                    <div className="h-2 w-full bg-slate-100/80 dark:bg-slate-800/50 rounded-full overflow-hidden transition-colors shadow-inner backdrop-blur-sm border border-transparent dark:border-white/5">
+                      <div 
+                        className="h-full bg-rose-500 transition-all duration-1000 ease-out shadow-rose-500/50 shadow-[0_0_10px]" 
+                        style={{ width: `${Math.min(asset.percentageLost, 100)}%` }}
+                      ></div>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="mt-4">
@@ -239,6 +228,81 @@ export default function AssetsPage() {
           </div>
         )}
       </div>
+
+      {/* Depreciation Forecast Chart */}
+      {!loading && assets.length > 0 && (
+        <div className="mt-10 glass-card p-8 rounded-[2rem] transition-colors">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-12 h-12 rounded-xl bg-indigo-50/80 dark:bg-indigo-500/10 border border-indigo-200/50 dark:border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 backdrop-blur-sm">
+              <BarChart3 size={24} />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 transition-colors">5-Year Depreciation Forecast</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 transition-colors">Projected loss across all assets</p>
+            </div>
+          </div>
+          
+          <DepreciationForecastChart assets={assets} currencySymbol={currencySymbol} />
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+// ==========================================
+// CUSTOM NATIVE TAILWIND FORECAST CHART
+// ==========================================
+function DepreciationForecastChart({ assets, currencySymbol }: { assets: any[], currencySymbol: string }) {
+  const currentYear = new Date().getFullYear();
+  const forecastYears = Array.from({ length: 5 }, (_, i) => currentYear + i);
+  
+  const chartData = forecastYears.map(year => {
+    let totalDepreciationForYear = 0;
+
+    assets.forEach(asset => {
+      const purchaseYear = new Date(asset.purchase_date).getFullYear();
+      const rate = asset.depreciation_rate / 100;
+      
+      if (year >= purchaseYear) {
+        const yearsBefore = Math.max(0, year - purchaseYear);
+        const openingValue = asset.purchase_price * Math.pow(1 - rate, yearsBefore);
+        totalDepreciationForYear += (openingValue * rate);
+      }
+    });
+
+    return { year, amount: totalDepreciationForYear };
+  });
+
+  const maxAmount = Math.max(...chartData.map(d => d.amount), 1);
+
+  return (
+    <div className="h-64 flex items-end justify-between gap-2 sm:gap-6 pt-10">
+      {chartData.map((data, index) => {
+        const heightPercentage = Math.max((data.amount / maxAmount) * 100, 2); 
+        
+        return (
+          <div key={data.year} className="relative flex flex-col items-center flex-1 h-full justify-end group">
+            
+            <div className="absolute -top-12 opacity-0 group-hover:opacity-100 group-hover:-translate-y-2 transition-all duration-300 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold py-1.5 px-3 rounded-lg shadow-xl whitespace-nowrap z-10 pointer-events-none">
+              -{currencySymbol}{data.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900 dark:border-t-white"></div>
+            </div>
+
+            <div 
+              className="w-full max-w-[4rem] bg-gradient-to-t from-indigo-600 to-purple-500 rounded-t-xl transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(99,102,241,0.3)] group-hover:shadow-[0_0_20px_rgba(99,102,241,0.6)] group-hover:brightness-110"
+              style={{ 
+                height: `${heightPercentage}%`,
+                animationDelay: `${index * 150}ms` 
+              }}
+            ></div>
+            
+            <div className="mt-4 text-sm font-semibold text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+              {data.year}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
