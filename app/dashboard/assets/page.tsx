@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import AddAssetModal from "@/components/AddAssetModal";
-import { Laptop, Car, Home, Camera, Briefcase, Trash2, TrendingDown, CalendarDays, BarChart3, ChevronDown } from "lucide-react";
+import { Laptop, Car, Home, Camera, Briefcase, Trash2, TrendingDown, CalendarDays, BarChart3, ChevronDown, Maximize2, Minimize2 } from "lucide-react";
 
 const getAssetIcon = (name: string) => {
   const lower = name.toLowerCase();
@@ -12,6 +12,14 @@ const getAssetIcon = (name: string) => {
   if (lower.includes('house') || lower.includes('property') || lower.includes('land')) return <Home size={24} />;
   if (lower.includes('camera') || lower.includes('lens')) return <Camera size={24} />;
   return <Briefcase size={24} />;
+};
+
+const formatCompactNumber = (number: number) => {
+  if (!number) return "0";
+  return new Intl.NumberFormat('en-US', {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(number);
 };
 
 export default function AssetsPage() {
@@ -34,7 +42,6 @@ export default function AssetsPage() {
         const purchasePrice = Number(asset.purchase_price);
         const salvageValue = Number(asset.salvage_value) || 0;
         
-        // Dynamic Math synced entirely to the selected dropdown year
         let openingValueForYear = purchasePrice;
         let closingValueForYear = purchasePrice;
         let valueLostInSelectedYear = 0;
@@ -51,7 +58,6 @@ export default function AssetsPage() {
           valueLostInSelectedYear = openingValueForYear - closingValueForYear;
         }
 
-        // NBV at the END of the selected year
         const nbvAtEndOfSelectedYear = selectedYear >= purchaseYear ? closingValueForYear : purchasePrice;
         const totalAccumulatedBySelectedYear = purchasePrice - nbvAtEndOfSelectedYear;
         
@@ -179,60 +185,13 @@ export default function AssetsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {assets.map((asset) => (
-              <div key={asset.id} className="glass-card p-6 rounded-[2rem] hover:bg-white/40 dark:hover:bg-white/5 transition duration-300 relative group flex flex-col justify-between">
-                
-                <button 
-                  onClick={() => handleDelete(asset.id)}
-                  className="absolute top-4 right-4 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 bg-white/50 dark:bg-black/20 hover:bg-rose-100 dark:hover:bg-rose-500/10 p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all z-10 backdrop-blur-md"
-                >
-                  <Trash2 size={16} />
-                </button>
-
-                <div>
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-14 h-14 rounded-2xl bg-slate-50/80 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 flex items-center justify-center text-indigo-500 dark:text-indigo-400 shadow-sm backdrop-blur-sm transition-colors shrink-0">
-                      {getAssetIcon(asset.name)}
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-slate-900 dark:text-slate-200 transition-colors line-clamp-1">{asset.name}</h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 transition-colors">Purchased {new Date(asset.purchase_date).toLocaleDateString()}</p>
-                    </div>
-                  </div>
-
-                  {/* UPGRADED: 3-Column Grid for Financial Summary */}
-                  <div className="grid grid-cols-3 gap-2 mb-5">
-                    <div className="bg-slate-50/80 dark:bg-white/5 p-2.5 rounded-xl border border-slate-200/50 dark:border-white/5 transition-colors backdrop-blur-sm flex flex-col justify-center">
-                      <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mb-1 transition-colors font-medium">Original</p>
-                      <p className="font-semibold text-sm text-slate-700 dark:text-slate-300 transition-colors truncate">{currencySymbol}{Number(asset.purchase_price).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-                    </div>
-                    
-                    <div className="bg-rose-50/80 dark:bg-rose-500/10 p-2.5 rounded-xl border border-rose-100/50 dark:border-rose-500/20 transition-colors backdrop-blur-sm flex flex-col justify-center">
-                      <p className="text-[10px] sm:text-xs text-rose-600 dark:text-rose-400/80 mb-1 transition-colors font-medium">Loss '{selectedYear.toString().slice(-2)}</p>
-                      <p className="font-bold text-sm text-rose-700 dark:text-rose-300 transition-colors truncate">-{currencySymbol}{asset.valueLostThisYear.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-                    </div>
-
-                    <div className="bg-indigo-50/80 dark:bg-indigo-500/10 p-2.5 rounded-xl border border-indigo-100/50 dark:border-indigo-500/20 transition-colors backdrop-blur-sm flex flex-col justify-center">
-                      <p className="text-[10px] sm:text-xs text-indigo-600 dark:text-indigo-400/80 mb-1 transition-colors font-medium">NBV '{selectedYear.toString().slice(-2)}</p>
-                      <p className="font-bold text-sm text-indigo-700 dark:text-indigo-300 transition-colors truncate">{currencySymbol}{asset.currentValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-                    </div>
-                  </div>
-                  
-                  {/* Dynamic Progress Bar synced to Selected Year */}
-                  <div>
-                    <div className="flex justify-between text-xs mb-1 transition-colors">
-                      <span className="text-rose-600 dark:text-rose-400 font-medium transition-colors">Accumulated Loss</span>
-                      <span className="text-slate-500 dark:text-slate-400 transition-colors font-medium">{asset.percentageLost.toFixed(1)}%</span>
-                    </div>
-                    <div className="h-2 w-full bg-slate-100/80 dark:bg-slate-800/50 rounded-full overflow-hidden transition-colors shadow-inner backdrop-blur-sm border border-transparent dark:border-white/5">
-                      <div 
-                        className="h-full bg-rose-500 transition-all duration-1000 ease-out shadow-rose-500/50 shadow-[0_0_10px]" 
-                        style={{ width: `${Math.min(asset.percentageLost, 100)}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-                
-              </div>
+              <AssetCard 
+                key={asset.id} 
+                asset={asset} 
+                selectedYear={selectedYear} 
+                currencySymbol={currencySymbol} 
+                onDelete={handleDelete} 
+              />
             ))}
           </div>
         )}
@@ -251,7 +210,7 @@ export default function AssetsPage() {
             </div>
           </div>
           
-          <DepreciationForecastChart assets={assets} currencySymbol={currencySymbol} />
+          <DepreciationForecastChart assets={assets} currencySymbol={currencySymbol} formatCompactNumber={formatCompactNumber} />
         </div>
       )}
 
@@ -260,9 +219,95 @@ export default function AssetsPage() {
 }
 
 // ==========================================
+// INTERACTIVE ASSET CARD (Tap to Expand!)
+// ==========================================
+function AssetCard({ asset, selectedYear, currencySymbol, onDelete }: any) {
+  // State to track if the user tapped this specific card to see full numbers
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <div className="glass-card p-6 rounded-[2rem] hover:bg-white/40 dark:hover:bg-white/5 transition duration-300 relative group flex flex-col justify-between overflow-hidden">
+      
+      <button 
+        onClick={() => onDelete(asset.id)}
+        className="absolute top-4 right-4 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 bg-white/50 dark:bg-black/20 hover:bg-rose-100 dark:hover:bg-rose-500/10 p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all z-10 backdrop-blur-md"
+      >
+        <Trash2 size={16} />
+      </button>
+
+      <div>
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-14 h-14 rounded-2xl bg-slate-50/80 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 flex items-center justify-center text-indigo-500 dark:text-indigo-400 shadow-sm backdrop-blur-sm transition-colors shrink-0">
+            {getAssetIcon(asset.name)}
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-200 transition-colors line-clamp-1">{asset.name}</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 transition-colors">Purchased {new Date(asset.purchase_date).toLocaleDateString()}</p>
+          </div>
+        </div>
+
+        {/* INTERACTIVE ZONE: Tapping this transforms the layout */}
+        <div 
+          onClick={() => setIsExpanded(!isExpanded)}
+          title="Tap to view exact amounts"
+          className={`mb-5 cursor-pointer rounded-2xl transition-all duration-300 hover:ring-2 ring-indigo-500/20 hover:scale-[0.98] active:scale-95 group/grid relative
+            ${isExpanded ? 'flex flex-col gap-2' : 'grid grid-cols-3 gap-1.5'}
+          `}
+        >
+          {/* Subtle hint icon that appears on hover */}
+          <div className="absolute -top-2 -right-2 bg-indigo-500 text-white rounded-full p-1 opacity-0 group-hover/grid:opacity-100 transition-opacity z-10 shadow-lg pointer-events-none">
+            {isExpanded ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+          </div>
+
+          <div className={`bg-slate-50/80 dark:bg-white/5 rounded-xl border border-slate-200/50 dark:border-white/5 transition-colors backdrop-blur-sm flex 
+            ${isExpanded ? 'flex-row justify-between items-center p-3' : 'flex-col justify-center p-2'}
+          `}>
+            <p className={`text-slate-500 dark:text-slate-400 transition-colors font-medium tracking-wide ${isExpanded ? 'text-xs' : 'text-[9px] sm:text-[10px] mb-0.5'}`}>Original</p>
+            <p className={`font-semibold text-slate-700 dark:text-slate-300 transition-colors truncate ${isExpanded ? 'text-sm' : 'text-xs sm:text-sm'}`}>
+              {currencySymbol}{isExpanded ? Number(asset.purchase_price).toLocaleString() : formatCompactNumber(asset.purchase_price)}
+            </p>
+          </div>
+          
+          <div className={`bg-rose-50/80 dark:bg-rose-500/10 rounded-xl border border-rose-100/50 dark:border-rose-500/20 transition-colors backdrop-blur-sm flex
+            ${isExpanded ? 'flex-row justify-between items-center p-3' : 'flex-col justify-center p-2'}
+          `}>
+            <p className={`text-rose-600 dark:text-rose-400/80 transition-colors font-medium tracking-wide ${isExpanded ? 'text-xs' : 'text-[9px] sm:text-[10px] mb-0.5'}`}>Loss '{selectedYear.toString().slice(-2)}</p>
+            <p className={`font-bold text-rose-700 dark:text-rose-300 transition-colors truncate ${isExpanded ? 'text-sm' : 'text-xs sm:text-sm'}`}>
+              -{currencySymbol}{isExpanded ? Number(asset.valueLostThisYear).toLocaleString() : formatCompactNumber(asset.valueLostThisYear)}
+            </p>
+          </div>
+
+          <div className={`bg-indigo-50/80 dark:bg-indigo-500/10 rounded-xl border border-indigo-100/50 dark:border-indigo-500/20 transition-colors backdrop-blur-sm flex
+            ${isExpanded ? 'flex-row justify-between items-center p-3' : 'flex-col justify-center p-2'}
+          `}>
+            <p className={`text-indigo-600 dark:text-indigo-400/80 transition-colors font-medium tracking-wide ${isExpanded ? 'text-xs' : 'text-[9px] sm:text-[10px] mb-0.5'}`}>NBV '{selectedYear.toString().slice(-2)}</p>
+            <p className={`font-bold text-indigo-700 dark:text-indigo-300 transition-colors truncate ${isExpanded ? 'text-sm' : 'text-xs sm:text-sm'}`}>
+              {currencySymbol}{isExpanded ? Number(asset.currentValue).toLocaleString() : formatCompactNumber(asset.currentValue)}
+            </p>
+          </div>
+        </div>
+        
+        <div>
+          <div className="flex justify-between text-xs mb-1 transition-colors">
+            <span className="text-rose-600 dark:text-rose-400 font-medium transition-colors">Accumulated Loss</span>
+            <span className="text-slate-500 dark:text-slate-400 transition-colors font-medium">{asset.percentageLost.toFixed(1)}%</span>
+          </div>
+          <div className="h-2 w-full bg-slate-100/80 dark:bg-slate-800/50 rounded-full overflow-hidden transition-colors shadow-inner backdrop-blur-sm border border-transparent dark:border-white/5">
+            <div 
+              className="h-full bg-rose-500 transition-all duration-1000 ease-out shadow-rose-500/50 shadow-[0_0_10px]" 
+              style={{ width: `${Math.min(asset.percentageLost, 100)}%` }}
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
 // FORECAST CHART
 // ==========================================
-function DepreciationForecastChart({ assets, currencySymbol }: { assets: any[], currencySymbol: string }) {
+function DepreciationForecastChart({ assets, currencySymbol, formatCompactNumber }: { assets: any[], currencySymbol: string, formatCompactNumber: any }) {
   const currentYear = new Date().getFullYear();
   const forecastYears = Array.from({ length: 5 }, (_, i) => currentYear + i);
   
@@ -303,7 +348,7 @@ function DepreciationForecastChart({ assets, currencySymbol }: { assets: any[], 
           <div key={data.year} className="relative flex flex-col items-center flex-1 h-full justify-end group">
             
             <div className="absolute -top-12 opacity-0 group-hover:opacity-100 group-hover:-translate-y-2 transition-all duration-300 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold py-1.5 px-3 rounded-lg shadow-xl whitespace-nowrap z-10 pointer-events-none">
-              -{currencySymbol}{data.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              -{currencySymbol}{formatCompactNumber(data.amount)}
               <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900 dark:border-t-white"></div>
             </div>
 
