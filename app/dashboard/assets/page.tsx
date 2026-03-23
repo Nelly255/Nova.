@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import AddAssetModal from "@/components/AddAssetModal";
 import DepreciationReportModal from "@/components/DepreciationReportModal"; 
-// PATCHED: Added ChevronDown for the custom dropdown
 import { Laptop, Car, Home, Camera, Briefcase, Trash2, TrendingDown, CalendarDays, BarChart3, ChevronDown } from "lucide-react";
 
 const getAssetIcon = (name: string) => {
@@ -22,7 +21,6 @@ export default function AssetsPage() {
   const [currencySymbol, setCurrencySymbol] = useState("$");
   
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  // UPGRADED: State for our custom frosted glass dropdown
   const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false);
 
   const fetchAssets = async () => {
@@ -32,26 +30,41 @@ export default function AssetsPage() {
       const calculatedAssets = data.map((asset) => {
         const purchaseDate = new Date(asset.purchase_date);
         const purchaseYear = purchaseDate.getFullYear();
-        const rate = asset.depreciation_rate / 100;
         
-        const yearsOwnedTotal = Math.max(0, (new Date().getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25));
-        const totalAccumulated = asset.purchase_price * (1 - Math.pow(1 - rate, yearsOwnedTotal));
-        const currentNBV = asset.purchase_price - totalAccumulated;
+        // Safety checks to ensure we are doing math with real numbers
+        const rate = Number(asset.depreciation_rate) / 100;
+        const purchasePrice = Number(asset.purchase_price);
+        const salvageValue = Number(asset.salvage_value) || 0;
+        
+        // 1. Calculate strictly based on FULL years passed (Math.floor is the magic fix here)
+        const exactYears = (new Date().getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+        const fullYearsOwned = Math.max(0, Math.floor(exactYears));
 
+        // 2. Calculate Current NBV and enforce the Salvage Value floor
+        let currentNBV = purchasePrice * Math.pow(1 - rate, fullYearsOwned);
+        if (currentNBV < salvageValue) currentNBV = salvageValue;
+
+        const totalAccumulated = purchasePrice - currentNBV;
+
+        // 3. Calculate exact value lost in the specifically selected dropdown year
         let valueLostInSelectedYear = 0;
         if (selectedYear >= purchaseYear) {
-          const yearsBeforeSelected = Math.max(0, selectedYear - purchaseYear);
-          const openingValueForYear = asset.purchase_price * Math.pow(1 - rate, yearsBeforeSelected);
+          const yearsBeforeSelected = selectedYear - purchaseYear;
           
-          const monthsOwnedInStartYear = selectedYear === purchaseYear ? (12 - purchaseDate.getMonth()) / 12 : 1;
-          valueLostInSelectedYear = openingValueForYear * rate * monthsOwnedInStartYear;
+          let openingValueForYear = purchasePrice * Math.pow(1 - rate, yearsBeforeSelected);
+          if (openingValueForYear < salvageValue) openingValueForYear = salvageValue;
+
+          let closingValueForYear = purchasePrice * Math.pow(1 - rate, yearsBeforeSelected + 1);
+          if (closingValueForYear < salvageValue) closingValueForYear = salvageValue;
+
+          valueLostInSelectedYear = openingValueForYear - closingValueForYear;
         }
 
         return {
           ...asset,
           currentValue: currentNBV,
           valueLostThisYear: valueLostInSelectedYear,
-          percentageLost: (totalAccumulated / asset.purchase_price) * 100,
+          percentageLost: purchasePrice > 0 ? (totalAccumulated / purchasePrice) * 100 : 0,
         };
       });
 
@@ -90,7 +103,7 @@ export default function AssetsPage() {
         
         <div className="flex items-center gap-3">
           
-          {/* UPGRADED: Custom Frosted Glass Year Dropdown */}
+          {/* Custom Frosted Glass Year Dropdown */}
           <div className="relative z-50">
             <button 
               onClick={() => setIsYearDropdownOpen(!isYearDropdownOpen)}
@@ -105,13 +118,11 @@ export default function AssetsPage() {
 
             {isYearDropdownOpen && (
               <>
-                {/* The Blur Overlay (closes dropdown when clicking outside) */}
                 <div 
                   className="fixed inset-0 z-40 bg-slate-900/5 dark:bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
                   onClick={() => setIsYearDropdownOpen(false)}
                 />
 
-                {/* The Dropdown Menu */}
                 <div className="absolute right-0 top-full mt-2 z-50 w-48 bg-white/80 dark:bg-slate-900/80 backdrop-blur-[64px] border border-white/60 dark:border-white/10 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] p-2 animate-in fade-in zoom-in-95 origin-top-right duration-200 max-h-64 overflow-y-auto custom-scrollbar">
                   {years.map(y => (
                     <button 
@@ -251,7 +262,7 @@ export default function AssetsPage() {
 }
 
 // ==========================================
-// CUSTOM NATIVE TAILWIND FORECAST CHART
+// PATCHED NATIVE TAILWIND FORECAST CHART
 // ==========================================
 function DepreciationForecastChart({ assets, currencySymbol }: { assets: any[], currencySymbol: string }) {
   const currentYear = new Date().getFullYear();
@@ -262,12 +273,21 @@ function DepreciationForecastChart({ assets, currencySymbol }: { assets: any[], 
 
     assets.forEach(asset => {
       const purchaseYear = new Date(asset.purchase_date).getFullYear();
-      const rate = asset.depreciation_rate / 100;
+      
+      const rate = Number(asset.depreciation_rate) / 100;
+      const purchasePrice = Number(asset.purchase_price);
+      const salvageValue = Number(asset.salvage_value) || 0;
       
       if (year >= purchaseYear) {
         const yearsBefore = Math.max(0, year - purchaseYear);
-        const openingValue = asset.purchase_price * Math.pow(1 - rate, yearsBefore);
-        totalDepreciationForYear += (openingValue * rate);
+        
+        let openingValue = purchasePrice * Math.pow(1 - rate, yearsBefore);
+        if (openingValue < salvageValue) openingValue = salvageValue;
+        
+        let closingValue = purchasePrice * Math.pow(1 - rate, yearsBefore + 1);
+        if (closingValue < salvageValue) closingValue = salvageValue;
+
+        totalDepreciationForYear += (openingValue - closingValue);
       }
     });
 
