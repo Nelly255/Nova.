@@ -54,7 +54,7 @@ export default function AddAssetModal() {
         throw new Error("You must be logged in to save an asset.");
       }
 
-      // 2. Insert the data with the explicit user_id AND a fallback for your old 'value' column
+      // 2. Insert the data with the explicit user_id ONLY (Removed the old 'value' column)
       const { error } = await supabase.from("assets").insert([
         {
           user_id: user.id, // Explicitly hands the ID to the bouncer
@@ -63,7 +63,6 @@ export default function AddAssetModal() {
           purchase_date: formData.purchase_date,
           depreciation_rate: parseFloat(formData.depreciation_rate),
           salvage_value: parseFloat(formData.salvage_value || "0"),
-          value: parseFloat(formData.purchase_price) // Fills your old column just in case it's required!
         },
       ]);
 
@@ -81,7 +80,6 @@ export default function AddAssetModal() {
       window.dispatchEvent(new Event("assetUpdated")); 
       
     } catch (error: any) {
-      // THE MAGIC FIX: This will now show you the EXACT database error in the alert!
       console.error("EXACT DATABASE ERROR:", error);
       alert(`Database Error: ${error.message}`);
     } finally {
