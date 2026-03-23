@@ -30,40 +30,36 @@ export default function AssetsPage() {
         const purchaseDate = new Date(asset.purchase_date);
         const purchaseYear = purchaseDate.getFullYear();
         
-        // Safety checks to ensure we are doing math with real numbers
         const rate = Number(asset.depreciation_rate) / 100;
         const purchasePrice = Number(asset.purchase_price);
         const salvageValue = Number(asset.salvage_value) || 0;
         
-        // 1. Calculate strictly based on FULL years passed (Math.floor is the magic fix here)
-        const exactYears = (new Date().getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
-        const fullYearsOwned = Math.max(0, Math.floor(exactYears));
-
-        // 2. Calculate Current NBV and enforce the Salvage Value floor
-        let currentNBV = purchasePrice * Math.pow(1 - rate, fullYearsOwned);
-        if (currentNBV < salvageValue) currentNBV = salvageValue;
-
-        const totalAccumulated = purchasePrice - currentNBV;
-
-        // 3. Calculate exact value lost in the specifically selected dropdown year
+        // Dynamic Math synced entirely to the selected dropdown year
+        let openingValueForYear = purchasePrice;
+        let closingValueForYear = purchasePrice;
         let valueLostInSelectedYear = 0;
+
         if (selectedYear >= purchaseYear) {
           const yearsBeforeSelected = selectedYear - purchaseYear;
           
-          let openingValueForYear = purchasePrice * Math.pow(1 - rate, yearsBeforeSelected);
+          openingValueForYear = purchasePrice * Math.pow(1 - rate, yearsBeforeSelected);
           if (openingValueForYear < salvageValue) openingValueForYear = salvageValue;
 
-          let closingValueForYear = purchasePrice * Math.pow(1 - rate, yearsBeforeSelected + 1);
+          closingValueForYear = purchasePrice * Math.pow(1 - rate, yearsBeforeSelected + 1);
           if (closingValueForYear < salvageValue) closingValueForYear = salvageValue;
 
           valueLostInSelectedYear = openingValueForYear - closingValueForYear;
         }
 
+        // NBV at the END of the selected year
+        const nbvAtEndOfSelectedYear = selectedYear >= purchaseYear ? closingValueForYear : purchasePrice;
+        const totalAccumulatedBySelectedYear = purchasePrice - nbvAtEndOfSelectedYear;
+        
         return {
           ...asset,
-          currentValue: currentNBV,
+          currentValue: nbvAtEndOfSelectedYear,
           valueLostThisYear: valueLostInSelectedYear,
-          percentageLost: purchasePrice > 0 ? (totalAccumulated / purchasePrice) * 100 : 0,
+          percentageLost: purchasePrice > 0 ? (totalAccumulatedBySelectedYear / purchasePrice) * 100 : 0,
         };
       });
 
@@ -102,7 +98,6 @@ export default function AssetsPage() {
         
         <div className="flex items-center gap-3">
           
-          {/* Custom Frosted Glass Year Dropdown */}
           <div className="relative z-50">
             <button 
               onClick={() => setIsYearDropdownOpen(!isYearDropdownOpen)}
@@ -152,7 +147,7 @@ export default function AssetsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="glass-card p-8 rounded-[2rem] relative overflow-hidden flex justify-between items-center transition-colors">
           <div className="relative z-10">
-            <p className="text-slate-500 dark:text-slate-400 font-medium mb-1 transition-colors">Total Net Book Value (Today)</p>
+            <p className="text-slate-500 dark:text-slate-400 font-medium mb-1 transition-colors">Net Book Value ({selectedYear})</p>
             <h2 className="text-4xl font-bold text-slate-900 dark:text-slate-50 transition-colors">{currencySymbol}{totalCurrentValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
           </div>
           <div className="w-16 h-16 rounded-full bg-emerald-50/80 dark:bg-emerald-500/10 flex items-center justify-center border border-emerald-100/50 dark:border-emerald-500/20 text-emerald-500 dark:text-emerald-400 relative z-10 transition-colors backdrop-blur-sm">
@@ -195,7 +190,7 @@ export default function AssetsPage() {
 
                 <div>
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-14 h-14 rounded-2xl bg-slate-50/80 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 flex items-center justify-center text-indigo-500 dark:text-indigo-400 shadow-sm backdrop-blur-sm transition-colors">
+                    <div className="w-14 h-14 rounded-2xl bg-slate-50/80 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 flex items-center justify-center text-indigo-500 dark:text-indigo-400 shadow-sm backdrop-blur-sm transition-colors shrink-0">
                       {getAssetIcon(asset.name)}
                     </div>
                     <div>
@@ -204,23 +199,29 @@ export default function AssetsPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="bg-slate-50/80 dark:bg-white/5 p-3 rounded-xl border border-slate-200/50 dark:border-white/5 transition-colors backdrop-blur-sm">
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-1 transition-colors font-medium">Purchase Price</p>
-                      <p className="font-semibold text-slate-700 dark:text-slate-300 transition-colors truncate">{currencySymbol}{Number(asset.purchase_price).toLocaleString()}</p>
+                  {/* UPGRADED: 3-Column Grid for Financial Summary */}
+                  <div className="grid grid-cols-3 gap-2 mb-5">
+                    <div className="bg-slate-50/80 dark:bg-white/5 p-2.5 rounded-xl border border-slate-200/50 dark:border-white/5 transition-colors backdrop-blur-sm flex flex-col justify-center">
+                      <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mb-1 transition-colors font-medium">Original</p>
+                      <p className="font-semibold text-sm text-slate-700 dark:text-slate-300 transition-colors truncate">{currencySymbol}{Number(asset.purchase_price).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                     </div>
                     
-                    {/* UPGRADED: Dynamic Depreciation Box */}
-                    <div className="bg-rose-50/80 dark:bg-rose-500/10 p-3 rounded-xl border border-rose-100/50 dark:border-rose-500/20 transition-colors backdrop-blur-sm">
-                      <p className="text-xs text-rose-600 dark:text-rose-400/80 mb-1 transition-colors font-medium">Loss in {selectedYear}</p>
-                      <p className="font-bold text-rose-700 dark:text-rose-300 transition-colors truncate">-{currencySymbol}{asset.valueLostThisYear.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                    <div className="bg-rose-50/80 dark:bg-rose-500/10 p-2.5 rounded-xl border border-rose-100/50 dark:border-rose-500/20 transition-colors backdrop-blur-sm flex flex-col justify-center">
+                      <p className="text-[10px] sm:text-xs text-rose-600 dark:text-rose-400/80 mb-1 transition-colors font-medium">Loss '{selectedYear.toString().slice(-2)}</p>
+                      <p className="font-bold text-sm text-rose-700 dark:text-rose-300 transition-colors truncate">-{currencySymbol}{asset.valueLostThisYear.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                    </div>
+
+                    <div className="bg-indigo-50/80 dark:bg-indigo-500/10 p-2.5 rounded-xl border border-indigo-100/50 dark:border-indigo-500/20 transition-colors backdrop-blur-sm flex flex-col justify-center">
+                      <p className="text-[10px] sm:text-xs text-indigo-600 dark:text-indigo-400/80 mb-1 transition-colors font-medium">NBV '{selectedYear.toString().slice(-2)}</p>
+                      <p className="font-bold text-sm text-indigo-700 dark:text-indigo-300 transition-colors truncate">{currencySymbol}{asset.currentValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                     </div>
                   </div>
                   
+                  {/* Dynamic Progress Bar synced to Selected Year */}
                   <div>
                     <div className="flex justify-between text-xs mb-1 transition-colors">
-                      <span className="text-rose-600 dark:text-rose-400 font-medium transition-colors">All-time Loss</span>
-                      <span className="text-slate-500 dark:text-slate-400 transition-colors font-medium">{asset.percentageLost.toFixed(1)}% Depreciated</span>
+                      <span className="text-rose-600 dark:text-rose-400 font-medium transition-colors">Accumulated Loss</span>
+                      <span className="text-slate-500 dark:text-slate-400 transition-colors font-medium">{asset.percentageLost.toFixed(1)}%</span>
                     </div>
                     <div className="h-2 w-full bg-slate-100/80 dark:bg-slate-800/50 rounded-full overflow-hidden transition-colors shadow-inner backdrop-blur-sm border border-transparent dark:border-white/5">
                       <div 
@@ -259,7 +260,7 @@ export default function AssetsPage() {
 }
 
 // ==========================================
-// PATCHED NATIVE TAILWIND FORECAST CHART
+// FORECAST CHART
 // ==========================================
 function DepreciationForecastChart({ assets, currencySymbol }: { assets: any[], currencySymbol: string }) {
   const currentYear = new Date().getFullYear();
