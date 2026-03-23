@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import AddAssetModal from "@/components/AddAssetModal";
-import DepreciationReportModal from "@/components/DepreciationReportModal"; 
 import { Laptop, Car, Home, Camera, Briefcase, Trash2, TrendingDown, CalendarDays, BarChart3, ChevronDown } from "lucide-react";
 
 const getAssetIcon = (name: string) => {
@@ -228,10 +227,6 @@ export default function AssetsPage() {
                       ></div>
                     </div>
                   </div>
-                </div>
-
-                <div className="mt-4">
-                  <DepreciationReportModal asset={asset} currencySymbol={currencySymbol} />
                 </div>
                 
               </div>
