@@ -209,9 +209,11 @@ export default function AssetsPage() {
                       <p className="text-xs text-slate-500 dark:text-slate-400 mb-1 transition-colors font-medium">Purchase Price</p>
                       <p className="font-semibold text-slate-700 dark:text-slate-300 transition-colors truncate">{currencySymbol}{Number(asset.purchase_price).toLocaleString()}</p>
                     </div>
-                    <div className="bg-indigo-50/80 dark:bg-indigo-500/10 p-3 rounded-xl border border-indigo-100/50 dark:border-indigo-500/20 transition-colors backdrop-blur-sm">
-                      <p className="text-xs text-indigo-600 dark:text-indigo-400/80 mb-1 transition-colors font-medium">Today's NBV</p>
-                      <p className="font-bold text-indigo-700 dark:text-indigo-300 transition-colors truncate">{currencySymbol}{asset.currentValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                    
+                    {/* UPGRADED: Dynamic Depreciation Box */}
+                    <div className="bg-rose-50/80 dark:bg-rose-500/10 p-3 rounded-xl border border-rose-100/50 dark:border-rose-500/20 transition-colors backdrop-blur-sm">
+                      <p className="text-xs text-rose-600 dark:text-rose-400/80 mb-1 transition-colors font-medium">Loss in {selectedYear}</p>
+                      <p className="font-bold text-rose-700 dark:text-rose-300 transition-colors truncate">-{currencySymbol}{asset.valueLostThisYear.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                     </div>
                   </div>
                   
