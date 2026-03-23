@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import AddAssetModal from "@/components/AddAssetModal";
-import { Laptop, Car, Home, Camera, Briefcase, Trash2, TrendingDown, CalendarDays, BarChart3, ChevronDown, Maximize2, Minimize2 } from "lucide-react";
+import { Laptop, Car, Home, Camera, Briefcase, Trash2, TrendingDown, CalendarDays, BarChart3, ChevronDown } from "lucide-react";
 
 const getAssetIcon = (name: string) => {
   const lower = name.toLowerCase();
@@ -14,6 +14,7 @@ const getAssetIcon = (name: string) => {
   return <Briefcase size={24} />;
 };
 
+// Kept this strictly for the Forecast Chart tooltips at the bottom
 const formatCompactNumber = (number: number) => {
   if (!number) return "0";
   return new Intl.NumberFormat('en-US', {
@@ -219,12 +220,9 @@ export default function AssetsPage() {
 }
 
 // ==========================================
-// INTERACTIVE ASSET CARD (Tap to Expand!)
+// ASSET CARD (Locked to Stacked View)
 // ==========================================
 function AssetCard({ asset, selectedYear, currencySymbol, onDelete }: any) {
-  // State to track if the user tapped this specific card to see full numbers
-  const [isExpanded, setIsExpanded] = useState(false);
-
   return (
     <div className="glass-card p-6 rounded-[2rem] hover:bg-white/40 dark:hover:bg-white/5 transition duration-300 relative group flex flex-col justify-between overflow-hidden">
       
@@ -246,43 +244,26 @@ function AssetCard({ asset, selectedYear, currencySymbol, onDelete }: any) {
           </div>
         </div>
 
-        {/* INTERACTIVE ZONE: Tapping this transforms the layout */}
-        <div 
-          onClick={() => setIsExpanded(!isExpanded)}
-          title="Tap to view exact amounts"
-          className={`mb-5 cursor-pointer rounded-2xl transition-all duration-300 hover:ring-2 ring-indigo-500/20 hover:scale-[0.98] active:scale-95 group/grid relative
-            ${isExpanded ? 'flex flex-col gap-2' : 'grid grid-cols-3 gap-1.5'}
-          `}
-        >
-          {/* Subtle hint icon that appears on hover */}
-          <div className="absolute -top-2 -right-2 bg-indigo-500 text-white rounded-full p-1 opacity-0 group-hover/grid:opacity-100 transition-opacity z-10 shadow-lg pointer-events-none">
-            {isExpanded ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
-          </div>
-
-          <div className={`bg-slate-50/80 dark:bg-white/5 rounded-xl border border-slate-200/50 dark:border-white/5 transition-colors backdrop-blur-sm flex 
-            ${isExpanded ? 'flex-row justify-between items-center p-3' : 'flex-col justify-center p-2'}
-          `}>
-            <p className={`text-slate-500 dark:text-slate-400 transition-colors font-medium tracking-wide ${isExpanded ? 'text-xs' : 'text-[9px] sm:text-[10px] mb-0.5'}`}>Original</p>
-            <p className={`font-semibold text-slate-700 dark:text-slate-300 transition-colors truncate ${isExpanded ? 'text-sm' : 'text-xs sm:text-sm'}`}>
-              {currencySymbol}{isExpanded ? Number(asset.purchase_price).toLocaleString() : formatCompactNumber(asset.purchase_price)}
+        {/* Stacked Receipt Layout */}
+        <div className="flex flex-col gap-2 mb-5">
+          <div className="bg-slate-50/80 dark:bg-white/5 rounded-xl border border-slate-200/50 dark:border-white/5 transition-colors backdrop-blur-sm flex flex-row justify-between items-center p-3">
+            <p className="text-slate-500 dark:text-slate-400 transition-colors font-medium tracking-wide text-xs">Purchase Price</p>
+            <p className="font-semibold text-slate-700 dark:text-slate-300 transition-colors text-sm">
+              {currencySymbol}{Number(asset.purchase_price).toLocaleString()}
             </p>
           </div>
           
-          <div className={`bg-rose-50/80 dark:bg-rose-500/10 rounded-xl border border-rose-100/50 dark:border-rose-500/20 transition-colors backdrop-blur-sm flex
-            ${isExpanded ? 'flex-row justify-between items-center p-3' : 'flex-col justify-center p-2'}
-          `}>
-            <p className={`text-rose-600 dark:text-rose-400/80 transition-colors font-medium tracking-wide ${isExpanded ? 'text-xs' : 'text-[9px] sm:text-[10px] mb-0.5'}`}>Loss '{selectedYear.toString().slice(-2)}</p>
-            <p className={`font-bold text-rose-700 dark:text-rose-300 transition-colors truncate ${isExpanded ? 'text-sm' : 'text-xs sm:text-sm'}`}>
-              -{currencySymbol}{isExpanded ? Number(asset.valueLostThisYear).toLocaleString() : formatCompactNumber(asset.valueLostThisYear)}
+          <div className="bg-rose-50/80 dark:bg-rose-500/10 rounded-xl border border-rose-100/50 dark:border-rose-500/20 transition-colors backdrop-blur-sm flex flex-row justify-between items-center p-3">
+            <p className="text-rose-600 dark:text-rose-400/80 transition-colors font-medium tracking-wide text-xs">Loss '{selectedYear.toString().slice(-2)}</p>
+            <p className="font-bold text-rose-700 dark:text-rose-300 transition-colors text-sm">
+              -{currencySymbol}{Number(asset.valueLostThisYear).toLocaleString()}
             </p>
           </div>
 
-          <div className={`bg-indigo-50/80 dark:bg-indigo-500/10 rounded-xl border border-indigo-100/50 dark:border-indigo-500/20 transition-colors backdrop-blur-sm flex
-            ${isExpanded ? 'flex-row justify-between items-center p-3' : 'flex-col justify-center p-2'}
-          `}>
-            <p className={`text-indigo-600 dark:text-indigo-400/80 transition-colors font-medium tracking-wide ${isExpanded ? 'text-xs' : 'text-[9px] sm:text-[10px] mb-0.5'}`}>NBV '{selectedYear.toString().slice(-2)}</p>
-            <p className={`font-bold text-indigo-700 dark:text-indigo-300 transition-colors truncate ${isExpanded ? 'text-sm' : 'text-xs sm:text-sm'}`}>
-              {currencySymbol}{isExpanded ? Number(asset.currentValue).toLocaleString() : formatCompactNumber(asset.currentValue)}
+          <div className="bg-indigo-50/80 dark:bg-indigo-500/10 rounded-xl border border-indigo-100/50 dark:border-indigo-500/20 transition-colors backdrop-blur-sm flex flex-row justify-between items-center p-3">
+            <p className="text-indigo-600 dark:text-indigo-400/80 transition-colors font-medium tracking-wide text-xs">NBV '{selectedYear.toString().slice(-2)}</p>
+            <p className="font-bold text-indigo-700 dark:text-indigo-300 transition-colors text-sm">
+              {currencySymbol}{Number(asset.currentValue).toLocaleString()}
             </p>
           </div>
         </div>
