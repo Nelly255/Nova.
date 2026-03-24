@@ -28,10 +28,21 @@ export default function DashboardPage() {
   const [currencySymbol, setCurrencySymbol] = useState("$");
   const [isDarkMode, setIsDarkMode] = useState(true);
 
+  // Dynamic Greeting State
+  const [greeting, setGreeting] = useState("Hello");
+
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false);
+
+  // Check the user's local time for the greeting
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) setGreeting("Good Morning");
+    else if (hour < 18) setGreeting("Good Afternoon");
+    else setGreeting("Good Evening");
+  }, []);
 
   const fetchDashboardData = async () => {
     try {
@@ -65,9 +76,34 @@ export default function DashboardPage() {
     const fetchUser = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        
         if (session?.user) {
-          const name = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || "User";
+          const user = session.user;
+          const name = user.user_metadata?.full_name || user.email?.split('@')[0] || "User";
           setUserName(name);
+
+          // 🚀 THE PREMIUM WELCOME EMAIL TRIPWIRE 🚀
+          // Check if the account was created less than 2 minutes ago (120,000 milliseconds)
+          const createdAt = new Date(user.created_at).getTime();
+          const timeSinceCreation = new Date().getTime() - createdAt;
+          const hasSentEmail = localStorage.getItem('nova_welcome_sent');
+
+          if (timeSinceCreation < 120000 && !hasSentEmail) {
+            try {
+              // Fire the hidden API route
+              await fetch('/api/welcome', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: user.email, name: name })
+              });
+              // Mark it as sent so we never double-email them
+              localStorage.setItem('nova_welcome_sent', 'true');
+            } catch (err) {
+              console.error("Failed to send welcome email", err);
+            }
+          }
+          // -------------------------------------------
+
         } else {
           const savedName = localStorage.getItem("user_name");
           if (savedName) setUserName(savedName);
@@ -171,7 +207,7 @@ export default function DashboardPage() {
       <header className="flex justify-between items-start sm:items-center">
         <div>
           <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 transition-colors capitalize">
-            {isEmptyState ? `Welcome, ${userName}` : "Good Morning"}
+            {isEmptyState ? `Welcome, ${userName}` : greeting}
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm mt-1 transition-colors">
             {isEmptyState ? "Let's set up your financial vault." : "Here is your financial overview."}

@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react"; 
-import { LayoutDashboard, ArrowRightLeft, Target, ShieldCheck, Settings, PiggyBank, Briefcase, Menu, ChevronLeft, CreditCard, Activity } from "lucide-react"; 
+import { supabase } from "@/lib/supabase"; 
+import { LayoutDashboard, ArrowRightLeft, Target, ShieldCheck, Settings, PiggyBank, Briefcase, Menu, ChevronLeft, CreditCard, Activity, LogOut } from "lucide-react"; 
 import UserProfile from "@/components/UserProfile"; 
 import AuthGuard from "@/components/AuthGuard";
 import QuickTourModal from "@/components/QuickTourModal"; 
@@ -20,6 +21,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       document.documentElement.classList.add('dark');
     }
   }, [pathname]); 
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/"; 
+  };
 
   return (
     <AuthGuard>
@@ -71,13 +77,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </aside>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto relative z-10">
-          {children}
+        <main className="flex-1 overflow-y-auto relative z-10 flex flex-col">
+          
+          {/* UPGRADED: Mobile Top Header (Visible ONLY on phones) */}
+          <header className="md:hidden flex items-center justify-between px-6 py-4 border-b border-slate-200/50 dark:border-white/5 bg-white/40 dark:bg-[#0A0A0E]/60 backdrop-blur-xl sticky top-0 z-40 shrink-0">
+            <div className="flex items-center gap-2">
+              <Activity size={24} className="text-indigo-600 dark:text-indigo-400" />
+              <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                Nova.
+              </span>
+            </div>
+            
+            <button 
+              onClick={handleSignOut}
+              className="flex items-center gap-1.5 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-500/20 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all"
+            >
+              <LogOut size={14} /> Sign Out
+            </button>
+          </header>
+
+          {/* Page Content */}
+          <div className="flex-1">
+            {children}
+          </div>
+          
         </main>
 
         {/* 📱 MOBILE FLOATING BOTTOM NAV (Hidden on Desktop) */}
         <nav className="md:hidden fixed bottom-6 left-4 right-4 z-50 pointer-events-auto">
-          {/* UPGRADED: Extreme iOS 18 Glass Effect using extreme blur and high saturation */}
           <div className="bg-white/20 dark:bg-[#0A0A0E]/40 backdrop-blur-[40px] saturate-[2] border border-white/40 dark:border-white/10 shadow-[0_16px_40px_-10px_rgba(0,0,0,0.5)] rounded-[2.5rem] px-2 py-2.5 flex items-center justify-between gap-1 overflow-x-auto custom-scrollbar relative">
             <MobileNavItem href="/dashboard" icon={<LayoutDashboard size={22}/>} label="Home" active={pathname === "/dashboard"} />
             <MobileNavItem href="/dashboard/transactions" icon={<ArrowRightLeft size={22}/>} label="Txns" active={pathname === "/dashboard/transactions"} />
@@ -85,7 +112,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <MobileNavItem href="/dashboard/savings" icon={<PiggyBank size={22}/>} label="Save" active={pathname === "/dashboard/savings"} />
             <MobileNavItem href="/dashboard/debts" icon={<CreditCard size={22}/>} label="Debts" active={pathname === "/dashboard/debts"} />
             <MobileNavItem href="/dashboard/assets" icon={<Briefcase size={22}/>} label="Assets" active={pathname === "/dashboard/assets"} />
+            
             <div className="w-[1px] h-8 bg-slate-300/50 dark:bg-white/20 shrink-0 mx-1 rounded-full"></div>
+            
             <MobileNavItem href="/dashboard/settings" icon={<Settings size={22}/>} label="Settings" active={pathname === "/dashboard/settings"} />
           </div>
         </nav>

@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation"; // ADDED: Next.js router for redirects
+import { supabase } from "@/lib/supabase"; // ADDED: Supabase client
 import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import { ArrowRight, Shield, Zap, PieChart, Activity, TrendingUp, Wallet, Sun, Moon, CreditCard, Target, Lock } from "lucide-react";
 
@@ -11,6 +13,18 @@ const bodyFont = Inter({ subsets: ["latin"] });
 
 export default function WelcomePage() {
   const [theme, setTheme] = useState('dark');
+  const router = useRouter(); // ADDED: Initialize router
+
+  // ADDED: Auth Check - Redirect logged-in users to dashboard instantly
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        router.push('/dashboard');
+      }
+    };
+    checkUser();
+  }, [router]);
 
   // Auto system theme detection
   useEffect(() => {

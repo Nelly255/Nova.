@@ -27,39 +27,49 @@ export default function NotificationBell() {
 
   useEffect(() => {
     const generateNotifications = async () => {
+      // 1. Get real-time alerts from DB
       const { data } = await supabase.from("subscriptions").select("*");
       const today = new Date().getDate();
-      const alerts = [];
+      let liveAlerts: any[] = [];
 
       if (data) {
         data.forEach(sub => {
           if (sub.billing_date >= today && sub.billing_date <= today + 3) {
-            alerts.push({
-              id: sub.id,
+            liveAlerts.push({
+              id: `sub-${sub.id}`,
               type: "warning",
               title: "Upcoming Bill",
               message: `${sub.name} is due on the ${sub.billing_date}th!`,
               time: getCurrentTime(), 
-              read: false 
+              read: false,
+              isPersistent: false
             });
           }
         });
       }
 
-      // UPGRADED: Only show this if they haven't read it yet!
-      const hasSeenWelcome = localStorage.getItem("has_seen_welcome_notif");
-      if (!hasSeenWelcome) {
-        alerts.push({
+      // 2. Pull local history of custom actions
+      const savedHistory = localStorage.getItem("nova_notif_history");
+      let historyItems = savedHistory ? JSON.parse(savedHistory) : [];
+
+      // 3. The Welcome Message 
+      const hasGeneratedWelcome = localStorage.getItem("has_generated_welcome_notif");
+      if (!hasGeneratedWelcome) {
+        const welcomeNotif = {
           id: "welcome",
           type: "info",
-          title: "Welcome to Nova.", // Patched the name here too!
+          title: "Welcome to Nova.",
           message: "Your financial dashboard is ready to go.",
           time: getCurrentTime(), 
-          read: false 
-        });
+          read: false,
+          isPersistent: true
+        };
+        historyItems = [welcomeNotif, ...historyItems];
+        localStorage.setItem("has_generated_welcome_notif", "true");
+        localStorage.setItem("nova_notif_history", JSON.stringify(historyItems));
       }
 
-      setNotifications(alerts);
+      setNotifications([...liveAlerts, ...historyItems]);
     };
 
     generateNotifications();
@@ -71,24 +81,32 @@ export default function NotificationBell() {
       
       const newNotif = { 
         ...customEvent.detail, 
-        time: customEvent.detail.time || getCurrentTime() 
+        id: `notif-${Date.now()}`, 
+        time: customEvent.detail.time || getCurrentTime(),
+        read: false,
+        isPersistent: true 
       };
       
-      setNotifications(prev => [newNotif, ...prev]);
+      setNotifications(prev => {
+        const updatedList = [newNotif, ...prev];
+        const persistentOnly = updatedList.filter(n => n.isPersistent).slice(0, 10);
+        localStorage.setItem("nova_notif_history", JSON.stringify(persistentOnly));
+        
+        return updatedList;
+      });
     };
     window.addEventListener('newNotification', handleCustomNotification);
     return () => window.removeEventListener('newNotification', handleCustomNotification);
   }, []);
 
   const handleNotificationClick = (id: string, type: string) => {
-    setNotifications((prev) => 
-      prev.map((n) => n.id === id ? { ...n, read: true } : n)
-    );
-    
-    // UPGRADED: If they click the welcome message, hide it forever!
-    if (id === "welcome") {
-      localStorage.setItem("has_seen_welcome_notif", "true");
-    }
+    setNotifications((prev) => {
+      const updated = prev.map((n) => n.id === id ? { ...n, read: true } : n);
+      const persistentOnly = updated.filter(n => n.isPersistent);
+      localStorage.setItem("nova_notif_history", JSON.stringify(persistentOnly));
+      
+      return updated;
+    });
     
     if (type === "warning") {
       setIsOpen(false); 
@@ -119,7 +137,7 @@ export default function NotificationBell() {
             onClick={() => setIsOpen(false)}
           />
 
-          <div className="fixed left-4 right-4 top-24 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-3 z-50 sm:w-96 bg-white/80 dark:bg-slate-900/90 backdrop-blur-2xl border border-white/50 dark:border-white/10 rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] overflow-hidden animate-in fade-in zoom-in-95 origin-top sm:origin-top-right duration-200 flex flex-col max-h-[80vh] sm:max-h-[75vh]">
+          <div className="fixed left-4 right-4 top-24 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-3 z-50 sm:w-96 bg-white/80 dark:bg-slate-900/90 backdrop-blur-2xl border border-white/50 dark:border-white/10 rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] overflow-hidden animate-in fade-in zoom-in-95 origin-top sm:origin-top-right duration-200 flex flex-col">
             
             <div className="flex justify-between items-center p-6 border-b border-slate-200/50 dark:border-white/5 transition-colors shrink-0">
               <div className="flex items-center gap-3">
@@ -135,7 +153,8 @@ export default function NotificationBell() {
               </button>
             </div>
             
-            <div className="overflow-y-auto custom-scrollbar flex-1 pb-2">
+            {/* UPGRADED: Added max-h-[320px] here to perfectly show ~3 notifications before scrolling! */}
+            <div className="overflow-y-auto custom-scrollbar flex-1 max-h-[320px] pb-2">
               {notifications.length === 0 ? (
                 <div className="p-8 text-center text-slate-500 dark:text-slate-400 text-sm font-medium">You're all caught up!</div>
               ) : (
