@@ -5,11 +5,11 @@ import { supabase } from "@/lib/supabase";
 import { 
   Save, Globe, Wallet, Download, FileSpreadsheet, Loader2, CheckCircle2, 
   FileText, ArrowRight, CalendarDays, Moon, Sun, Trash2, X, AlertTriangle
-} from "lucide-react"; // <-- UPGRADED: Added AlertTriangle for our custom errors!
+} from "lucide-react"; 
 
 export default function SettingsPage() {
-  // Localization & Theme States
-  const [currency, setCurrency] = useState("USD");
+  // UPGRADED: Localization & Theme States default to TZS now!
+  const [currency, setCurrency] = useState("TZS");
   const [theme, setTheme] = useState("dark");
   const [saved, setSaved] = useState(false);
 
@@ -28,7 +28,7 @@ export default function SettingsPage() {
   const [isWiping, setIsWiping] = useState(false);
   const [wipeSuccess, setWipeSuccess] = useState(false);
 
-  // UPGRADED: Custom Toast Notification State
+  // Custom Toast Notification State
   const [toast, setToast] = useState<{message: string, type: 'error' | 'success'} | null>(null);
 
   const showToast = (message: string, type: 'error' | 'success' = 'error') => {
@@ -37,7 +37,8 @@ export default function SettingsPage() {
   };
 
   useEffect(() => {
-    const savedCurrency = localStorage.getItem("app_currency") || "USD";
+    // UPGRADED: Fallback to TZS if they haven't saved anything yet
+    const savedCurrency = localStorage.getItem("app_currency") || "TZS";
     const savedTheme = localStorage.getItem("app_theme") || "dark";
     
     setCurrency(savedCurrency);
@@ -93,13 +94,11 @@ export default function SettingsPage() {
     } catch (error) {
       console.error("Failed to wipe data:", error);
       setIsWiping(false);
-      // UPGRADED: Custom Toast instead of alert()
       showToast("Something went wrong while deleting your data. Please try again.");
     }
   };
 
   const downloadCSV = (data: any[], filename: string) => {
-    // UPGRADED: Custom Toast instead of alert()
     if (!data || data.length === 0) {
       showToast("No data available for this period.");
       return;
@@ -125,7 +124,6 @@ export default function SettingsPage() {
   };
 
   const downloadPDF = (data: any[], title: string) => {
-    // UPGRADED: Custom Toast instead of alert()
     if (!data || data.length === 0) {
       showToast("No data available for this period.");
       return;
@@ -192,7 +190,6 @@ export default function SettingsPage() {
         printWindow.close();
       }, 250);
     } else {
-      // UPGRADED: Custom Toast instead of alert()
       showToast("Please allow pop-ups for this site to generate PDFs.");
     }
   };
@@ -503,7 +500,7 @@ export default function SettingsPage() {
       )}
 
       {/* ============================================== */}
-      {/* UPGRADED: CUSTOM TOAST NOTIFICATION */}
+      {/* CUSTOM TOAST NOTIFICATION */}
       {/* ============================================== */}
       {toast && (
         <div className="fixed bottom-24 md:bottom-10 left-1/2 -translate-x-1/2 z-[150] animate-in slide-in-from-bottom-5 fade-in duration-300">

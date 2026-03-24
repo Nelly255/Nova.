@@ -25,7 +25,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState("User");
   
-  const [currencySymbol, setCurrencySymbol] = useState("$");
+  const [currencySymbol, setCurrencySymbol] = useState("TSh");
   const [isDarkMode, setIsDarkMode] = useState(true);
 
   // Dynamic Greeting State
