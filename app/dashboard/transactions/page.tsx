@@ -21,7 +21,7 @@ export default function TransactionsPage() {
   
   const [transactionToEdit, setTransactionToEdit] = useState<any>(null);
   
-  // UPGRADED: Custom state for our gorgeous new delete modal!
+  // Custom state for our gorgeous new delete modal!
   const [transactionToDelete, setTransactionToDelete] = useState<any>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -56,7 +56,7 @@ export default function TransactionsPage() {
     setCurrentPage(1);
   }, [filter, searchQuery, selectedMonth, selectedYear]);
 
-  // UPGRADED: This now handles the actual deletion after the user clicks "Yes, Delete" in the modal
+  // This now handles the actual deletion after the user clicks "Yes, Delete" in the modal
   const confirmDelete = async () => {
     if (!transactionToDelete) return;
     
@@ -243,8 +243,9 @@ export default function TransactionsPage() {
                     <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 transition-colors whitespace-nowrap">
                       {new Date(t.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                     </td>
+                    {/* UPGRADED: Expenses are now Red here in Desktop view! */}
                     <td className={`px-6 py-4 text-right font-semibold tracking-wide transition-colors whitespace-nowrap ${
-                      t.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-slate-100'
+                      t.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
                     }`}>
                       {t.type === 'expense' ? '-' : '+'}
                       {currencySymbol}
@@ -253,7 +254,6 @@ export default function TransactionsPage() {
                     <td className="px-6 py-4 text-center">
                       <div className="flex justify-center items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                         <button onClick={() => setTransactionToEdit(t)} className="text-slate-400 dark:text-slate-500 hover:text-brand dark:hover:text-brand hover:bg-brand/10 dark:hover:bg-brand/10 transition-colors p-2 rounded-lg" title="Edit Transaction"><Pencil size={18} /></button>
-                        {/* UPGRADED: Triggers the new custom modal */}
                         <button onClick={() => setTransactionToDelete(t)} className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors p-2 rounded-lg" title="Delete Transaction"><Trash2 size={18} /></button>
                       </div>
                     </td>
@@ -292,8 +292,9 @@ export default function TransactionsPage() {
                       </p>
                     </div>
                   </div>
+                  {/* UPGRADED: Expenses are now Red here in Mobile view too! */}
                   <div className={`text-right font-extrabold text-base tracking-wide transition-colors whitespace-nowrap mt-0.5 ${
-                    t.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-slate-100'
+                    t.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
                   }`}>
                     {t.type === 'expense' ? '-' : '+'}{currencySymbol}{Number(t.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
@@ -306,7 +307,6 @@ export default function TransactionsPage() {
                   >
                     <Pencil size={14} /> Edit
                   </button>
-                  {/* UPGRADED: Triggers the new custom modal */}
                   <button 
                     onClick={() => setTransactionToDelete(t)} 
                     className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 rounded-lg text-xs font-bold transition-all active:scale-95"
@@ -359,7 +359,7 @@ export default function TransactionsPage() {
       )}
 
       {/* ============================================== */}
-      {/* DANGER MODAL (Replaces window.confirm) */}
+      {/* DANGER MODAL */}
       {/* ============================================== */}
       {transactionToDelete && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">

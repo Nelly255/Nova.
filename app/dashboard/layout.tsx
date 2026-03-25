@@ -8,6 +8,8 @@ import { LayoutDashboard, ArrowRightLeft, Target, ShieldCheck, Settings, PiggyBa
 import UserProfile from "@/components/UserProfile"; 
 import AuthGuard from "@/components/AuthGuard";
 import QuickTourModal from "@/components/QuickTourModal"; 
+// UPGRADED: Import the new Single Tab Enforcer
+import SingleTabEnforcer from "@/components/SingleTabEnforcer"; 
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname(); 
@@ -29,6 +31,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <AuthGuard>
+      {/* UPGRADED: The enforcer sits right here watching all your tabs! */}
+      <SingleTabEnforcer />
       <QuickTourModal /> 
       
       <div className="flex h-screen bg-transparent text-slate-900 dark:text-slate-50 font-sans overflow-hidden transition-colors duration-300 relative">

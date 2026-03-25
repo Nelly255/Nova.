@@ -83,26 +83,22 @@ export default function DashboardPage() {
           setUserName(name);
 
           // 🚀 THE PREMIUM WELCOME EMAIL TRIPWIRE 🚀
-          // Check if the account was created less than 2 minutes ago (120,000 milliseconds)
           const createdAt = new Date(user.created_at).getTime();
           const timeSinceCreation = new Date().getTime() - createdAt;
           const hasSentEmail = localStorage.getItem('nova_welcome_sent');
 
           if (timeSinceCreation < 120000 && !hasSentEmail) {
             try {
-              // Fire the hidden API route
               await fetch('/api/welcome', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: user.email, name: name })
               });
-              // Mark it as sent so we never double-email them
               localStorage.setItem('nova_welcome_sent', 'true');
             } catch (err) {
               console.error("Failed to send welcome email", err);
             }
           }
-          // -------------------------------------------
 
         } else {
           const savedName = localStorage.getItem("user_name");
@@ -344,7 +340,7 @@ export default function DashboardPage() {
                   <>
                     <h3 className="text-xl md:text-2xl font-bold tracking-tight mt-2 md:mt-3 text-slate-900 dark:text-slate-100 transition-colors">{nextBill.name}</h3>
                     <p className="text-xs md:text-sm font-medium text-slate-500 mt-1 transition-colors">
-                      Due on the {nextBill.billing_date}th • {currencySymbol}{Number(nextBill.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      Due on the {nextBill.billing_date}th • <span className="font-bold text-rose-600 dark:text-rose-400">{currencySymbol}{Number(nextBill.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </p>
                   </>
                 ) : (
@@ -469,7 +465,7 @@ export default function DashboardPage() {
                       title={t.title} 
                       date={new Date(t.date).toLocaleDateString()} 
                       amount={`${t.type === 'expense' ? '-' : '+'}${currencySymbol}${Number(t.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
-                      color={t.type === 'income' ? "text-emerald-600 dark:text-emerald-400" : "text-slate-900 dark:text-slate-100"} 
+                      color={t.type === 'income' ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"} 
                       bg={t.type === 'income' ? "bg-emerald-50/50 dark:bg-emerald-400/10" : "bg-slate-50/50 dark:bg-white/5"}
                     />
                   ))
