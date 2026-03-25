@@ -1,26 +1,26 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createPortal } from "react-dom"; // <-- The Magic Teleporter!
-import { Plus, X, Loader2, ChevronDown } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Plus, X, Loader2, ChevronDown, Search, PlusCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
-const CATEGORIES = [
-  { label: "Groceries", value: "Groceries" },
-  { label: "Dining Out", value: "Dining Out" },
-  { label: "Transport", value: "Transport" },
-  { label: "Entertainment", value: "Entertainment" },
-  { label: "Bills & Utilities", value: "Bills" },
-  { label: "Income / Salary", value: "Income" },
-  { label: "Other", value: "Other" }
+const DEFAULT_CATEGORIES = [
+  "Groceries",
+  "Dining Out",
+  "Transport",
+  "Entertainment",
+  "Bills & Utilities",
+  "Income / Salary",
+  "Other"
 ];
 
 export default function AddTransactionModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [categorySearch, setCategorySearch] = useState("");
   
-  // Need to check if we are on the client-side so Next.js SSR doesn't crash with Portals
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -31,6 +31,14 @@ export default function AddTransactionModal() {
     category: "Groceries",
     date: new Date().toISOString().split("T")[0], 
   });
+
+  // Filter categories based on search or allow creating new one
+  const filteredCategories = DEFAULT_CATEGORIES.filter(cat => 
+    cat.toLowerCase().includes(categorySearch.toLowerCase())
+  );
+
+  const isNewCategory = categorySearch.length > 0 && 
+    !DEFAULT_CATEGORIES.some(cat => cat.toLowerCase() === categorySearch.toLowerCase());
 
   const formatAmountForDisplay = (value: string) => {
     if (!value) return "";
@@ -66,15 +74,16 @@ export default function AddTransactionModal() {
 
     if (error) {
       console.error("Error saving transaction:", error.message);
-      alert("Failed to save transaction. Check the console.");
+      alert("Failed to save transaction.");
     } else {
       setIsOpen(false);
+      setIsCategoryOpen(false);
+      setCategorySearch("");
       setFormData({ ...formData, title: "", amount: "", type: "expense", category: "Groceries" });
       window.dispatchEvent(new Event("transactionUpdated")); 
     }
   };
 
-  // 1. The button stays exactly where you put it in the layout
   const modalButton = (
     <button 
       onClick={() => setIsOpen(true)}
@@ -84,22 +93,18 @@ export default function AddTransactionModal() {
     </button>
   );
 
-  // 2. The Modal Content (Centered, beautiful, and portal-ready)
   const modalContent = isOpen && mounted ? createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-0">
-      
-      {/* Heavy Backdrop Blur to block everything else out */}
       <div 
         className="absolute inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
         onClick={() => { setIsOpen(false); setIsCategoryOpen(false); }}
       />
 
-      {/* Centered Modal Card */}
       <div className="relative z-10 w-full max-w-md bg-white dark:bg-[#0A0A0E] rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] border border-slate-200 dark:border-white/10 overflow-visible animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
         
-        <div className="flex justify-between items-center p-6 md:p-8 border-b border-zinc-200/80 dark:border-white/5 transition-colors shrink-0">
-          <h3 className="text-xl md:text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100 transition-colors">New Transaction</h3>
-          <button onClick={() => { setIsOpen(false); setIsCategoryOpen(false); }} className="text-zinc-500 hover:text-rose-500 dark:text-zinc-400 dark:hover:text-rose-400 transition-colors p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-white/5">
+        <div className="flex justify-between items-center p-6 md:p-8 border-b border-zinc-200/80 dark:border-white/5 shrink-0">
+          <h3 className="text-xl md:text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">New Transaction</h3>
+          <button onClick={() => { setIsOpen(false); setIsCategoryOpen(false); }} className="text-zinc-500 hover:text-rose-500 dark:text-zinc-400 p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-white/5">
             <X size={20} />
           </button>
         </div>
@@ -112,8 +117,8 @@ export default function AddTransactionModal() {
               onClick={() => setFormData({ ...formData, type: "expense" })}
               className={`py-3 rounded-2xl text-sm font-bold transition-all duration-300 ${
                 formData.type === "expense" 
-                ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30 shadow-[0_0_15px_rgba(244,63,94,0.15)] backdrop-blur-md" 
-                : "bg-zinc-50/50 dark:bg-black/20 text-zinc-500 dark:text-zinc-400 border border-zinc-200/80 dark:border-white/5 hover:bg-white/80 dark:hover:bg-white/10 backdrop-blur-sm"
+                ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30 shadow-[0_0_15px_rgba(244,63,94,0.15)]" 
+                : "bg-zinc-50/50 dark:bg-black/20 text-zinc-500 dark:text-zinc-400 border border-zinc-200/80 dark:border-white/5"
               }`}
             >
               Expense
@@ -123,8 +128,8 @@ export default function AddTransactionModal() {
               onClick={() => setFormData({ ...formData, type: "income" })}
               className={`py-3 rounded-2xl text-sm font-bold transition-all duration-300 ${
                 formData.type === "income" 
-                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.15)] backdrop-blur-md" 
-                : "bg-zinc-50/50 dark:bg-black/20 text-zinc-500 dark:text-zinc-400 border border-zinc-200/80 dark:border-white/5 hover:bg-white/80 dark:hover:bg-white/10 backdrop-blur-sm"
+                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.15)]" 
+                : "bg-zinc-50/50 dark:bg-black/20 text-zinc-500 dark:text-zinc-400 border border-zinc-200/80 dark:border-white/5"
               }`}
             >
               Income
@@ -132,20 +137,20 @@ export default function AddTransactionModal() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5 transition-colors">What was this for?</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">What was this for?</label>
             <input 
               required
               type="text" 
               placeholder="e.g., Starbucks, Salary"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
+              className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5 transition-colors">Amount</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">Amount</label>
               <input 
                 required
                 type="text" 
@@ -153,11 +158,11 @@ export default function AddTransactionModal() {
                 placeholder="0.00"
                 value={formatAmountForDisplay(formData.amount)} 
                 onChange={handleAmountChange} 
-                className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
+                className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5 transition-colors">Date</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">Date</label>
               <input 
                 required
                 type="date"
@@ -168,41 +173,79 @@ export default function AddTransactionModal() {
             </div>
           </div>
 
+          {/* SMART CATEGORY SELECTOR */}
           <div className="relative">
-            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5 transition-colors">Category</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">Category</label>
             <button 
               type="button"
               onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-              className="w-full flex justify-between items-center bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+              className="w-full flex justify-between items-center bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-indigo-500 transition-colors"
             >
-              <span className="truncate">
-                {CATEGORIES.find(c => c.value === formData.category)?.label || formData.category}
-              </span>
+              <span className="truncate">{formData.category}</span>
               <ChevronDown size={18} className={`text-zinc-400 shrink-0 transition-transform duration-200 ${isCategoryOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {isCategoryOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setIsCategoryOpen(false)} />
-                <div className="absolute left-0 right-0 bottom-full mb-2 z-50 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl border border-zinc-200/80 dark:border-white/10 rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] overflow-hidden animate-in fade-in zoom-in-95 origin-bottom duration-200">
-                  <div className="max-h-60 overflow-y-auto custom-scrollbar p-1.5">
-                    {CATEGORIES.map((cat) => (
+                <div className="absolute left-0 right-0 bottom-full mb-2 z-50 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-white/10 rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] overflow-hidden animate-in fade-in zoom-in-95 origin-bottom duration-200">
+                  
+                  {/* Search / Create Input */}
+                  <div className="p-2 border-b border-zinc-100 dark:border-white/5 bg-zinc-50/50 dark:bg-zinc-950/50">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
+                      <input 
+                        autoFocus
+                        type="text"
+                        placeholder="Search or type new..."
+                        value={categorySearch}
+                        onChange={(e) => setCategorySearch(e.target.value)}
+                        className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="max-h-52 overflow-y-auto custom-scrollbar p-1.5">
+                    {/* Option to create new if it doesn't exist */}
+                    {isNewCategory && (
                       <button
-                        key={cat.value}
                         type="button"
                         onClick={() => {
-                          setFormData({ ...formData, category: cat.value });
+                          setFormData({ ...formData, category: categorySearch });
                           setIsCategoryOpen(false);
+                          setCategorySearch("");
                         }}
-                        className={`w-full text-left px-4 py-3 rounded-xl text-sm transition-colors flex items-center justify-between ${
-                          formData.category === cat.value 
-                          ? 'bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-bold' 
-                          : 'hover:bg-zinc-100 dark:hover:bg-white/10 text-zinc-700 dark:text-zinc-300 font-medium'
+                        className="w-full text-left px-4 py-3 rounded-xl text-sm transition-colors flex items-center gap-2 text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-500/10 font-bold mb-1"
+                      >
+                        <PlusCircle size={16} />
+                        Create "{categorySearch}"
+                      </button>
+                    )}
+
+                    {filteredCategories.map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => {
+                          setFormData({ ...formData, category: cat });
+                          setIsCategoryOpen(false);
+                          setCategorySearch("");
+                        }}
+                        className={`w-full text-left px-4 py-3 rounded-xl text-sm transition-colors ${
+                          formData.category === cat 
+                          ? 'bg-zinc-100 dark:bg-white/10 text-zinc-900 dark:text-white font-bold' 
+                          : 'hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-700 dark:text-zinc-300 font-medium'
                         }`}
                       >
-                        {cat.label}
+                        {cat}
                       </button>
                     ))}
+
+                    {filteredCategories.length === 0 && !isNewCategory && (
+                      <div className="px-4 py-8 text-center text-zinc-500 text-xs">
+                        Type to create a custom category
+                      </div>
+                    )}
                   </div>
                 </div>
               </>

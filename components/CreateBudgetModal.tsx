@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, X, Loader2, AlertCircle, ChevronDown } from "lucide-react";
+import { Plus, X, Loader2, AlertCircle, ChevronDown, Search, PlusCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
-const BUDGET_CATEGORIES = [
+const DEFAULT_BUDGET_CATEGORIES = [
   "Groceries", 
   "Dining Out", 
   "Transport", 
@@ -20,11 +20,20 @@ export default function CreateBudgetModal() {
   const [errorMsg, setErrorMsg] = useState("");
   
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [categorySearch, setCategorySearch] = useState("");
 
   const [formData, setFormData] = useState({
     name: "Groceries",
     limit_amount: "", 
   });
+
+  // SMART LOGIC: Filter defaults or allow creating new
+  const filteredCategories = DEFAULT_BUDGET_CATEGORIES.filter(cat => 
+    cat.toLowerCase().includes(categorySearch.toLowerCase())
+  );
+
+  const isNewCategory = categorySearch.length > 0 && 
+    !DEFAULT_BUDGET_CATEGORIES.some(cat => cat.toLowerCase() === categorySearch.toLowerCase());
 
   const formatAmountForDisplay = (value: string) => {
     if (!value) return "";
@@ -80,6 +89,7 @@ export default function CreateBudgetModal() {
       setErrorMsg("Failed to save budget. Please try again.");
     } else {
       setIsOpen(false);
+      setCategorySearch("");
       setFormData({ name: "Groceries", limit_amount: "" });
       window.dispatchEvent(new Event("budgetUpdated")); 
     }
@@ -106,7 +116,6 @@ export default function CreateBudgetModal() {
               </button>
             </div>
 
-            {/* UPGRADED: Removed pb-48 and used overflow-y-visible so the dropdown can float over the inputs */}
             <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-visible custom-scrollbar">
               
               {errorMsg && (
@@ -116,6 +125,7 @@ export default function CreateBudgetModal() {
                 </div>
               )}
 
+              {/* SMART CATEGORY SELECTOR */}
               <div className="relative">
                 <label className="block text-sm font-semibold tracking-wide text-zinc-700 dark:text-zinc-400 mb-1 transition-colors">Budget Category</label>
                 <button 
@@ -131,24 +141,58 @@ export default function CreateBudgetModal() {
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setIsCategoryOpen(false)} />
                     <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200/80 dark:border-white/10 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                      {BUDGET_CATEGORIES.map((cat) => (
-                        <button
-                          key={cat}
-                          type="button"
-                          onClick={() => {
-                            setFormData({ ...formData, name: cat });
-                            setErrorMsg("");
-                            setIsCategoryOpen(false);
-                          }}
-                          className={`w-full text-left px-4 py-3 text-sm transition-colors flex items-center justify-between ${
-                            formData.name === cat 
-                            ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold' 
-                            : 'hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-700 dark:text-zinc-300'
-                          }`}
-                        >
-                          {cat}
-                        </button>
-                      ))}
+                      
+                      {/* Search / Create Input */}
+                      <div className="p-2 border-b border-zinc-100 dark:border-white/5 bg-zinc-50/50 dark:bg-zinc-950/50">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
+                          <input 
+                            autoFocus
+                            type="text"
+                            placeholder="Search or type new..."
+                            value={categorySearch}
+                            onChange={(e) => setCategorySearch(e.target.value)}
+                            className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="max-h-52 overflow-y-auto custom-scrollbar p-1.5">
+                        {/* Option to create new if it doesn't exist */}
+                        {isNewCategory && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData({ ...formData, name: categorySearch });
+                              setIsCategoryOpen(false);
+                              setCategorySearch("");
+                            }}
+                            className="w-full text-left px-4 py-3 rounded-xl text-sm transition-colors flex items-center gap-2 text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-500/10 font-bold mb-1"
+                          >
+                            <PlusCircle size={16} />
+                            Track "{categorySearch}"
+                          </button>
+                        )}
+
+                        {filteredCategories.map((cat) => (
+                          <button
+                            key={cat}
+                            type="button"
+                            onClick={() => {
+                              setFormData({ ...formData, name: cat });
+                              setIsCategoryOpen(false);
+                              setCategorySearch("");
+                            }}
+                            className={`w-full text-left px-4 py-3 rounded-xl text-sm transition-colors ${
+                              formData.name === cat 
+                              ? 'bg-zinc-100 dark:bg-white/10 text-zinc-900 dark:text-white font-bold' 
+                              : 'hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-700 dark:text-zinc-300 font-medium'
+                            }`}
+                          >
+                            {cat}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </>
                 )}
@@ -160,7 +204,7 @@ export default function CreateBudgetModal() {
                   required
                   type="text" 
                   inputMode="decimal"
-                  placeholder="e.g., 500.00"
+                  placeholder="0.00"
                   value={formatAmountForDisplay(formData.limit_amount)}
                   onChange={handleAmountChange}
                   className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-zinc-400 dark:placeholder:text-zinc-600 font-bold"

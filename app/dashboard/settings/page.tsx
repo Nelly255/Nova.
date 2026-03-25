@@ -8,7 +8,6 @@ import {
 } from "lucide-react"; 
 
 export default function SettingsPage() {
-  // UPGRADED: Localization & Theme States default to TZS now!
   const [currency, setCurrency] = useState("TZS");
   const [theme, setTheme] = useState("dark");
   const [saved, setSaved] = useState(false);
@@ -33,11 +32,10 @@ export default function SettingsPage() {
 
   const showToast = (message: string, type: 'error' | 'success' = 'error') => {
     setToast({ message, type });
-    setTimeout(() => setToast(null), 3500); // Auto dismiss after 3.5 seconds
+    setTimeout(() => setToast(null), 3500); 
   };
 
   useEffect(() => {
-    // UPGRADED: Fallback to TZS if they haven't saved anything yet
     const savedCurrency = localStorage.getItem("app_currency") || "TZS";
     const savedTheme = localStorage.getItem("app_theme") || "dark";
     
@@ -67,25 +65,22 @@ export default function SettingsPage() {
   // --- Data Management Logic ---
   const handleClearData = () => {
     setShowWipeModal(true);
-    setWipeSuccess(false); // Reset success state when opening
+    setWipeSuccess(false); 
   };
 
   const executeClearData = async () => {
     setIsWiping(true);
     
     try {
-      // Safely delete all records for the authenticated user
       await supabase.from("transactions").delete().not('id', 'is', null);
       await supabase.from("assets").delete().not('id', 'is', null);
       await supabase.from("subscriptions").delete().not('id', 'is', null);
 
-      // Trigger global updates so other components reflect the empty state
       window.dispatchEvent(new Event("transactionUpdated"));
       
       setIsWiping(false);
       setWipeSuccess(true);
 
-      // Auto-close the modal after showing the success message for 2.5 seconds
       setTimeout(() => {
         setShowWipeModal(false);
         setWipeSuccess(false);
@@ -103,7 +98,11 @@ export default function SettingsPage() {
       showToast("No data available for this period.");
       return;
     }
-    const headers = Object.keys(data[0]);
+    
+    // Clean up ugly database columns before exporting
+    const forbiddenKeys = ['id', 'user_id', 'created_at', 'updated_at'];
+    const headers = Object.keys(data[0]).filter(key => !forbiddenKeys.includes(key));
+    
     const csvRows = data.map(row => {
       return headers.map(header => {
         let value = row[header];
@@ -123,59 +122,213 @@ export default function SettingsPage() {
     document.body.removeChild(link);
   };
 
-  const downloadPDF = (data: any[], title: string) => {
+  // UPGRADED: Premium PDF Engine with Clean Data & No "Tracker" text
+  const downloadPDF = async (data: any[], title: string) => {
     if (!data || data.length === 0) {
       showToast("No data available for this period.");
       return;
     }
     
-    const headers = Object.keys(data[0]);
+    // Fetch the user's name
+    let userName = "Nova User";
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        userName = session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || "Nova User";
+      } else {
+         const savedName = localStorage.getItem("user_name");
+         if(savedName) userName = savedName;
+      }
+    } catch (error) {
+      console.error("Failed to fetch user name for PDF", error);
+    }
+
+    // CLEAN THE DATA: Remove database IDs so it looks professional
+    const forbiddenKeys = ['id', 'user_id', 'created_at', 'updated_at'];
+    
+    // Let's reorder keys to make it look even better (Date first, then Title/Category, then Amount)
+    let rawHeaders = Object.keys(data[0]).filter(key => !forbiddenKeys.includes(key));
+    let headers = rawHeaders;
+    
+    if (title.includes("Transactions")) {
+      // Force a beautiful column order for transactions
+      const preferredOrder = ['date', 'title', 'category', 'type', 'amount'];
+      headers = preferredOrder.filter(k => rawHeaders.includes(k));
+    }
     
     let dateRangeText = "All Time";
     if (exportPeriod === "custom" && (startDate || endDate)) {
       dateRangeText = `${startDate || 'Beginning'} to ${endDate || 'Today'}`;
     }
 
-    const isDark = theme === "dark";
-    const bgColor = isDark ? "#020617" : "#ffffff";
-    const textColor = isDark ? "#f8fafc" : "#0f172a";
-    const mutedText = isDark ? "#94a3b8" : "#64748b";
-    const borderColor = isDark ? "#1e293b" : "#e2e8f0";
-    const thBg = isDark ? "#0f172a" : "#f8fafc";
-    const rowAltBg = isDark ? "#0a0f1c" : "#f8fafc";
+    const sym = currency === "TZS" ? "TSh " : "$";
 
+    // --- AUTOMATIC STATEMENT SUMMARY ---
+    let summaryHtml = '';
+    if (title.includes("Transactions")) {
+      const totalIncome = data.filter(d => d.type === 'income').reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+      const totalExpense = data.filter(d => d.type === 'expense').reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+      const net = totalIncome - totalExpense;
+      
+      summaryHtml = `
+        <div class="summary-container">
+          <div class="summary-card">
+            <span class="summary-label">Total Income</span>
+            <span class="summary-value text-emerald">+${sym}${totalIncome.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          </div>
+          <div class="summary-card">
+            <span class="summary-label">Total Expenses</span>
+            <span class="summary-value text-rose">-${sym}${totalExpense.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          </div>
+          <div class="summary-card" style="background: #EEF2FF; border-color: #C7D2FE;">
+            <span class="summary-label" style="color: #4F46E5;">Net Cash Flow</span>
+            <span class="summary-value" style="color: #312E81;">${net >= 0 ? '+' : ''}${sym}${net.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    // --- PREMIUM HTML & CSS TEMPLATE ---
     let html = `
+      <!DOCTYPE html>
       <html>
         <head>
-          <title>${title}</title>
+          <title>${title.replace(/_/g, " ")} - Nova</title>
           <style>
-            body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; background-color: ${bgColor}; color: ${textColor}; }
-            .header { text-align: center; margin-bottom: 40px; }
-            h1 { color: #6366f1; margin-bottom: 5px; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; }
-            .date { color: ${mutedText}; font-size: 14px; font-weight: bold; }
-            .timestamp { color: ${mutedText}; font-size: 12px; margin-top: 4px; opacity: 0.8; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
-            th, td { border-bottom: 1px solid ${borderColor}; padding: 12px 8px; text-align: left; }
-            th { background-color: ${thBg}; color: ${textColor}; font-weight: bold; text-transform: uppercase; border-bottom: 2px solid ${borderColor}; }
-            tr:nth-child(even) { background-color: ${rowAltBg}; }
-            .footer { margin-top: 50px; text-align: center; font-size: 10px; color: ${mutedText}; border-top: 1px solid ${borderColor}; padding-top: 20px; }
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+            
+            @page { margin: 15mm; size: A4; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            
+            body { 
+              font-family: 'Inter', sans-serif; 
+              color: #0F172A; 
+              background-color: #FFFFFF; 
+              padding: 20px; 
+              margin: 0; 
+              line-height: 1.5; 
+            }
+            
+            /* Premium Header */
+            .header { 
+              display: flex; 
+              justify-content: space-between; 
+              align-items: flex-end; 
+              border-bottom: 2px solid #E2E8F0; 
+              padding-bottom: 20px; 
+              margin-bottom: 30px; 
+            }
+            .brand-container { text-align: right; }
+            .brand { font-size: 32px; font-weight: 800; color: #4F46E5; letter-spacing: -1px; margin: 0; line-height: 1; }
+            .report-title { font-size: 14px; color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
+            .report-date { font-size: 12px; color: #94A3B8; font-weight: 500; }
+            .user-name { font-size: 20px; font-weight: 800; color: #0F172A; margin-bottom: 2px; }
+            
+            /* Summary Cards */
+            .summary-container { display: flex; gap: 20px; margin-bottom: 40px; }
+            .summary-card { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; flex: 1; }
+            .summary-label { font-size: 10px; text-transform: uppercase; color: #64748B; font-weight: 700; letter-spacing: 1px; margin-bottom: 8px; display: block; }
+            .summary-value { font-size: 20px; font-weight: 800; color: #0F172A; letter-spacing: -0.5px; }
+            .text-emerald { color: #10B981; }
+            .text-rose { color: #E11D48; }
+
+            /* Modern Table */
+            table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 40px; }
+            th { 
+              text-align: left; 
+              padding: 12px 16px; 
+              border-bottom: 2px solid #CBD5E1; 
+              color: #475569; 
+              font-weight: 700; 
+              text-transform: uppercase; 
+              letter-spacing: 0.5px; 
+              font-size: 10px; 
+            }
+            td { 
+              padding: 14px 16px; 
+              border-bottom: 1px solid #F1F5F9; 
+              color: #334155; 
+              font-weight: 500;
+            }
+            tr:nth-child(even) td { background-color: #F8FAFC; }
+            
+            .align-right { text-align: right; }
+            .amount-cell { font-variant-numeric: tabular-nums; font-weight: 600; }
+            
+            /* Footer */
+            .footer { 
+              text-align: center; 
+              font-size: 10px; 
+              color: #94A3B8; 
+              margin-top: 50px; 
+              border-top: 1px solid #E2E8F0; 
+              padding-top: 20px; 
+              font-weight: 500;
+            }
           </style>
         </head>
         <body>
           <div class="header">
-            <h1>${title.replace(/_/g, " ")}</h1>
-            <div class="date">Period: ${dateRangeText}</div>
-            <div class="timestamp">Generated on ${new Date().toLocaleString()}</div>
+            <div>
+              <div class="report-title">${title.replace(/_/g, " ")}</div>
+              <div class="user-name">${userName}</div>
+              <div class="report-date">Period: ${dateRangeText}</div>
+            </div>
+            <div class="brand-container">
+              <h1 class="brand">Nova.</h1>
+              <div class="report-date" style="margin-top: 6px;">Generated ${new Date().toLocaleDateString()}</div>
+            </div>
           </div>
+
+          ${summaryHtml}
+
           <table>
             <thead>
-              <tr>${headers.map(h => `<th>${h.replace(/_/g, " ")}</th>`).join("")}</tr>
+              <tr>
+                ${headers.map(h => {
+                  const isNumber = h.includes('amount') || h.includes('price') || h.includes('value');
+                  return `<th class="${isNumber ? 'align-right' : ''}">${h.replace(/_/g, " ")}</th>`;
+                }).join("")}
+              </tr>
             </thead>
             <tbody>
-              ${data.map(row => `<tr>${headers.map(h => `<td>${row[h] !== null ? row[h] : ""}</td>`).join("")}</tr>`).join("")}
+              ${data.map(row => `
+                <tr>
+                  ${headers.map(h => {
+                    let val = row[h];
+                    if (val === null || val === undefined) val = "-";
+                    
+                    const isNumber = h.includes('amount') || h.includes('price') || h.includes('value');
+                    
+                    if (isNumber && !isNaN(val)) {
+                      val = Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                      if (row.type === 'expense') {
+                         return `<td class="align-right amount-cell text-rose">-${sym}${val}</td>`;
+                      } else if (row.type === 'income') {
+                         return `<td class="align-right amount-cell text-emerald">+${sym}${val}</td>`;
+                      }
+                      return `<td class="align-right amount-cell">${sym}${val}</td>`;
+                    }
+                    
+                    if (h.includes('date') && val !== "-") {
+                       val = new Date(val).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                    }
+                    
+                    // Style the "type" column slightly if it exists
+                    if (h === 'type') {
+                      return `<td style="text-transform: capitalize;">${val}</td>`;
+                    }
+                    
+                    return `<td>${val}</td>`;
+                  }).join("")}
+                </tr>
+              `).join("")}
             </tbody>
           </table>
-          <div class="footer">Securely generated by Tracker. | Financial Data Export</div>
+          <div class="footer">
+            Official Financial Statement securely generated by the Nova Tracking Engine.<br/>
+            CONFIDENTIAL DOCUMENT
+          </div>
         </body>
       </html>
     `;
@@ -185,10 +338,11 @@ export default function SettingsPage() {
       printWindow.document.write(html);
       printWindow.document.close();
       printWindow.focus();
+      
       setTimeout(() => {
         printWindow.print();
         printWindow.close();
-      }, 250);
+      }, 500);
     } else {
       showToast("Please allow pop-ups for this site to generate PDFs.");
     }
@@ -206,8 +360,8 @@ export default function SettingsPage() {
 
     const { data, error } = await query;
     if (!error && data) {
-      if (type === 'csv') downloadCSV(data, "Tracker_Transactions");
-      else downloadPDF(data, "Tracker_Transactions_Report");
+      if (type === 'csv') downloadCSV(data, "Transactions_Data");
+      else await downloadPDF(data, "Transactions_Report"); 
     }
     
     type === 'csv' ? setExportingTx(false) : setExportingTxPdf(false);
@@ -225,8 +379,8 @@ export default function SettingsPage() {
 
     const { data, error } = await query;
     if (!error && data) {
-      if (type === 'csv') downloadCSV(data, "Tracker_Assets_Depreciation");
-      else downloadPDF(data, "Tracker_Assets_Depreciation_Report");
+      if (type === 'csv') downloadCSV(data, "Assets_Depreciation_Data");
+      else await downloadPDF(data, "Assets_Depreciation_Report"); 
     }
     
     type === 'csv' ? setExportingAssets(false) : setExportingAssetsPdf(false);
