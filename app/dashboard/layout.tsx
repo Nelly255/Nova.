@@ -8,7 +8,6 @@ import { LayoutDashboard, ArrowRightLeft, Target, ShieldCheck, Settings, PiggyBa
 import UserProfile from "@/components/UserProfile"; 
 import AuthGuard from "@/components/AuthGuard";
 import QuickTourModal from "@/components/QuickTourModal"; 
-// UPGRADED: Import the new Single Tab Enforcer
 import SingleTabEnforcer from "@/components/SingleTabEnforcer"; 
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -31,7 +30,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <AuthGuard>
-      {/* UPGRADED: The enforcer sits right here watching all your tabs! */}
       <SingleTabEnforcer />
       <QuickTourModal /> 
       
@@ -81,35 +79,39 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </aside>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto relative z-10 flex flex-col">
-          
-          {/* UPGRADED: Mobile Top Header (Visible ONLY on phones) */}
-          <header className="md:hidden flex items-center justify-between px-6 py-4 border-b border-slate-200/50 dark:border-white/5 bg-white/40 dark:bg-[#0A0A0E]/60 backdrop-blur-xl sticky top-0 z-40 shrink-0">
-            <div className="flex items-center gap-2">
-              <Activity size={24} className="text-indigo-600 dark:text-indigo-400" />
-              <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                Nova.
-              </span>
-            </div>
-            
-            <button 
-              onClick={handleSignOut}
-              className="flex items-center gap-1.5 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-500/20 px-3 py-1.5 rounded-full text-xs font-bold shadow-sm active:scale-95 transition-all"
-            >
-              <LogOut size={14} /> Sign Out
-            </button>
-          </header>
-
-          {/* Page Content */}
+        {/* UPGRADED: Added pt-24 on mobile to make room for the new floating top header */}
+        <main className="flex-1 overflow-y-auto relative z-10 flex flex-col pt-24 md:pt-0">
           <div className="flex-1">
             {children}
           </div>
-          
         </main>
 
+        {/* 📱 MOBILE FLOATING TOP HEADER (Hidden on Desktop) */}
+        {/* UPGRADED: Rounded, floating "Island" design with z-[9999] */}
+        <header className="md:hidden fixed top-4 left-4 right-4 z-[9999] flex items-center justify-between px-5 py-3 border border-white/40 dark:border-white/10 bg-white/20 dark:bg-[#0A0A0E]/40 backdrop-blur-[40px] saturate-[2] shadow-[0_16px_40px_-10px_rgba(0,0,0,0.5)] rounded-[2rem] pointer-events-auto">
+          <div className="flex items-center gap-2">
+            <Activity size={24} className="text-indigo-600 dark:text-indigo-400" />
+            <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+              Nova.
+            </span>
+          </div>
+          
+          <button 
+            onClick={handleSignOut}
+            className="flex items-center gap-1.5 bg-rose-50/80 hover:bg-rose-100 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-200/50 dark:border-rose-500/20 px-3.5 py-2 rounded-xl text-xs font-bold shadow-sm active:scale-95 transition-all"
+          >
+            <LogOut size={14} /> Sign Out
+          </button>
+        </header>
+
         {/* 📱 MOBILE FLOATING BOTTOM NAV (Hidden on Desktop) */}
-        <nav className="md:hidden fixed bottom-6 left-4 right-4 z-50 pointer-events-auto">
-          <div className="bg-white/20 dark:bg-[#0A0A0E]/40 backdrop-blur-[40px] saturate-[2] border border-white/40 dark:border-white/10 shadow-[0_16px_40px_-10px_rgba(0,0,0,0.5)] rounded-[2.5rem] px-2 py-2.5 flex items-center justify-between gap-1 overflow-x-auto custom-scrollbar relative">
+        <nav className="md:hidden fixed bottom-6 left-4 right-4 z-[9999] pointer-events-auto">
+          <style dangerouslySetInnerHTML={{__html: `
+            .nuke-scrollbar::-webkit-scrollbar { display: none !important; }
+            .nuke-scrollbar { -ms-overflow-style: none !important; scrollbar-width: none !important; }
+          `}} />
+          
+          <div className="nuke-scrollbar bg-white/20 dark:bg-[#0A0A0E]/40 backdrop-blur-[40px] saturate-[2] border border-white/40 dark:border-white/10 shadow-[0_16px_40px_-10px_rgba(0,0,0,0.5)] rounded-[2.5rem] px-2 py-2.5 flex items-center justify-between gap-1 overflow-x-auto relative">
             <MobileNavItem href="/dashboard" icon={<LayoutDashboard size={22}/>} label="Home" active={pathname === "/dashboard"} />
             <MobileNavItem href="/dashboard/transactions" icon={<ArrowRightLeft size={22}/>} label="Txns" active={pathname === "/dashboard/transactions"} />
             <MobileNavItem href="/dashboard/budgets" icon={<Target size={22}/>} label="Budgets" active={pathname === "/dashboard/budgets"} />
@@ -158,17 +160,17 @@ function MobileNavItem({ icon, label, href = "#", active = false }: any) {
   return (
     <Link 
       href={href}
-      className={`flex flex-col items-center justify-center min-w-[60px] p-2 rounded-2xl transition-all duration-300 relative group shrink-0 ${
+      className={`flex flex-col items-center justify-center min-w-[60px] py-2.5 px-2 rounded-2xl transition-all duration-300 relative group shrink-0 ${
         active 
         ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10' 
         : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
       }`}
     >
-      <div className={`transition-transform duration-300 ${active ? 'scale-110 drop-shadow-md' : 'group-hover:-translate-y-1'}`}>
+      <div className={`transition-transform duration-300 ${active ? '-translate-y-1 scale-110 drop-shadow-md' : 'group-hover:-translate-y-1'}`}>
         {icon}
       </div>
       {active && (
-        <span className="absolute -bottom-1 w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400 shadow-[0_0_8px_rgba(99,102,241,0.8)]"></span>
+        <span className="absolute bottom-1.5 w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400 shadow-[0_0_8px_rgba(99,102,241,0.8)]"></span>
       )}
     </Link>
   );
