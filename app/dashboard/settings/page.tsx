@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { 
   Save, Globe, Wallet, Download, FileSpreadsheet, Loader2, CheckCircle2, 
-  FileText, ArrowRight, CalendarDays, Moon, Sun, Trash2, X, AlertTriangle
+  FileText, ArrowRight, CalendarDays, Moon, Sun, Trash2, X, AlertTriangle, Coffee
 } from "lucide-react"; 
 
 export default function SettingsPage() {
@@ -22,12 +22,10 @@ export default function SettingsPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // Custom Danger Modal States
   const [showWipeModal, setShowWipeModal] = useState(false);
   const [isWiping, setIsWiping] = useState(false);
   const [wipeSuccess, setWipeSuccess] = useState(false);
 
-  // Custom Toast Notification State
   const [toast, setToast] = useState<{message: string, type: 'error' | 'success'} | null>(null);
 
   const showToast = (message: string, type: 'error' | 'success' = 'error') => {
@@ -43,7 +41,6 @@ export default function SettingsPage() {
     setTheme(savedTheme);
   }, []);
 
-  // --- Theme Logic ---
   const handleThemeChange = (newTheme: string) => {
     setTheme(newTheme);
     localStorage.setItem("app_theme", newTheme);
@@ -54,7 +51,6 @@ export default function SettingsPage() {
     }
   };
 
-  // --- General Save (Currency) ---
   const handleSave = () => {
     localStorage.setItem("app_currency", currency);
     setSaved(true);
@@ -62,7 +58,6 @@ export default function SettingsPage() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  // --- Data Management Logic ---
   const handleClearData = () => {
     setShowWipeModal(true);
     setWipeSuccess(false); 
@@ -70,7 +65,6 @@ export default function SettingsPage() {
 
   const executeClearData = async () => {
     setIsWiping(true);
-    
     try {
       await supabase.from("transactions").delete().not('id', 'is', null);
       await supabase.from("assets").delete().not('id', 'is', null);
@@ -99,10 +93,7 @@ export default function SettingsPage() {
       return;
     }
     
-    // Clean up ugly database columns before exporting
-    const forbiddenKeys = ['id', 'user_id', 'created_at', 'updated_at'];
-    const headers = Object.keys(data[0]).filter(key => !forbiddenKeys.includes(key));
-    
+    const headers = Object.keys(data[0]);
     const csvRows = data.map(row => {
       return headers.map(header => {
         let value = row[header];
@@ -111,6 +102,7 @@ export default function SettingsPage() {
         return `"${value}"`;
       }).join(",");
     });
+    
     const csvContent = [headers.join(","), ...csvRows].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -122,14 +114,12 @@ export default function SettingsPage() {
     document.body.removeChild(link);
   };
 
-  // UPGRADED: Premium PDF Engine with Clean Data & No "Tracker" text
   const downloadPDF = async (data: any[], title: string) => {
     if (!data || data.length === 0) {
       showToast("No data available for this period.");
       return;
     }
     
-    // Fetch the user's name
     let userName = "Nova User";
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -143,18 +133,7 @@ export default function SettingsPage() {
       console.error("Failed to fetch user name for PDF", error);
     }
 
-    // CLEAN THE DATA: Remove database IDs so it looks professional
-    const forbiddenKeys = ['id', 'user_id', 'created_at', 'updated_at'];
-    
-    // Let's reorder keys to make it look even better (Date first, then Title/Category, then Amount)
-    let rawHeaders = Object.keys(data[0]).filter(key => !forbiddenKeys.includes(key));
-    let headers = rawHeaders;
-    
-    if (title.includes("Transactions")) {
-      // Force a beautiful column order for transactions
-      const preferredOrder = ['date', 'title', 'category', 'type', 'amount'];
-      headers = preferredOrder.filter(k => rawHeaders.includes(k));
-    }
+    const headers = Object.keys(data[0]);
     
     let dateRangeText = "All Time";
     if (exportPeriod === "custom" && (startDate || endDate)) {
@@ -163,7 +142,6 @@ export default function SettingsPage() {
 
     const sym = currency === "TZS" ? "TSh " : "$";
 
-    // --- AUTOMATIC STATEMENT SUMMARY ---
     let summaryHtml = '';
     if (title.includes("Transactions")) {
       const totalIncome = data.filter(d => d.type === 'income').reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
@@ -188,7 +166,6 @@ export default function SettingsPage() {
       `;
     }
 
-    // --- PREMIUM HTML & CSS TEMPLATE ---
     let html = `
       <!DOCTYPE html>
       <html>
@@ -209,7 +186,6 @@ export default function SettingsPage() {
               line-height: 1.5; 
             }
             
-            /* Premium Header */
             .header { 
               display: flex; 
               justify-content: space-between; 
@@ -224,7 +200,6 @@ export default function SettingsPage() {
             .report-date { font-size: 12px; color: #94A3B8; font-weight: 500; }
             .user-name { font-size: 20px; font-weight: 800; color: #0F172A; margin-bottom: 2px; }
             
-            /* Summary Cards */
             .summary-container { display: flex; gap: 20px; margin-bottom: 40px; }
             .summary-card { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; flex: 1; }
             .summary-label { font-size: 10px; text-transform: uppercase; color: #64748B; font-weight: 700; letter-spacing: 1px; margin-bottom: 8px; display: block; }
@@ -232,7 +207,6 @@ export default function SettingsPage() {
             .text-emerald { color: #10B981; }
             .text-rose { color: #E11D48; }
 
-            /* Modern Table */
             table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 40px; }
             th { 
               text-align: left; 
@@ -255,7 +229,6 @@ export default function SettingsPage() {
             .align-right { text-align: right; }
             .amount-cell { font-variant-numeric: tabular-nums; font-weight: 600; }
             
-            /* Footer */
             .footer { 
               text-align: center; 
               font-size: 10px; 
@@ -286,7 +259,7 @@ export default function SettingsPage() {
             <thead>
               <tr>
                 ${headers.map(h => {
-                  const isNumber = h.includes('amount') || h.includes('price') || h.includes('value');
+                  const isNumber = h.includes('amount') || h.includes('price') || h.includes('value') || h.includes('depreciation');
                   return `<th class="${isNumber ? 'align-right' : ''}">${h.replace(/_/g, " ")}</th>`;
                 }).join("")}
               </tr>
@@ -298,7 +271,7 @@ export default function SettingsPage() {
                     let val = row[h];
                     if (val === null || val === undefined) val = "-";
                     
-                    const isNumber = h.includes('amount') || h.includes('price') || h.includes('value');
+                    const isNumber = h.includes('amount') || h.includes('price') || h.includes('value') || h.includes('depreciation');
                     
                     if (isNumber && !isNaN(val)) {
                       val = Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -314,7 +287,6 @@ export default function SettingsPage() {
                        val = new Date(val).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
                     }
                     
-                    // Style the "type" column slightly if it exists
                     if (h === 'type') {
                       return `<td style="text-transform: capitalize;">${val}</td>`;
                     }
@@ -360,8 +332,17 @@ export default function SettingsPage() {
 
     const { data, error } = await query;
     if (!error && data) {
-      if (type === 'csv') downloadCSV(data, "Transactions_Data");
-      else await downloadPDF(data, "Transactions_Report"); 
+      // Clean and structure the Transaction Data before sending to PDF engine
+      const formattedTx = data.map(tx => ({
+        date: tx.date,
+        title: tx.title,
+        category: tx.category,
+        type: tx.type,
+        amount: tx.amount
+      }));
+
+      if (type === 'csv') downloadCSV(formattedTx, "Transactions_Data");
+      else await downloadPDF(formattedTx, "Transactions_Report"); 
     }
     
     type === 'csv' ? setExportingTx(false) : setExportingTxPdf(false);
@@ -379,8 +360,37 @@ export default function SettingsPage() {
 
     const { data, error } = await query;
     if (!error && data) {
-      if (type === 'csv') downloadCSV(data, "Assets_Depreciation_Data");
-      else await downloadPDF(data, "Assets_Depreciation_Report"); 
+      const currentYear = new Date().getFullYear();
+      
+      // UPGRADED: Calculate actual Depreciation Math before sending to PDF engine
+      const formattedAssets = data.map(asset => {
+        const purchaseYear = new Date(asset.purchase_date).getFullYear();
+        const rate = Number(asset.depreciation_rate) / 100;
+        const purchasePrice = Number(asset.purchase_price);
+        const salvageValue = Number(asset.salvage_value) || 0;
+
+        let nbv = purchasePrice;
+        if (currentYear >= purchaseYear) {
+          const yearsOwned = currentYear - purchaseYear;
+          nbv = purchasePrice * Math.pow(1 - rate, yearsOwned + 1);
+          if (nbv < salvageValue) nbv = salvageValue;
+        }
+        
+        const accumulated = purchasePrice - nbv;
+
+        return {
+          name: asset.name,
+          purchase_date: asset.purchase_date,
+          purchase_price: purchasePrice,
+          depreciation_rate: `${asset.depreciation_rate}%`,
+          salvage_value: salvageValue,
+          accumulated_depreciation: accumulated,
+          net_book_value: nbv
+        };
+      });
+
+      if (type === 'csv') downloadCSV(formattedAssets, "Assets_Depreciation_Data");
+      else await downloadPDF(formattedAssets, "Assets_Depreciation_Report"); 
     }
     
     type === 'csv' ? setExportingAssets(false) : setExportingAssetsPdf(false);
@@ -566,6 +576,31 @@ export default function SettingsPage() {
           <CheckCircle2 size={16} className="shrink-0 mt-0.5" />
           <p>Your exports are generated purely locally in your browser for maximum privacy. No data is sent to external report servers.</p>
         </div>
+      </div>
+
+      {/* ========================================= */}
+      {/* SUPPORT NOVA (Ko-fi) */}
+      {/* ========================================= */}
+      <div className="bg-gradient-to-br from-rose-500/10 to-orange-500/10 dark:from-rose-500/5 dark:to-orange-500/5 backdrop-blur-2xl border border-rose-200/50 dark:border-rose-500/20 rounded-[2rem] p-6 md:p-8 shadow-lg transition-colors flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="flex items-center gap-5">
+          <div className="w-14 h-14 bg-gradient-to-br from-rose-400 to-orange-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-rose-500/30 shrink-0 transform -rotate-6 hover:rotate-0 transition-all duration-300">
+            <Coffee size={28} />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-1">Enjoying Nova?</h2>
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+              Nova is designed, built, and maintained by an independent developer. If this vault helps you organize your financial life, consider supporting the project on Ko-fi to keep the servers running! ☕
+            </p>
+          </div>
+        </div>
+        <a 
+          href="https://ko-fi.com/nellyjackson" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="w-full md:w-auto whitespace-nowrap px-6 py-3.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 text-white dark:text-slate-900 font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2"
+        >
+          Support on Ko-fi
+        </a>
       </div>
 
       {/* ========================================= */}

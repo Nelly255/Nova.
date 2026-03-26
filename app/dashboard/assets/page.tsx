@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import AddAssetModal from "@/components/AddAssetModal";
-import { Laptop, Car, Home, Camera, Briefcase, Trash2, TrendingDown, CalendarDays, BarChart3, ChevronDown } from "lucide-react";
+import { Laptop, Car, Home, Camera, Briefcase, Trash2, TrendingDown, CalendarDays, BarChart3, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 
 const getAssetIcon = (name: string) => {
   const lower = name.toLowerCase();
@@ -30,6 +30,10 @@ export default function AssetsPage() {
   
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false);
+
+  // UPGRADED: Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 6; // 6 looks perfect for a grid!
 
   const fetchAssets = async () => {
     const { data, error } = await supabase.from("assets").select("*").order("purchase_date", { ascending: false });
@@ -84,15 +88,36 @@ export default function AssetsPage() {
     return () => window.removeEventListener("assetUpdated", fetchAssets);
   }, [selectedYear]); 
 
+  // Reset to page 1 if the year changes to prevent empty states
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedYear]);
+
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from("assets").delete().eq("id", id);
-    if (!error) setAssets((prev) => prev.filter((a) => a.id !== id));
+    if (!error) {
+      setAssets((prev) => {
+        const newAssets = prev.filter((a) => a.id !== id);
+        // Adjust pagination if we delete the last item on the current page
+        if (currentPage > Math.ceil(newAssets.length / ITEMS_PER_PAGE)) {
+          setCurrentPage(Math.max(1, currentPage - 1));
+        }
+        return newAssets;
+      });
+    }
   };
 
   const totalCurrentValue = assets.reduce((acc, asset) => acc + asset.currentValue, 0);
   const totalValueLostInYear = assets.reduce((acc, asset) => acc + asset.valueLostThisYear, 0);
 
   const years = Array.from({ length: 11 }, (_, i) => 2020 + i);
+
+  // UPGRADED: Pagination Math
+  const totalPages = Math.max(1, Math.ceil(assets.length / ITEMS_PER_PAGE));
+  const paginatedAssets = assets.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE, 
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <div className="p-8 md:p-10 max-w-6xl mx-auto space-y-8 pb-20 bg-transparent min-h-screen relative">
@@ -184,17 +209,51 @@ export default function AssetsPage() {
             <p className="text-slate-500 mt-2 transition-colors">Add your car, laptop, or camera to see its real-time value.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {assets.map((asset) => (
-              <AssetCard 
-                key={asset.id} 
-                asset={asset} 
-                selectedYear={selectedYear} 
-                currencySymbol={currencySymbol} 
-                onDelete={handleDelete} 
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* UPGRADED: Using paginatedAssets instead of assets */}
+              {paginatedAssets.map((asset) => (
+                <AssetCard 
+                  key={asset.id} 
+                  asset={asset} 
+                  selectedYear={selectedYear} 
+                  currencySymbol={currencySymbol} 
+                  onDelete={handleDelete} 
+                />
+              ))}
+            </div>
+
+            {/* UPGRADED: The Pagination Controls */}
+            {assets.length > ITEMS_PER_PAGE && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-5 mt-6 border-t border-white/50 dark:border-white/5 bg-white/40 dark:bg-white/5 transition-colors backdrop-blur-md rounded-2xl">
+                <span className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 text-center sm:text-left">
+                  Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, assets.length)} of {assets.length} assets
+                </span>
+                
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="p-2 rounded-lg border border-white/80 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white/60 dark:bg-transparent shadow-sm"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-300 px-2">
+                    Page {currentPage} / {totalPages}
+                  </span>
+                  
+                  <button 
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="p-2 rounded-lg border border-white/80 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white/60 dark:bg-transparent shadow-sm"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
