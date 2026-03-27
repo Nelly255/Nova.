@@ -7,6 +7,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Nova. | Intelligent Wealth Management",
   description: "Your financial life, beautifully organized. Track assets, crush debt, and monitor cash flow from one powerful dashboard.",
+  manifest: "/manifest.json", // 🚀 BOOM! The magic link that tells Chrome you are a real app.
 };
 
 export default function RootLayout({
