@@ -61,12 +61,12 @@ export default function HelpModal() {
         <>
           {/* Invisible Blur Overlay */}
           <div 
-            className="fixed inset-0 z-40 bg-slate-900/10 dark:bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
+            className="fixed inset-0 z-[9998] bg-slate-900/10 dark:bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
             onClick={() => setIsOpen(false)}
           />
 
-          {/* PATCHED: The Glass Popover Modal (Responsive positioning applied here!) */}
-          <div className="fixed left-4 right-4 top-24 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-3 z-50 sm:w-96 bg-white/80 dark:bg-slate-900/90 backdrop-blur-2xl border border-white/50 dark:border-white/10 rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] overflow-hidden animate-in fade-in zoom-in-95 origin-top sm:origin-top-right duration-200 flex flex-col max-h-[80vh] sm:max-h-[75vh]">
+          {/* PATCHED: The Glass Popover Modal (Titan-Tier Z-Index) */}
+          <div className="fixed left-4 right-4 top-24 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-3 z-[10000] sm:w-96 bg-white/80 dark:bg-slate-900/90 backdrop-blur-2xl border border-white/50 dark:border-white/10 rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] overflow-hidden animate-in fade-in zoom-in-95 origin-top sm:origin-top-right duration-200 flex flex-col max-h-[80vh] sm:max-h-[75vh]">
             
             {/* Header */}
             <div className="flex justify-between items-center p-6 border-b border-slate-200/50 dark:border-white/5 transition-colors shrink-0">
