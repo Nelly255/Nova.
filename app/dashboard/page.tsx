@@ -212,7 +212,7 @@ export default function DashboardPage() {
   const upcomingBills = subscriptions.filter(sub => sub.billing_date >= today);
   const nextBill = upcomingBills.length > 0 ? upcomingBills[0] : (subscriptions.length > 0 ? subscriptions[0] : null);
 
-  // 🚀 NEW: Calculate Data for Nova Wrapped
+  // 🚀 Calculate Data for Nova Wrapped (TYPESCRIPT SAFE)
   const categoryTotals = currentMonthTransactions.reduce((acc, t) => {
     if (t.type === 'expense') {
       acc[t.category] = (acc[t.category] || 0) + Number(t.amount);
@@ -222,9 +222,13 @@ export default function DashboardPage() {
 
   let topCategory = "No Spending";
   let topCategoryAmount = 0;
+  
+  // Explicitly tell TypeScript that `amt` is a number to avoid the build crash
   for (const [cat, amt] of Object.entries(categoryTotals)) {
-    if (amt > topCategoryAmount) {
-      topCategoryAmount = amt as number;
+    const amount = amt as number; 
+    
+    if (amount > topCategoryAmount) {
+      topCategoryAmount = amount;
       topCategory = cat;
     }
   }
