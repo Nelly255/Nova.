@@ -4,11 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react"; 
 import { supabase } from "@/lib/supabase"; 
-import { LayoutDashboard, ArrowRightLeft, Target, ShieldCheck, Settings, PiggyBank, Briefcase, Menu, ChevronLeft, CreditCard, Activity, LogOut, Download } from "lucide-react"; 
+import { LayoutDashboard, ArrowRightLeft, Target, ShieldCheck, Settings, PiggyBank, Briefcase, Menu, ChevronLeft, CreditCard, Activity, LogOut, Download, Search } from "lucide-react"; 
 import UserProfile from "@/components/UserProfile"; 
 import AuthGuard from "@/components/AuthGuard";
 import QuickTourModal from "@/components/QuickTourModal"; 
 import SingleTabEnforcer from "@/components/SingleTabEnforcer"; 
+// 🚀 INJECTED: The Command Palette Import
+import CommandPalette from "@/components/CommandPalette";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname(); 
@@ -61,6 +63,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <AuthGuard>
       <SingleTabEnforcer />
       <QuickTourModal /> 
+      {/* 🚀 INJECTED: The Command Palette Component */}
+      <CommandPalette />
       
       <div className="flex h-screen bg-transparent text-slate-900 dark:text-slate-50 font-sans overflow-hidden transition-colors duration-300 relative">
         
@@ -125,7 +129,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Nova.</span>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
+            
+            {/* 🚀 NEW: The Mobile Search Trigger */}
+            <button 
+              onClick={() => window.dispatchEvent(new Event("open-command-palette"))}
+              className="text-slate-500 hover:text-indigo-500 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 active:scale-95"
+              title="Search"
+            >
+              <Search size={20} />
+            </button>
+
             {/* IN-APP INSTALL BUTTON (MOBILE) */}
             {installPrompt && (
               <button 

@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Plus_Jakarta_Sans } from "next/font/google";
-import { LayoutDashboard, ArrowRightLeft, Target, ShieldCheck, X, ChevronRight, Check } from "lucide-react";
+// 🚀 UPGRADED: Added the Search icon for the new tour step!
+import { LayoutDashboard, ArrowRightLeft, Target, ShieldCheck, X, ChevronRight, Check, Search } from "lucide-react";
 
 const headerFont = Plus_Jakarta_Sans({ subsets: ["latin"] });
 
@@ -63,6 +64,13 @@ export default function QuickTourModal() {
       description: "Stop bleeding money. Use the Subscription Radar to catch hidden recurring charges before they drain your account.",
       icon: <ShieldCheck size={32} className="text-rose-500" />,
       color: "from-slate-100 to-rose-50 dark:from-slate-800 dark:to-rose-500/20"
+    },
+    // 🚀 NEW STEP: Command Palette / Global Search
+    {
+      title: "5. Global Search",
+      description: "Work like a pro. Press Cmd/Ctrl + K on your keyboard or tap the Search icon to instantly jump anywhere in the app.",
+      icon: <Search size={32} className="text-purple-500" />,
+      color: "from-slate-100 to-purple-50 dark:from-slate-800 dark:to-purple-500/20"
     }
   ];
 

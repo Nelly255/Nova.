@@ -9,6 +9,9 @@ import HelpModal from "@/components/HelpModal";
 import NotificationBell from "@/components/NotificationBell"; 
 import CategoryChart from "@/components/CategoryChart";
 import UserProfile from "@/components/UserProfile"; 
+// 🚀 INJECTED: Nova Wrapped Import
+import dynamic from "next/dynamic";
+const NovaWrapped = dynamic(() => import("@/components/NovaWrapped"), { ssr: false });
 import { supabase } from "@/lib/supabase";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -209,6 +212,23 @@ export default function DashboardPage() {
   const upcomingBills = subscriptions.filter(sub => sub.billing_date >= today);
   const nextBill = upcomingBills.length > 0 ? upcomingBills[0] : (subscriptions.length > 0 ? subscriptions[0] : null);
 
+  // 🚀 NEW: Calculate Data for Nova Wrapped
+  const categoryTotals = currentMonthTransactions.reduce((acc, t) => {
+    if (t.type === 'expense') {
+      acc[t.category] = (acc[t.category] || 0) + Number(t.amount);
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  let topCategory = "No Spending";
+  let topCategoryAmount = 0;
+  for (const [cat, amt] of Object.entries(categoryTotals)) {
+    if (amt > topCategoryAmount) {
+      topCategoryAmount = amt as number;
+      topCategory = cat;
+    }
+  }
+
   const isEmptyState = transactions.length === 0 && budgets.length === 0 && assets.length === 0 && savings.length === 0 && debts.length === 0;
 
   return (
@@ -289,6 +309,16 @@ export default function DashboardPage() {
         <EmptyDashboardState />
       ) : (
         <>
+          {/* 🚀 INJECTED & WIRED: Nova Wrapped Feature */}
+          <NovaWrapped 
+            month={`${MONTHS[selectedMonth]} ${selectedYear}`}
+            netWorth={`${currencySymbol}${trueNetWorth.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+            monthlyIncome={`+${currencySymbol}${currentMonthIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+            monthlyExpense={`-${currencySymbol}${currentMonthExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+            topCategory={topCategory}
+            transactionCount={currentMonthTransactions.length}
+          />
+
           {/* Massive True Net Worth Banner */}
           <div className="glass-card p-6 md:p-8 rounded-[2rem] relative overflow-hidden transition-colors border-t border-white/40 dark:border-white/10 shadow-xl shadow-brand/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="absolute -left-24 -top-24 w-64 h-64 bg-emerald-500/20 blur-3xl rounded-full pointer-events-none"></div>
