@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Plus, X, Loader2, ChevronDown, Search, PlusCircle } from "lucide-react";
+import { Plus, X, Loader2, ChevronDown, Search, PlusCircle, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 const DEFAULT_CATEGORIES = [
@@ -21,6 +21,10 @@ export default function AddTransactionModal() {
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [categorySearch, setCategorySearch] = useState("");
   
+  // 🚀 AI PARSER STATE
+  const [aiInput, setAiInput] = useState("");
+  const [isAiParsing, setIsAiParsing] = useState(false);
+
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -54,6 +58,40 @@ export default function AddTransactionModal() {
       rawValue = parts[0] + "." + parts.slice(1).join("");
     }
     setFormData({ ...formData, amount: rawValue });
+  };
+
+  // 🚀 THE MAGIC AI PARSER FUNCTION
+  const handleAiParse = async () => {
+    if (!aiInput.trim()) return;
+    setIsAiParsing(true);
+
+    try {
+      const res = await fetch("/api/parse-tx", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: aiInput }),
+      });
+
+      if (!res.ok) throw new Error("Failed to parse transaction");
+
+      const data = await res.json();
+
+      // Auto-fill the form with the AI's intelligence!
+      setFormData(prev => ({
+        ...prev,
+        title: data.title || prev.title,
+        amount: data.amount ? String(data.amount) : prev.amount,
+        type: (data.type === "income" || data.type === "expense") ? data.type : prev.type,
+        category: data.category || prev.category,
+      }));
+
+      setAiInput(""); // Clear the input so it looks clean
+    } catch (error) {
+      console.error("AI Parse Error:", error);
+      alert("Couldn't parse that automatically. Please enter it manually below!");
+    } finally {
+      setIsAiParsing(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -109,158 +147,194 @@ export default function AddTransactionModal() {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-5 overflow-y-auto custom-scrollbar flex-1">
+        <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar flex-1">
           
-          <div className="grid grid-cols-2 gap-3 mb-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => setFormData({ ...formData, type: "expense" })}
-              className={`py-3 rounded-2xl text-sm font-bold transition-all duration-300 ${
-                formData.type === "expense" 
-                ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30 shadow-[0_0_15px_rgba(244,63,94,0.15)]" 
-                : "bg-zinc-50/50 dark:bg-black/20 text-zinc-500 dark:text-zinc-400 border border-zinc-200/80 dark:border-white/5"
-              }`}
-            >
-              Expense
-            </button>
-            <button
-              type="button"
-              onClick={() => setFormData({ ...formData, type: "income" })}
-              className={`py-3 rounded-2xl text-sm font-bold transition-all duration-300 ${
-                formData.type === "income" 
-                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.15)]" 
-                : "bg-zinc-50/50 dark:bg-black/20 text-zinc-500 dark:text-zinc-400 border border-zinc-200/80 dark:border-white/5"
-              }`}
-            >
-              Income
-            </button>
+          {/* ✨ AI MAGIC INPUT ZONE ✨ */}
+          <div className="mb-8 p-5 rounded-[1.5rem] bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent border border-indigo-500/20 relative overflow-hidden group">
+            <div className="absolute inset-0 opacity-20 mix-blend-overlay pointer-events-none group-hover:opacity-30 transition-opacity"></div>
+            
+            <label className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-3">
+              <Sparkles size={14} className="animate-pulse" /> Magic Quick Add
+            </label>
+            
+            <div className="flex gap-2 relative z-10">
+              <input
+                type="text"
+                placeholder='e.g., "Spent 15,000 on Uber"'
+                value={aiInput}
+                onChange={(e) => setAiInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAiParse(); } }}
+                className="flex-1 bg-white/50 dark:bg-black/50 border border-indigo-200/50 dark:border-indigo-500/30 rounded-xl px-4 py-3 text-sm md:text-base text-zinc-900 dark:text-white font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors backdrop-blur-sm placeholder:text-indigo-900/30 dark:placeholder:text-indigo-200/30"
+              />
+              <button
+                type="button"
+                onClick={handleAiParse}
+                disabled={isAiParsing || !aiInput.trim()}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 rounded-xl font-bold transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center min-w-[50px] shadow-lg shadow-indigo-500/25"
+              >
+                {isAiParsing ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
+              </button>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">What was this for?</label>
-            <input 
-              required
-              type="text" 
-              placeholder="e.g., Starbucks, Salary"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
-            />
+          <div className="relative flex items-center justify-center mb-6">
+            <div className="absolute w-full h-[1px] bg-zinc-200 dark:bg-white/10"></div>
+            <span className="bg-white dark:bg-[#0A0A0E] relative z-10 px-4 text-[10px] font-bold uppercase tracking-widest text-zinc-400">Review or Edit</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* STANDARD MANUAL FORM */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid grid-cols-2 gap-3 mb-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, type: "expense" })}
+                className={`py-3 rounded-2xl text-sm font-bold transition-all duration-300 ${
+                  formData.type === "expense" 
+                  ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30 shadow-[0_0_15px_rgba(244,63,94,0.15)]" 
+                  : "bg-zinc-50/50 dark:bg-black/20 text-zinc-500 dark:text-zinc-400 border border-zinc-200/80 dark:border-white/5"
+                }`}
+              >
+                Expense
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, type: "income" })}
+                className={`py-3 rounded-2xl text-sm font-bold transition-all duration-300 ${
+                  formData.type === "income" 
+                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.15)]" 
+                  : "bg-zinc-50/50 dark:bg-black/20 text-zinc-500 dark:text-zinc-400 border border-zinc-200/80 dark:border-white/5"
+                }`}
+              >
+                Income
+              </button>
+            </div>
+
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">Amount</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">What was this for?</label>
               <input 
                 required
                 type="text" 
-                inputMode="decimal" 
-                placeholder="0.00"
-                value={formatAmountForDisplay(formData.amount)} 
-                onChange={handleAmountChange} 
+                placeholder="e.g., Starbucks, Salary"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
               />
             </div>
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">Date</label>
-              <input 
-                required
-                type="date"
-                value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors [color-scheme:light] dark:[color-scheme:dark]"
-              />
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">Amount</label>
+                <input 
+                  required
+                  type="text" 
+                  inputMode="decimal" 
+                  placeholder="0.00"
+                  value={formatAmountForDisplay(formData.amount)} 
+                  onChange={handleAmountChange} 
+                  className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">Date</label>
+                <input 
+                  required
+                  type="date"
+                  value={formData.date}
+                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors [color-scheme:light] dark:[color-scheme:dark]"
+                />
+              </div>
             </div>
-          </div>
 
-          {/* SMART CATEGORY SELECTOR */}
-          <div className="relative">
-            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">Category</label>
-            <button 
-              type="button"
-              onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-              className="w-full flex justify-between items-center bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-indigo-500 transition-colors"
-            >
-              <span className="truncate">{formData.category}</span>
-              <ChevronDown size={18} className={`text-zinc-400 shrink-0 transition-transform duration-200 ${isCategoryOpen ? 'rotate-180' : ''}`} />
-            </button>
+            {/* SMART CATEGORY SELECTOR */}
+            <div className="relative">
+              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">Category</label>
+              <button 
+                type="button"
+                onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                className="w-full flex justify-between items-center bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-indigo-500 transition-colors"
+              >
+                <span className="truncate">{formData.category}</span>
+                <ChevronDown size={18} className={`text-zinc-400 shrink-0 transition-transform duration-200 ${isCategoryOpen ? 'rotate-180' : ''}`} />
+              </button>
 
-            {isCategoryOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setIsCategoryOpen(false)} />
-                <div className="absolute left-0 right-0 bottom-full mb-2 z-50 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-white/10 rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] overflow-hidden animate-in fade-in zoom-in-95 origin-bottom duration-200">
-                  
-                  {/* Search / Create Input */}
-                  <div className="p-2 border-b border-zinc-100 dark:border-white/5 bg-zinc-50/50 dark:bg-zinc-950/50">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
-                      <input 
-                        autoFocus
-                        type="text"
-                        placeholder="Search or type new..."
-                        value={categorySearch}
-                        onChange={(e) => setCategorySearch(e.target.value)}
-                        className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
-                      />
+              {isCategoryOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsCategoryOpen(false)} />
+                  <div className="absolute left-0 right-0 bottom-full mb-2 z-50 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-white/10 rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] overflow-hidden animate-in fade-in zoom-in-95 origin-bottom duration-200">
+                    
+                    {/* Search / Create Input */}
+                    <div className="p-2 border-b border-zinc-100 dark:border-white/5 bg-zinc-50/50 dark:bg-zinc-950/50">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
+                        <input 
+                          autoFocus
+                          type="text"
+                          placeholder="Search or type new..."
+                          value={categorySearch}
+                          onChange={(e) => setCategorySearch(e.target.value)}
+                          className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="max-h-52 overflow-y-auto custom-scrollbar p-1.5">
+                      {/* Option to create new if it doesn't exist */}
+                      {isNewCategory && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData({ ...formData, category: categorySearch });
+                            setIsCategoryOpen(false);
+                            setCategorySearch("");
+                          }}
+                          className="w-full text-left px-4 py-3 rounded-xl text-sm transition-colors flex items-center gap-2 text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-500/10 font-bold mb-1"
+                        >
+                          <PlusCircle size={16} />
+                          Create "{categorySearch}"
+                        </button>
+                      )}
+
+                      {filteredCategories.map((cat) => (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => {
+                            setFormData({ ...formData, category: cat });
+                            setIsCategoryOpen(false);
+                            setCategorySearch("");
+                          }}
+                          className={`w-full text-left px-4 py-3 rounded-xl text-sm transition-colors ${
+                            formData.category === cat 
+                            ? 'bg-zinc-100 dark:bg-white/10 text-zinc-900 dark:text-white font-bold' 
+                            : 'hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-700 dark:text-zinc-300 font-medium'
+                          }`}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+
+                      {filteredCategories.length === 0 && !isNewCategory && (
+                        <div className="px-4 py-8 text-center text-zinc-500 text-xs">
+                          Type to create a custom category
+                        </div>
+                      )}
                     </div>
                   </div>
+                </>
+              )}
+            </div>
 
-                  <div className="max-h-52 overflow-y-auto custom-scrollbar p-1.5">
-                    {/* Option to create new if it doesn't exist */}
-                    {isNewCategory && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFormData({ ...formData, category: categorySearch });
-                          setIsCategoryOpen(false);
-                          setCategorySearch("");
-                        }}
-                        className="w-full text-left px-4 py-3 rounded-xl text-sm transition-colors flex items-center gap-2 text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-500/10 font-bold mb-1"
-                      >
-                        <PlusCircle size={16} />
-                        Create "{categorySearch}"
-                      </button>
-                    )}
+            <button 
+              type="submit" 
+              disabled={isLoading}
+              className="w-full shrink-0 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-[0_8px_20px_-6px_rgba(99,102,241,0.6)] border border-white/20 transition-all duration-300 hover:-translate-y-0.5 active:scale-95 font-bold py-4 rounded-xl mt-6 flex justify-center items-center gap-2 disabled:opacity-70 disabled:hover:translate-y-0"
+            >
+              {isLoading ? <Loader2 className="animate-spin" size={20} /> : "Save Transaction"}
+            </button>
+          </form>
 
-                    {filteredCategories.map((cat) => (
-                      <button
-                        key={cat}
-                        type="button"
-                        onClick={() => {
-                          setFormData({ ...formData, category: cat });
-                          setIsCategoryOpen(false);
-                          setCategorySearch("");
-                        }}
-                        className={`w-full text-left px-4 py-3 rounded-xl text-sm transition-colors ${
-                          formData.category === cat 
-                          ? 'bg-zinc-100 dark:bg-white/10 text-zinc-900 dark:text-white font-bold' 
-                          : 'hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-700 dark:text-zinc-300 font-medium'
-                        }`}
-                      >
-                        {cat}
-                      </button>
-                    ))}
-
-                    {filteredCategories.length === 0 && !isNewCategory && (
-                      <div className="px-4 py-8 text-center text-zinc-500 text-xs">
-                        Type to create a custom category
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-
-          <button 
-            type="submit" 
-            disabled={isLoading}
-            className="w-full shrink-0 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-[0_8px_20px_-6px_rgba(99,102,241,0.6)] border border-white/20 transition-all duration-300 hover:-translate-y-0.5 active:scale-95 font-bold py-4 rounded-xl mt-6 flex justify-center items-center gap-2 disabled:opacity-70 disabled:hover:translate-y-0"
-          >
-            {isLoading ? <Loader2 className="animate-spin" size={20} /> : "Save Transaction"}
-          </button>
-        </form>
-
+        </div>
       </div>
     </div>
   , document.body) : null;

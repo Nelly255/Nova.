@@ -195,7 +195,16 @@ function NavItem({ icon, label, href = "#", active = false, isCollapsed }: any) 
 // --- MOBILE NAV ITEM ---
 function MobileNavItem({ icon, label, href = "#", active = false }: any) {
   return (
-    <Link href={href} className={`flex flex-col items-center justify-center min-w-[60px] py-2.5 px-2 rounded-2xl transition-all duration-300 relative group shrink-0 ${active ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}>
+    <Link 
+      href={href} 
+      // 🚀 INJECTED: Premium Haptic Feedback on Mobile Tap!
+      onClick={() => {
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+          navigator.vibrate(50);
+        }
+      }}
+      className={`flex flex-col items-center justify-center min-w-[60px] py-2.5 px-2 rounded-2xl transition-all duration-300 relative group shrink-0 ${active ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10' : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'}`}
+    >
       <div className={`transition-transform duration-300 ${active ? '-translate-y-1 scale-110 drop-shadow-md' : 'group-hover:-translate-y-1'}`}>{icon}</div>
       {active && <span className="absolute bottom-1.5 w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400 shadow-[0_0_8px_rgba(99,102,241,0.8)]"></span>}
     </Link>
