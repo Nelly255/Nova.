@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Plus, X, Loader2, ChevronDown, Search, PlusCircle, Sparkles } from "lucide-react";
+import { Plus, X, Loader2, ChevronDown, Search, PlusCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 const DEFAULT_CATEGORIES = [
@@ -21,10 +21,6 @@ export default function AddTransactionModal() {
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [categorySearch, setCategorySearch] = useState("");
   
-  // 🚀 AI PARSER STATE
-  const [aiInput, setAiInput] = useState("");
-  const [isAiParsing, setIsAiParsing] = useState(false);
-
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -58,40 +54,6 @@ export default function AddTransactionModal() {
       rawValue = parts[0] + "." + parts.slice(1).join("");
     }
     setFormData({ ...formData, amount: rawValue });
-  };
-
-  // 🚀 THE MAGIC AI PARSER FUNCTION
-  const handleAiParse = async () => {
-    if (!aiInput.trim()) return;
-    setIsAiParsing(true);
-
-    try {
-      const res = await fetch("/api/parse-tx", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: aiInput }),
-      });
-
-      if (!res.ok) throw new Error("Failed to parse transaction");
-
-      const data = await res.json();
-
-      // Auto-fill the form with the AI's intelligence!
-      setFormData(prev => ({
-        ...prev,
-        title: data.title || prev.title,
-        amount: data.amount ? String(data.amount) : prev.amount,
-        type: (data.type === "income" || data.type === "expense") ? data.type : prev.type,
-        category: data.category || prev.category,
-      }));
-
-      setAiInput(""); // Clear the input so it looks clean
-    } catch (error) {
-      console.error("AI Parse Error:", error);
-      alert("Couldn't parse that automatically. Please enter it manually below!");
-    } finally {
-      setIsAiParsing(false);
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -149,40 +111,6 @@ export default function AddTransactionModal() {
 
         <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar flex-1">
           
-          {/* ✨ AI MAGIC INPUT ZONE ✨ */}
-          <div className="mb-8 p-5 rounded-[1.5rem] bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent border border-indigo-500/20 relative overflow-hidden group">
-            <div className="absolute inset-0 opacity-20 mix-blend-overlay pointer-events-none group-hover:opacity-30 transition-opacity"></div>
-            
-            <label className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-3">
-              <Sparkles size={14} className="animate-pulse" /> Magic Quick Add
-            </label>
-            
-            <div className="flex gap-2 relative z-10">
-              <input
-                type="text"
-                placeholder='e.g., "Spent 15,000 on Uber"'
-                value={aiInput}
-                onChange={(e) => setAiInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAiParse(); } }}
-                className="flex-1 bg-white/50 dark:bg-black/50 border border-indigo-200/50 dark:border-indigo-500/30 rounded-xl px-4 py-3 text-sm md:text-base text-zinc-900 dark:text-white font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors backdrop-blur-sm placeholder:text-indigo-900/30 dark:placeholder:text-indigo-200/30"
-              />
-              <button
-                type="button"
-                onClick={handleAiParse}
-                disabled={isAiParsing || !aiInput.trim()}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 rounded-xl font-bold transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center min-w-[50px] shadow-lg shadow-indigo-500/25"
-              >
-                {isAiParsing ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
-              </button>
-            </div>
-          </div>
-
-          <div className="relative flex items-center justify-center mb-6">
-            <div className="absolute w-full h-[1px] bg-zinc-200 dark:bg-white/10"></div>
-            <span className="bg-white dark:bg-[#0A0A0E] relative z-10 px-4 text-[10px] font-bold uppercase tracking-widest text-zinc-400">Review or Edit</span>
-          </div>
-
-          {/* STANDARD MANUAL FORM */}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="grid grid-cols-2 gap-3 mb-2 shrink-0">
               <button
