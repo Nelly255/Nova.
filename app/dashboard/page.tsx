@@ -185,24 +185,30 @@ export default function DashboardPage() {
 
   const totalSavings = savings.reduce((acc, g) => acc + Number(g.current_amount), 0);
   
-  // UPGRADED: Synced the exact mathematical engine from the Assets page
+  // 🚀 UPGRADED: Synced perfectly with the Daily Pro-Rata engine from the Assets page
+  const isViewingCurrentYear = selectedYear === now.getFullYear();
+
   const totalAssetsValue = assets.reduce((acc, asset) => {
     const purchaseDate = new Date(asset.purchase_date);
-    const purchaseYear = purchaseDate.getFullYear();
     const rate = Number(asset.depreciation_rate) / 100;
     const purchasePrice = Number(asset.purchase_price);
     const salvageValue = Number(asset.salvage_value) || 0;
 
-    let closingValueForYear = purchasePrice;
+    // Daily Math Target Dates
+    const targetDateEnd = isViewingCurrentYear ? now : new Date(selectedYear, 11, 31, 23, 59, 59);
 
-    if (selectedYear >= purchaseYear) {
-      const yearsBeforeSelected = selectedYear - purchaseYear;
-      closingValueForYear = purchasePrice * Math.pow(1 - rate, yearsBeforeSelected + 1);
-      if (closingValueForYear < salvageValue) closingValueForYear = salvageValue;
+    let currentValue = purchasePrice;
+
+    if (targetDateEnd >= purchaseDate) {
+      // Exact fractional years
+      const daysOwnedEnd = (targetDateEnd.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24);
+      const exactYearsOwnedEnd = daysOwnedEnd / 365.25;
+
+      currentValue = purchasePrice * Math.pow(1 - rate, exactYearsOwnedEnd);
+      if (currentValue < salvageValue) currentValue = salvageValue;
     }
 
-    const nbvAtEndOfSelectedYear = selectedYear >= purchaseYear ? closingValueForYear : purchasePrice;
-    return acc + nbvAtEndOfSelectedYear;
+    return acc + currentValue;
   }, 0);
 
   const totalDebts = debts.reduce((acc, d) => acc + Number(d.remaining_amount), 0);

@@ -8,6 +8,8 @@ const ASSET_CATEGORIES = [
   { label: "Computers & Data Equipment (37.5%)", value: "37.5" },
   { label: "Light Vehicles & Construction Equip (25%)", value: "25" },
   { label: "Heavy Vehicles, Machinery & Plant (12.5%)", value: "12.5" },
+  // 🚀 INJECTED: The new category for appliances and furniture
+  { label: "Electrical, Furniture & Fittings (12.5%)", value: "12.5" },
   { label: "Buildings & Structures (5%)", value: "5" }
 ];
 
@@ -148,14 +150,14 @@ export default function AddAssetModal() {
                     <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200/80 dark:border-white/10 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                       {ASSET_CATEGORIES.map((cat) => (
                         <button
-                          key={cat.value}
+                          key={cat.label} // Changed key to label since values can duplicate
                           type="button"
                           onClick={() => {
                             setFormData({ ...formData, depreciation_rate: cat.value });
                             setIsCategoryOpen(false);
                           }}
                           className={`w-full text-left px-4 py-3 text-sm transition-colors flex items-center justify-between ${
-                            formData.depreciation_rate === cat.value 
+                            formData.depreciation_rate === cat.value && ASSET_CATEGORIES.find(c => c.value === formData.depreciation_rate)?.label === cat.label
                             ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold' 
                             : 'hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-700 dark:text-zinc-300'
                           }`}

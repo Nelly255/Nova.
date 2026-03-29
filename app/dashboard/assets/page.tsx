@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabase";
 import AddAssetModal from "@/components/AddAssetModal";
-import { Laptop, Car, Home, Camera, Briefcase, Trash2, TrendingDown, CalendarDays, BarChart3, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Laptop, Car, Home, Camera, Briefcase, Trash2, TrendingDown, CalendarDays, BarChart3, ChevronDown, ChevronLeft, ChevronRight, Info, X, Lightbulb, Percent, Clock } from "lucide-react";
 
 const getAssetIcon = (name: string) => {
   const lower = name.toLowerCase();
@@ -14,7 +15,6 @@ const getAssetIcon = (name: string) => {
   return <Briefcase size={24} />;
 };
 
-// Kept this strictly for the Forecast Chart tooltips at the bottom
 const formatCompactNumber = (number: number) => {
   if (!number) return "0";
   return new Intl.NumberFormat('en-US', {
@@ -30,47 +30,68 @@ export default function AssetsPage() {
   
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false);
+  const isCurrentYear = selectedYear === new Date().getFullYear();
+  
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // UPGRADED: Pagination States
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 6; // 6 looks perfect for a grid!
+  const ITEMS_PER_PAGE = 6; 
+
+  useEffect(() => setMounted(true), []);
 
   const fetchAssets = async () => {
     const { data, error } = await supabase.from("assets").select("*").order("purchase_date", { ascending: false });
     
     if (!error && data) {
+      const now = new Date();
+      const isViewingCurrentYear = selectedYear === now.getFullYear();
+
       const calculatedAssets = data.map((asset) => {
         const purchaseDate = new Date(asset.purchase_date);
-        const purchaseYear = purchaseDate.getFullYear();
-        
         const rate = Number(asset.depreciation_rate) / 100;
         const purchasePrice = Number(asset.purchase_price);
         const salvageValue = Number(asset.salvage_value) || 0;
         
-        let openingValueForYear = purchasePrice;
-        let closingValueForYear = purchasePrice;
-        let valueLostInSelectedYear = 0;
+        // DAILY MATH LOGIC
+        const targetDateEnd = isViewingCurrentYear ? now : new Date(selectedYear, 11, 31, 23, 59, 59);
+        const targetDateStart = new Date(selectedYear, 0, 1);
 
-        if (selectedYear >= purchaseYear) {
-          const yearsBeforeSelected = selectedYear - purchaseYear;
-          
-          openingValueForYear = purchasePrice * Math.pow(1 - rate, yearsBeforeSelected);
-          if (openingValueForYear < salvageValue) openingValueForYear = salvageValue;
+        let currentValue = purchasePrice;
+        let valueLostThisYear = 0;
+        let totalAccumulatedLoss = 0;
+        let dailyLoss = 0;
 
-          closingValueForYear = purchasePrice * Math.pow(1 - rate, yearsBeforeSelected + 1);
-          if (closingValueForYear < salvageValue) closingValueForYear = salvageValue;
+        if (targetDateEnd >= purchaseDate) {
+          const daysOwnedEnd = (targetDateEnd.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24);
+          const exactYearsOwnedEnd = daysOwnedEnd / 365.25;
 
-          valueLostInSelectedYear = openingValueForYear - closingValueForYear;
+          currentValue = purchasePrice * Math.pow(1 - rate, exactYearsOwnedEnd);
+          if (currentValue < salvageValue) currentValue = salvageValue;
+
+          let valueAtStart = purchasePrice;
+          if (purchaseDate < targetDateStart) {
+            const daysOwnedStart = (targetDateStart.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24);
+            const exactYearsOwnedStart = daysOwnedStart / 365.25;
+            valueAtStart = purchasePrice * Math.pow(1 - rate, exactYearsOwnedStart);
+            if (valueAtStart < salvageValue) valueAtStart = salvageValue;
+          }
+
+          valueLostThisYear = Math.max(0, valueAtStart - currentValue);
+          totalAccumulatedLoss = Math.max(0, purchasePrice - currentValue);
+
+          const effectiveStartDate = purchaseDate > targetDateStart ? purchaseDate : targetDateStart;
+          const daysActiveThisYear = Math.max(1, (targetDateEnd.getTime() - effectiveStartDate.getTime()) / (1000 * 60 * 60 * 24));
+          dailyLoss = valueLostThisYear / daysActiveThisYear;
         }
 
-        const nbvAtEndOfSelectedYear = selectedYear >= purchaseYear ? closingValueForYear : purchasePrice;
-        const totalAccumulatedBySelectedYear = purchasePrice - nbvAtEndOfSelectedYear;
-        
         return {
           ...asset,
-          currentValue: nbvAtEndOfSelectedYear,
-          valueLostThisYear: valueLostInSelectedYear,
-          percentageLost: purchasePrice > 0 ? (totalAccumulatedBySelectedYear / purchasePrice) * 100 : 0,
+          currentValue,
+          valueLostThisYear,
+          totalAccumulatedLoss,
+          percentageLost: purchasePrice > 0 ? (totalAccumulatedLoss / purchasePrice) * 100 : 0,
+          dailyLoss
         };
       });
 
@@ -88,7 +109,6 @@ export default function AssetsPage() {
     return () => window.removeEventListener("assetUpdated", fetchAssets);
   }, [selectedYear]); 
 
-  // Reset to page 1 if the year changes to prevent empty states
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedYear]);
@@ -98,7 +118,6 @@ export default function AssetsPage() {
     if (!error) {
       setAssets((prev) => {
         const newAssets = prev.filter((a) => a.id !== id);
-        // Adjust pagination if we delete the last item on the current page
         if (currentPage > Math.ceil(newAssets.length / ITEMS_PER_PAGE)) {
           setCurrentPage(Math.max(1, currentPage - 1));
         }
@@ -112,7 +131,6 @@ export default function AssetsPage() {
 
   const years = Array.from({ length: 11 }, (_, i) => 2020 + i);
 
-  // UPGRADED: Pagination Math
   const totalPages = Math.max(1, Math.ceil(assets.length / ITEMS_PER_PAGE));
   const paginatedAssets = assets.slice(
     (currentPage - 1) * ITEMS_PER_PAGE, 
@@ -124,8 +142,17 @@ export default function AssetsPage() {
       
       <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 transition-colors">Asset Depreciation</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1 transition-colors">Track your Net Book Value and yearly tax write-offs.</p>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 transition-colors">Your Assets</h1>
+            <button 
+              onClick={() => setIsHelpOpen(true)}
+              className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-indigo-500 flex items-center justify-center hover:scale-110 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-all cursor-pointer"
+              title="Asset Intelligence Info"
+            >
+              <Info size={16} />
+            </button>
+          </div>
+          <p className="text-slate-500 dark:text-slate-400 mt-1 transition-colors">Track what you own and see how its value changes over time.</p>
         </div>
         
         <div className="flex items-center gap-3">
@@ -175,11 +202,83 @@ export default function AssetsPage() {
         </div>
       </header>
 
+      {/* 🚀 THE PROFESSIONAL HELP MODAL */}
+      {isHelpOpen && mounted && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-0">
+          <div 
+            className="absolute inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200 cursor-pointer"
+            onClick={() => setIsHelpOpen(false)}
+          />
+          <div className="relative z-10 w-full max-w-lg bg-white dark:bg-[#0A0A0E] rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] border border-slate-200 dark:border-white/10 overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col">
+            
+            <div className="flex justify-between items-center p-6 md:p-8 border-b border-zinc-200/80 dark:border-white/5 shrink-0 bg-slate-50/50 dark:bg-white/5">
+              <div>
+                <h3 className="text-xl md:text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-3">
+                  <Briefcase className="text-indigo-500" /> Asset Intelligence
+                </h3>
+              </div>
+              <button onClick={() => setIsHelpOpen(false)} className="text-zinc-500 hover:text-rose-500 dark:text-zinc-400 p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-6 md:p-8 overflow-y-auto max-h-[70vh] space-y-6">
+              
+              <div className="flex gap-4 items-start">
+                <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-100 dark:border-indigo-500/20">
+                  <TrendingDown size={18} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-900 dark:text-white mb-1">Understanding Depreciation</h4>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Depreciation is the accounting method used to measure the loss in value of a tangible asset over its useful lifespan. As physical assets experience wear and tear or become obsolete, their value naturally decreases. Tracking this ensures you understand your true Net Book Value (NBV).
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-4 items-start">
+                <div className="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-100 dark:border-rose-500/20">
+                  <Percent size={18} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-900 dark:text-white mb-1">Standard Depreciation Rates</h4>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Different asset classes depreciate at distinct speeds based on standard financial and tax guidelines. For instance, computing hardware depreciates rapidly (37.5%) due to technological advancement, whereas vehicles (25%) and property (5%) retain value for much longer.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-4 items-start">
+                <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-500/20">
+                  <Clock size={18} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-900 dark:text-white mb-1">Daily Pro-Rata Calculation</h4>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Rather than applying a flat yearly deduction, Nova utilizes daily pro-rata mathematics. If you acquire an asset mid-year, its depreciation is calculated precisely from the exact date of purchase, providing a hyper-accurate, real-time reflection of your financial standing.
+                  </p>
+                </div>
+              </div>
+
+            </div>
+
+            <div className="p-6 border-t border-zinc-200/80 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
+              <button 
+                onClick={() => setIsHelpOpen(false)}
+                className="w-full bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 text-white dark:text-slate-900 font-bold py-3.5 rounded-xl transition-all active:scale-95"
+              >
+                Understood
+              </button>
+            </div>
+          </div>
+        </div>
+      , document.body)}
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="glass-card p-8 rounded-[2rem] relative overflow-hidden flex justify-between items-center transition-colors">
           <div className="relative z-10">
-            <p className="text-slate-500 dark:text-slate-400 font-medium mb-1 transition-colors">Net Book Value ({selectedYear})</p>
+            <p className="text-slate-500 dark:text-slate-400 font-medium mb-1 transition-colors">Current Total Value ({selectedYear})</p>
             <h2 className="text-4xl font-bold text-slate-900 dark:text-slate-50 transition-colors">{currencySymbol}{totalCurrentValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
           </div>
           <div className="w-16 h-16 rounded-full bg-emerald-50/80 dark:bg-emerald-500/10 flex items-center justify-center border border-emerald-100/50 dark:border-emerald-500/20 text-emerald-500 dark:text-emerald-400 relative z-10 transition-colors backdrop-blur-sm">
@@ -189,7 +288,9 @@ export default function AssetsPage() {
         
         <div className="glass-card p-8 rounded-[2rem] flex justify-between items-center transition-colors relative overflow-hidden">
           <div className="relative z-10">
-            <p className="text-slate-500 dark:text-slate-400 font-medium mb-1 transition-colors">Value Lost in {selectedYear}</p>
+            <p className="text-slate-500 dark:text-slate-400 font-medium mb-1 transition-colors">
+              Value Lost in {selectedYear} {isCurrentYear ? "(So Far)" : ""}
+            </p>
             <h2 className="text-4xl font-bold text-rose-600 dark:text-rose-400 transition-colors">-{currencySymbol}{totalValueLostInYear.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
           </div>
           <div className="w-16 h-16 rounded-full bg-rose-50/80 dark:bg-rose-500/10 flex items-center justify-center border border-rose-100/50 dark:border-rose-500/20 text-rose-500 dark:text-rose-400 transition-colors backdrop-blur-sm relative z-10">
@@ -211,19 +312,18 @@ export default function AssetsPage() {
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* UPGRADED: Using paginatedAssets instead of assets */}
               {paginatedAssets.map((asset) => (
                 <AssetCard 
                   key={asset.id} 
                   asset={asset} 
                   selectedYear={selectedYear} 
+                  isCurrentYear={isCurrentYear}
                   currencySymbol={currencySymbol} 
                   onDelete={handleDelete} 
                 />
               ))}
             </div>
 
-            {/* UPGRADED: The Pagination Controls */}
             {assets.length > ITEMS_PER_PAGE && (
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-5 mt-6 border-t border-white/50 dark:border-white/5 bg-white/40 dark:bg-white/5 transition-colors backdrop-blur-md rounded-2xl">
                 <span className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 text-center sm:text-left">
@@ -265,8 +365,8 @@ export default function AssetsPage() {
               <BarChart3 size={24} />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 transition-colors">5-Year Depreciation Forecast</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 transition-colors">Projected loss across all assets</p>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 transition-colors">Expected Value Drop (5 Years)</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 transition-colors">Forecast of how much value your items will lose</p>
             </div>
           </div>
           
@@ -279,9 +379,9 @@ export default function AssetsPage() {
 }
 
 // ==========================================
-// ASSET CARD (Locked to Stacked View)
+// ASSET CARD
 // ==========================================
-function AssetCard({ asset, selectedYear, currencySymbol, onDelete }: any) {
+function AssetCard({ asset, selectedYear, isCurrentYear, currencySymbol, onDelete }: any) {
   return (
     <div className="glass-card p-6 rounded-[2rem] hover:bg-white/40 dark:hover:bg-white/5 transition duration-300 relative group flex flex-col justify-between overflow-hidden">
       
@@ -303,33 +403,37 @@ function AssetCard({ asset, selectedYear, currencySymbol, onDelete }: any) {
           </div>
         </div>
 
-        {/* Stacked Receipt Layout */}
         <div className="flex flex-col gap-2 mb-5">
           <div className="bg-slate-50/80 dark:bg-white/5 rounded-xl border border-slate-200/50 dark:border-white/5 transition-colors backdrop-blur-sm flex flex-row justify-between items-center p-3">
-            <p className="text-slate-500 dark:text-slate-400 transition-colors font-medium tracking-wide text-xs">Purchase Price</p>
+            <p className="text-slate-500 dark:text-slate-400 transition-colors font-medium tracking-wide text-xs">Original Price</p>
             <p className="font-semibold text-slate-700 dark:text-slate-300 transition-colors text-sm">
               {currencySymbol}{Number(asset.purchase_price).toLocaleString()}
             </p>
           </div>
           
           <div className="bg-rose-50/80 dark:bg-rose-500/10 rounded-xl border border-rose-100/50 dark:border-rose-500/20 transition-colors backdrop-blur-sm flex flex-row justify-between items-center p-3">
-            <p className="text-rose-600 dark:text-rose-400/80 transition-colors font-medium tracking-wide text-xs">Loss '{selectedYear.toString().slice(-2)}</p>
+            <div>
+              <p className="text-rose-600 dark:text-rose-400/80 transition-colors font-medium tracking-wide text-xs">Lost in '{selectedYear.toString().slice(-2)}</p>
+              {isCurrentYear && asset.dailyLoss > 0 && (
+                <p className="text-[10px] text-rose-500/70 font-semibold mt-0.5" title="This is how much money you lose every single day just by owning this!">Bleeding {currencySymbol}{asset.dailyLoss.toLocaleString(undefined, {maximumFractionDigits: 0})} / day</p>
+              )}
+            </div>
             <p className="font-bold text-rose-700 dark:text-rose-300 transition-colors text-sm">
-              -{currencySymbol}{Number(asset.valueLostThisYear).toLocaleString()}
+              -{currencySymbol}{Number(asset.valueLostThisYear).toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </p>
           </div>
 
           <div className="bg-indigo-50/80 dark:bg-indigo-500/10 rounded-xl border border-indigo-100/50 dark:border-indigo-500/20 transition-colors backdrop-blur-sm flex flex-row justify-between items-center p-3">
-            <p className="text-indigo-600 dark:text-indigo-400/80 transition-colors font-medium tracking-wide text-xs">NBV '{selectedYear.toString().slice(-2)}</p>
+            <p className="text-indigo-600 dark:text-indigo-400/80 transition-colors font-medium tracking-wide text-xs">Current Value</p>
             <p className="font-bold text-indigo-700 dark:text-indigo-300 transition-colors text-sm">
-              {currencySymbol}{Number(asset.currentValue).toLocaleString()}
+              {currencySymbol}{Number(asset.currentValue).toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </p>
           </div>
         </div>
         
         <div>
           <div className="flex justify-between text-xs mb-1 transition-colors">
-            <span className="text-rose-600 dark:text-rose-400 font-medium transition-colors">Accumulated Loss</span>
+            <span className="text-rose-600 dark:text-rose-400 font-medium transition-colors">Total Value Dropped</span>
             <span className="text-slate-500 dark:text-slate-400 transition-colors font-medium">{asset.percentageLost.toFixed(1)}%</span>
           </div>
           <div className="h-2 w-full bg-slate-100/80 dark:bg-slate-800/50 rounded-full overflow-hidden transition-colors shadow-inner backdrop-blur-sm border border-transparent dark:border-white/5">
@@ -355,7 +459,8 @@ function DepreciationForecastChart({ assets, currencySymbol, formatCompactNumber
     let totalDepreciationForYear = 0;
 
     assets.forEach(asset => {
-      const purchaseYear = new Date(asset.purchase_date).getFullYear();
+      const purchaseDate = new Date(asset.purchase_date);
+      const purchaseYear = purchaseDate.getFullYear();
       
       const rate = Number(asset.depreciation_rate) / 100;
       const purchasePrice = Number(asset.purchase_price);
