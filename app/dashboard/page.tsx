@@ -186,7 +186,7 @@ export default function DashboardPage() {
   const totalSavings = savings.reduce((acc, g) => acc + Number(g.current_amount), 0);
   
   // 🚀 UPGRADED: Synced perfectly with the Daily Pro-Rata engine from the Assets page
-  const isViewingCurrentYear = selectedYear === now.getFullYear();
+  const isViewingCurrentMonth = selectedMonth === now.getMonth() && selectedYear === now.getFullYear();
 
   const totalAssetsValue = assets.reduce((acc, asset) => {
     const purchaseDate = new Date(asset.purchase_date);
@@ -195,7 +195,7 @@ export default function DashboardPage() {
     const salvageValue = Number(asset.salvage_value) || 0;
 
     // Daily Math Target Dates
-    const targetDateEnd = isViewingCurrentYear ? now : new Date(selectedYear, 11, 31, 23, 59, 59);
+    const targetDateEnd = selectedYear === now.getFullYear() ? now : new Date(selectedYear, 11, 31, 23, 59, 59);
 
     let currentValue = purchasePrice;
 
@@ -319,7 +319,6 @@ export default function DashboardPage() {
         <EmptyDashboardState />
       ) : (
         <>
-          {/* 🚀 INJECTED & WIRED: Nova Wrapped Feature */}
           <NovaWrapped 
             month={`${MONTHS[selectedMonth]} ${selectedYear}`}
             netWorth={`${currencySymbol}${trueNetWorth.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
@@ -417,7 +416,7 @@ export default function DashboardPage() {
               <div>
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-base md:text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100 transition-colors">
-                    {MONTHS[selectedMonth]} Budget Health
+                    {MONTHS[selectedMonth]} Velocity Health
                   </h3>
                   <Link href="/dashboard/budgets" className="text-xs md:text-sm text-slate-500 hover:text-indigo-500 dark:text-slate-400 dark:hover:text-indigo-400 transition font-semibold">View Details</Link>
                 </div>
@@ -425,7 +424,7 @@ export default function DashboardPage() {
                 {budgets.length === 0 ? (
                   <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm font-medium transition-colors">No budgets set. Head over to the Budgets tab to track your spending!</p>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 mb-4">
                     {budgets.slice(0, 6).map(budget => {
                       const spent = currentMonthTransactions
                         .filter(t => t.category === budget.name)
@@ -438,6 +437,7 @@ export default function DashboardPage() {
                           spent={spent} 
                           total={Number(budget.limit_amount)} 
                           currencySymbol={currencySymbol} 
+                          isCurrentMonth={isViewingCurrentMonth} // 🚀 Pacing variable injected
                         />
                       );
                     })}
@@ -445,6 +445,7 @@ export default function DashboardPage() {
                 )}
               </div>
 
+              {/* 🚀 RESTORED OVERALL BUDGET USAGE BAR */}
               {budgets.length > 0 && (
                 <div className="mt-6 pt-6 border-t border-slate-200/50 dark:border-white/5">
                   {(() => {
@@ -543,12 +544,47 @@ export default function DashboardPage() {
   );
 }
 
-// Sub-components
-function BudgetMiniBar({ name, spent, total, currencySymbol }: any) {
+// 🚀 UPGRADED: The Rocket-Money Velocity Speedometer Logic
+function BudgetMiniBar({ name, spent, total, currencySymbol, isCurrentMonth }: any) {
   const percentage = Math.min((spent / total) * 100, 100);
+  
   let progressColor = "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]";
-  if (percentage > 60) progressColor = "bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]";
-  if (percentage > 90) progressColor = "bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]";
+  let pacingUI = null;
+
+  if (isCurrentMonth) {
+    const today = new Date().getDate();
+    const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+    const daysRemainingInMonth = daysInMonth - today;
+
+    if (spent >= total) {
+       progressColor = "bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]";
+       pacingUI = <p className="text-[10px] mt-1.5 font-bold text-rose-500 dark:text-rose-400">🛑 Budget exhausted</p>;
+    } else if (spent > 0) {
+      // Calculate daily burn rate and project when they run out
+      const dailyBurnRate = spent / today;
+      const budgetRemaining = total - spent;
+      const daysOfBudgetLeft = budgetRemaining / dailyBurnRate;
+
+      if (daysOfBudgetLeft < daysRemainingInMonth) {
+        progressColor = "bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]";
+        
+        const runOutDate = new Date();
+        runOutDate.setDate(today + Math.floor(daysOfBudgetLeft));
+        const dayOrdinal = runOutDate.getDate();
+        
+        const suffix = ["st", "nd", "rd"][((dayOrdinal + 90) % 100 - 10) % 10 - 1] || "th";
+        
+        pacingUI = <p className="text-[10px] mt-1.5 font-bold text-rose-500 dark:text-rose-400 flex items-center gap-1"><TrendingUp size={10}/> Emptying early (~{dayOrdinal}{suffix})</p>;
+      } else {
+        pacingUI = <p className="text-[10px] mt-1.5 font-bold text-emerald-500 dark:text-emerald-400 flex items-center gap-1"><Scale size={10}/> Good pacing</p>;
+      }
+    } else {
+        pacingUI = <p className="text-[10px] mt-1.5 font-bold text-emerald-500 dark:text-emerald-400">Untouched so far</p>;
+    }
+  } else {
+    if (percentage > 90) progressColor = "bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]";
+    else if (percentage > 75) progressColor = "bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]";
+  }
 
   return (
     <div>
@@ -561,6 +597,7 @@ function BudgetMiniBar({ name, spent, total, currencySymbol }: any) {
       <div className="h-1.5 md:h-2 w-full bg-slate-100/80 dark:bg-slate-800/50 rounded-full overflow-hidden transition-colors shadow-inner backdrop-blur-sm border border-transparent dark:border-white/5">
         <div className={`h-full ${progressColor} rounded-full transition-all duration-1000 ease-out`} style={{ width: `${percentage}%` }}></div>
       </div>
+      {pacingUI}
     </div>
   );
 }
