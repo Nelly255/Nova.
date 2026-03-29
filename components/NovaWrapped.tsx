@@ -20,7 +20,7 @@ export default function NovaWrapped({ month, netWorth, monthlyIncome, monthlyExp
   // 🚀 PRODUCTION LOGIC: Show only between the 28th and 2nd of the month
   useEffect(() => {
     const today = new Date().getDate();
-    if (today >= 28 || today <= 2) { 
+    if (today >= 30 || today <= 2) { 
       setIsVisible(true);
     }
   }, []);
