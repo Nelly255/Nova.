@@ -188,7 +188,10 @@ export default function DashboardPage() {
   // 🚀 UPGRADED: Synced perfectly with the Daily Pro-Rata engine from the Assets page
   const isViewingCurrentMonth = selectedMonth === now.getMonth() && selectedYear === now.getFullYear();
 
-  const totalAssetsValue = assets.reduce((acc, asset) => {
+  // 🚀 THE FIX: Filter out 'sold' assets so they don't artificially inflate your NBV
+  const activeAssetsOnly = assets.filter(asset => asset.status === 'active' || !asset.status);
+
+  const totalAssetsValue = activeAssetsOnly.reduce((acc, asset) => {
     const purchaseDate = new Date(asset.purchase_date);
     const rate = Number(asset.depreciation_rate) / 100;
     const purchasePrice = Number(asset.purchase_price);

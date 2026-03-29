@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabase";
 import AddAssetModal from "@/components/AddAssetModal";
-import { Laptop, Car, Home, Camera, Briefcase, Trash2, TrendingDown, CalendarDays, BarChart3, ChevronDown, ChevronLeft, ChevronRight, Info, X, Lightbulb, Percent, Clock } from "lucide-react";
+import { Laptop, Car, Home, Camera, Briefcase, Trash2, TrendingDown, CalendarDays, BarChart3, ChevronDown, ChevronLeft, ChevronRight, Info, X, Lightbulb, Percent, Clock, DollarSign, Check, Tag, ArrowRight } from "lucide-react";
 
 const getAssetIcon = (name: string) => {
   const lower = name.toLowerCase();
@@ -28,6 +28,9 @@ export default function AssetsPage() {
   const [loading, setLoading] = useState(true);
   const [currencySymbol, setCurrencySymbol] = useState("$");
   
+  // NEW: Tab State
+  const [activeTab, setActiveTab] = useState<'active' | 'sold'>('active');
+  
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false);
   const isCurrentYear = selectedYear === new Date().getFullYear();
@@ -41,7 +44,11 @@ export default function AssetsPage() {
   useEffect(() => setMounted(true), []);
 
   const fetchAssets = async () => {
-    const { data, error } = await supabase.from("assets").select("*").order("purchase_date", { ascending: false });
+    // MODIFIED: Fetch ALL assets so we can switch tabs instantly
+    const { data, error } = await supabase
+      .from("assets")
+      .select("*")
+      .order("purchase_date", { ascending: false });
     
     if (!error && data) {
       const now = new Date();
@@ -87,6 +94,7 @@ export default function AssetsPage() {
 
         return {
           ...asset,
+          status: asset.status || 'active', // Ensure old data defaults to active
           currentValue,
           valueLostThisYear,
           totalAccumulatedLoss,
@@ -111,14 +119,40 @@ export default function AssetsPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedYear]);
+  }, [selectedYear, activeTab]); // Reset page when changing tabs
+
+  const handleSell = async (id: string, price: number) => {
+    const { error } = await supabase
+      .from("assets")
+      .update({ 
+        status: 'sold', 
+        sold_price: price, 
+        sold_date: new Date().toISOString() 
+      })
+      .eq("id", id);
+
+    if (!error) {
+      // MODIFIED: Update the state to 'sold' instead of removing it, so it jumps to the Sold tab
+      setAssets((prev) => 
+        prev.map(asset => 
+          asset.id === id 
+            ? { ...asset, status: 'sold', sold_price: price, sold_date: new Date().toISOString() } 
+            : asset
+        )
+      );
+    } else {
+      console.error("Failed to sell asset:", error);
+    }
+  };
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from("assets").delete().eq("id", id);
     if (!error) {
       setAssets((prev) => {
         const newAssets = prev.filter((a) => a.id !== id);
-        if (currentPage > Math.ceil(newAssets.length / ITEMS_PER_PAGE)) {
+        // Safely adjust pagination if we delete the last item on a page
+        const filteredForTab = newAssets.filter(a => a.status === activeTab);
+        if (currentPage > Math.ceil(filteredForTab.length / ITEMS_PER_PAGE)) {
           setCurrentPage(Math.max(1, currentPage - 1));
         }
         return newAssets;
@@ -126,13 +160,18 @@ export default function AssetsPage() {
     }
   };
 
-  const totalCurrentValue = assets.reduce((acc, asset) => acc + asset.currentValue, 0);
-  const totalValueLostInYear = assets.reduce((acc, asset) => acc + asset.valueLostThisYear, 0);
+  // NEW: Filter assets based on the active tab
+  const displayedAssets = assets.filter(asset => asset.status === activeTab);
+
+  // Stats should only calculate based on ACTIVE assets
+  const activeAssetsOnly = assets.filter(asset => asset.status === 'active');
+  const totalCurrentValue = activeAssetsOnly.reduce((acc, asset) => acc + asset.currentValue, 0);
+  const totalValueLostInYear = activeAssetsOnly.reduce((acc, asset) => acc + asset.valueLostThisYear, 0);
 
   const years = Array.from({ length: 11 }, (_, i) => 2020 + i);
 
-  const totalPages = Math.max(1, Math.ceil(assets.length / ITEMS_PER_PAGE));
-  const paginatedAssets = assets.slice(
+  const totalPages = Math.max(1, Math.ceil(displayedAssets.length / ITEMS_PER_PAGE));
+  const paginatedAssets = displayedAssets.slice(
     (currentPage - 1) * ITEMS_PER_PAGE, 
     currentPage * ITEMS_PER_PAGE
   );
@@ -274,40 +313,68 @@ export default function AssetsPage() {
         </div>
       , document.body)}
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="glass-card p-8 rounded-[2rem] relative overflow-hidden flex justify-between items-center transition-colors">
-          <div className="relative z-10">
-            <p className="text-slate-500 dark:text-slate-400 font-medium mb-1 transition-colors">Current Total Value ({selectedYear})</p>
-            <h2 className="text-4xl font-bold text-slate-900 dark:text-slate-50 transition-colors">{currencySymbol}{totalCurrentValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
+      {/* Stats Cards - ONLY show on Active Tab */}
+      {activeTab === 'active' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-500">
+          <div className="glass-card p-8 rounded-[2rem] relative overflow-hidden flex justify-between items-center transition-colors">
+            <div className="relative z-10">
+              <p className="text-slate-500 dark:text-slate-400 font-medium mb-1 transition-colors">Current Total Value ({selectedYear})</p>
+              <h2 className="text-4xl font-bold text-slate-900 dark:text-slate-50 transition-colors">{currencySymbol}{totalCurrentValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
+            </div>
+            <div className="w-16 h-16 rounded-full bg-emerald-50/80 dark:bg-emerald-500/10 flex items-center justify-center border border-emerald-100/50 dark:border-emerald-500/20 text-emerald-500 dark:text-emerald-400 relative z-10 transition-colors backdrop-blur-sm">
+              <Briefcase size={28} />
+            </div>
           </div>
-          <div className="w-16 h-16 rounded-full bg-emerald-50/80 dark:bg-emerald-500/10 flex items-center justify-center border border-emerald-100/50 dark:border-emerald-500/20 text-emerald-500 dark:text-emerald-400 relative z-10 transition-colors backdrop-blur-sm">
-            <Briefcase size={28} />
+          
+          <div className="glass-card p-8 rounded-[2rem] flex justify-between items-center transition-colors relative overflow-hidden">
+            <div className="relative z-10">
+              <p className="text-slate-500 dark:text-slate-400 font-medium mb-1 transition-colors">
+                Value Lost in {selectedYear} {isCurrentYear ? "(So Far)" : ""}
+              </p>
+              <h2 className="text-4xl font-bold text-rose-600 dark:text-rose-400 transition-colors">-{currencySymbol}{totalValueLostInYear.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
+            </div>
+            <div className="w-16 h-16 rounded-full bg-rose-50/80 dark:bg-rose-500/10 flex items-center justify-center border border-rose-100/50 dark:border-rose-500/20 text-rose-500 dark:text-rose-400 transition-colors backdrop-blur-sm relative z-10">
+              <TrendingDown size={28} />
+            </div>
           </div>
         </div>
-        
-        <div className="glass-card p-8 rounded-[2rem] flex justify-between items-center transition-colors relative overflow-hidden">
-          <div className="relative z-10">
-            <p className="text-slate-500 dark:text-slate-400 font-medium mb-1 transition-colors">
-              Value Lost in {selectedYear} {isCurrentYear ? "(So Far)" : ""}
-            </p>
-            <h2 className="text-4xl font-bold text-rose-600 dark:text-rose-400 transition-colors">-{currencySymbol}{totalValueLostInYear.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
-          </div>
-          <div className="w-16 h-16 rounded-full bg-rose-50/80 dark:bg-rose-500/10 flex items-center justify-center border border-rose-100/50 dark:border-rose-500/20 text-rose-500 dark:text-rose-400 transition-colors backdrop-blur-sm relative z-10">
-            <TrendingDown size={28} />
-          </div>
-        </div>
+      )}
+
+      {/* NEW: Tab Navigation */}
+      <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-2xl w-fit border border-slate-200 dark:border-white/10 mt-8">
+        <button 
+          onClick={() => setActiveTab('active')} 
+          className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeTab === 'active' ? 'bg-white dark:bg-slate-800 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+        >
+          Active Assets
+        </button>
+        <button 
+          onClick={() => setActiveTab('sold')} 
+          className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeTab === 'sold' ? 'bg-white dark:bg-slate-800 shadow-sm text-emerald-600 dark:text-emerald-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+        >
+          Sold History
+        </button>
       </div>
 
       {/* Asset List */}
-      <div className="mt-8">
+      <div className="mt-6">
         {loading ? (
           <p className="text-slate-500 transition-colors font-medium">Calculating valuations...</p>
-        ) : assets.length === 0 ? (
+        ) : displayedAssets.length === 0 ? (
           <div className="glass-card p-16 text-center rounded-[2rem] flex flex-col items-center transition-colors">
-            <Laptop size={48} className="mx-auto text-slate-400 dark:text-slate-600 mb-4 transition-colors" />
-            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-200 transition-colors">No assets tracked</h3>
-            <p className="text-slate-500 mt-2 transition-colors">Add your car, laptop, or camera to see its real-time value.</p>
+            {activeTab === 'active' ? (
+              <>
+                <Laptop size={48} className="mx-auto text-slate-400 dark:text-slate-600 mb-4 transition-colors" />
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-200 transition-colors">No active assets</h3>
+                <p className="text-slate-500 mt-2 transition-colors">Add your car, laptop, or camera to see its real-time value.</p>
+              </>
+            ) : (
+              <>
+                <Tag size={48} className="mx-auto text-emerald-400/50 dark:text-emerald-600/50 mb-4 transition-colors" />
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-200 transition-colors">No sold history</h3>
+                <p className="text-slate-500 mt-2 transition-colors">Assets you sell will appear here for your records.</p>
+              </>
+            )}
           </div>
         ) : (
           <>
@@ -320,14 +387,15 @@ export default function AssetsPage() {
                   isCurrentYear={isCurrentYear}
                   currencySymbol={currencySymbol} 
                   onDelete={handleDelete} 
+                  onSell={handleSell} 
                 />
               ))}
             </div>
 
-            {assets.length > ITEMS_PER_PAGE && (
+            {displayedAssets.length > ITEMS_PER_PAGE && (
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-5 mt-6 border-t border-white/50 dark:border-white/5 bg-white/40 dark:bg-white/5 transition-colors backdrop-blur-md rounded-2xl">
                 <span className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 text-center sm:text-left">
-                  Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, assets.length)} of {assets.length} assets
+                  Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, displayedAssets.length)} of {displayedAssets.length} assets
                 </span>
                 
                 <div className="flex items-center gap-3">
@@ -357,8 +425,8 @@ export default function AssetsPage() {
         )}
       </div>
 
-      {/* Depreciation Forecast Chart */}
-      {!loading && assets.length > 0 && (
+      {/* Depreciation Forecast Chart - ONLY show on Active Tab */}
+      {!loading && activeAssetsOnly.length > 0 && activeTab === 'active' && (
         <div className="mt-10 glass-card p-8 rounded-[2rem] transition-colors">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-12 h-12 rounded-xl bg-indigo-50/80 dark:bg-indigo-500/10 border border-indigo-200/50 dark:border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 backdrop-blur-sm">
@@ -370,7 +438,7 @@ export default function AssetsPage() {
             </div>
           </div>
           
-          <DepreciationForecastChart assets={assets} currencySymbol={currencySymbol} formatCompactNumber={formatCompactNumber} />
+          <DepreciationForecastChart assets={activeAssetsOnly} currencySymbol={currencySymbol} formatCompactNumber={formatCompactNumber} />
         </div>
       )}
 
@@ -379,18 +447,110 @@ export default function AssetsPage() {
 }
 
 // ==========================================
-// ASSET CARD
+// ASSET CARD (UPDATED TO FIX OVERLAP AND ADD COMMAS)
 // ==========================================
-function AssetCard({ asset, selectedYear, isCurrentYear, currencySymbol, onDelete }: any) {
+function AssetCard({ asset, selectedYear, isCurrentYear, currencySymbol, onDelete, onSell }: any) {
+  const [isSelling, setIsSelling] = useState(false);
+  const [sellPrice, setSellPrice] = useState("");
+  const isSold = asset.status === 'sold';
+
+  // NEW: Handle input with commas
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // 1. Remove all non-digit characters
+    const rawValue = e.target.value.replace(/[^0-9.]/g, '');
+    
+    // 2. Format with commas
+    if (rawValue) {
+      const parts = rawValue.split('.');
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      setSellPrice(parts.join('.'));
+    } else {
+      setSellPrice("");
+    }
+  };
+
+  const handleConfirmSell = () => {
+    if (!sellPrice) return;
+    // Strip the commas back out before saving to database
+    const numericPrice = Number(sellPrice.replace(/,/g, ''));
+    onSell(asset.id, numericPrice);
+    setIsSelling(false);
+  };
+
   return (
-    <div className="glass-card p-6 rounded-[2rem] hover:bg-white/40 dark:hover:bg-white/5 transition duration-300 relative group flex flex-col justify-between overflow-hidden">
+    <div className={`glass-card p-6 rounded-[2rem] transition duration-300 relative group flex flex-col justify-between overflow-hidden ${isSold ? 'bg-slate-50/50 dark:bg-slate-900/30 border-emerald-500/20' : 'hover:bg-white/40 dark:hover:bg-white/5'}`}>
       
-      <button 
-        onClick={() => onDelete(asset.id)}
-        className="absolute top-4 right-4 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 bg-white/50 dark:bg-black/20 hover:bg-rose-100 dark:hover:bg-rose-500/10 p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all z-10 backdrop-blur-md"
-      >
-        <Trash2 size={16} />
-      </button>
+      {/* SOLD BADGE */}
+      {isSold && (
+        <div className="absolute top-5 right-5 z-10">
+          <span className="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 border border-emerald-200 dark:border-emerald-500/30">
+            <Check size={12} /> SOLD
+          </span>
+        </div>
+      )}
+
+      {/* Dynamic Hover Buttons for Selling & Deleting (Only if active) */}
+      {!isSold && (
+        <>
+          {isSelling ? (
+            <div className="absolute inset-x-4 top-4 z-20 bg-white dark:bg-slate-800 p-4 rounded-[1.25rem] shadow-xl border border-indigo-500/30 animate-in fade-in slide-in-from-top-2">
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Confirm Sale Price</p>
+              <div className="flex items-center gap-2">
+                
+                {/* NEW: Flex wrapper fixes the overlap issue completely */}
+                <div className="flex items-center flex-1 bg-slate-50 dark:bg-slate-900 border-2 border-indigo-500 rounded-xl px-3 py-2 focus-within:ring-4 focus-within:ring-indigo-500/20 transition-all">
+                  <span className="text-slate-400 text-sm font-medium mr-1.5 whitespace-nowrap">{currencySymbol}</span>
+                  <input
+                    type="text" // Changed to text to support commas
+                    inputMode="numeric" // Keeps the mobile number pad open
+                    value={sellPrice}
+                    onChange={handlePriceChange}
+                    className="w-full bg-transparent text-sm focus:outline-none text-slate-900 dark:text-white"
+                    placeholder="0"
+                    autoFocus
+                  />
+                </div>
+                
+                {/* UI matches your screenshot perfectly */}
+                <button onClick={handleConfirmSell} className="bg-emerald-500 hover:bg-emerald-600 text-white p-2.5 rounded-xl transition-colors shadow-sm" title="Confirm">
+                  <ArrowRight size={18} />
+                </button>
+                <button onClick={() => setIsSelling(false)} className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 p-2.5 rounded-xl transition-colors shadow-sm" title="Cancel">
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all z-10">
+              <button 
+                onClick={() => setIsSelling(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/80 dark:bg-slate-800/80 hover:bg-indigo-50 dark:hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold rounded-xl backdrop-blur-md transition-all shadow-sm border border-slate-200 dark:border-white/10"
+                title="Mark as Sold"
+              >
+                <Tag size={14} /> Sell
+              </button>
+              <button 
+                onClick={() => onDelete(asset.id)}
+                className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 bg-white/80 dark:bg-slate-800/80 hover:bg-rose-100 dark:hover:bg-rose-500/10 rounded-xl backdrop-blur-md transition-all shadow-sm border border-slate-200 dark:border-white/10"
+                title="Delete Permanently"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Delete button always available for sold items too, but placed bottom right */}
+      {isSold && (
+        <button 
+          onClick={() => onDelete(asset.id)}
+          className="absolute bottom-5 right-5 text-slate-400 hover:text-rose-600 opacity-0 group-hover:opacity-100 transition-all bg-white/50 dark:bg-black/20 p-2 rounded-lg backdrop-blur-md"
+          title="Delete Record"
+        >
+          <Trash2 size={16} />
+        </button>
+      )}
 
       <div>
         <div className="flex items-center gap-4 mb-6">
@@ -398,8 +558,10 @@ function AssetCard({ asset, selectedYear, isCurrentYear, currencySymbol, onDelet
             {getAssetIcon(asset.name)}
           </div>
           <div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-200 transition-colors line-clamp-1">{asset.name}</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 transition-colors">Purchased {new Date(asset.purchase_date).toLocaleDateString()}</p>
+            <h3 className={`text-lg font-bold transition-colors line-clamp-1 ${isSold ? 'text-slate-600 dark:text-slate-400' : 'text-slate-900 dark:text-slate-200'}`}>{asset.name}</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 transition-colors">
+              {isSold ? `Sold on ${new Date(asset.sold_date).toLocaleDateString()}` : `Purchased ${new Date(asset.purchase_date).toLocaleDateString()}`}
+            </p>
           </div>
         </div>
 
@@ -411,38 +573,53 @@ function AssetCard({ asset, selectedYear, isCurrentYear, currencySymbol, onDelet
             </p>
           </div>
           
-          <div className="bg-rose-50/80 dark:bg-rose-500/10 rounded-xl border border-rose-100/50 dark:border-rose-500/20 transition-colors backdrop-blur-sm flex flex-row justify-between items-center p-3">
-            <div>
-              <p className="text-rose-600 dark:text-rose-400/80 transition-colors font-medium tracking-wide text-xs">Lost in '{selectedYear.toString().slice(-2)}</p>
-              {isCurrentYear && asset.dailyLoss > 0 && (
-                <p className="text-[10px] text-rose-500/70 font-semibold mt-0.5" title="This is how much money you lose every single day just by owning this!">Bleeding {currencySymbol}{asset.dailyLoss.toLocaleString(undefined, {maximumFractionDigits: 0})} / day</p>
-              )}
+          {/* If sold, highlight the sold price instead of current value */}
+          {isSold ? (
+            <div className="bg-emerald-50/80 dark:bg-emerald-500/10 rounded-xl border border-emerald-100/50 dark:border-emerald-500/20 transition-colors backdrop-blur-sm flex flex-row justify-between items-center p-3">
+              <p className="text-emerald-700 dark:text-emerald-400/80 font-bold tracking-wide text-xs">Final Sale Price</p>
+              <p className="font-bold text-emerald-700 dark:text-emerald-300 text-sm">
+                {currencySymbol}{Number(asset.sold_price).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              </p>
             </div>
-            <p className="font-bold text-rose-700 dark:text-rose-300 transition-colors text-sm">
-              -{currencySymbol}{Number(asset.valueLostThisYear).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-            </p>
-          </div>
+          ) : (
+            <>
+              <div className="bg-rose-50/80 dark:bg-rose-500/10 rounded-xl border border-rose-100/50 dark:border-rose-500/20 transition-colors backdrop-blur-sm flex flex-row justify-between items-center p-3">
+                <div>
+                  <p className="text-rose-600 dark:text-rose-400/80 transition-colors font-medium tracking-wide text-xs">Lost in '{selectedYear.toString().slice(-2)}</p>
+                  {isCurrentYear && asset.dailyLoss > 0 && (
+                    <p className="text-[10px] text-rose-500/70 font-semibold mt-0.5" title="This is how much money you lose every single day just by owning this!">Bleeding {currencySymbol}{asset.dailyLoss.toLocaleString(undefined, {maximumFractionDigits: 0})} / day</p>
+                  )}
+                </div>
+                <p className="font-bold text-rose-700 dark:text-rose-300 transition-colors text-sm">
+                  -{currencySymbol}{Number(asset.valueLostThisYear).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </p>
+              </div>
 
-          <div className="bg-indigo-50/80 dark:bg-indigo-500/10 rounded-xl border border-indigo-100/50 dark:border-indigo-500/20 transition-colors backdrop-blur-sm flex flex-row justify-between items-center p-3">
-            <p className="text-indigo-600 dark:text-indigo-400/80 transition-colors font-medium tracking-wide text-xs">Current Value</p>
-            <p className="font-bold text-indigo-700 dark:text-indigo-300 transition-colors text-sm">
-              {currencySymbol}{Number(asset.currentValue).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-            </p>
-          </div>
+              <div className="bg-indigo-50/80 dark:bg-indigo-500/10 rounded-xl border border-indigo-100/50 dark:border-indigo-500/20 transition-colors backdrop-blur-sm flex flex-row justify-between items-center p-3">
+                <p className="text-indigo-600 dark:text-indigo-400/80 transition-colors font-medium tracking-wide text-xs">Current Value</p>
+                <p className="font-bold text-indigo-700 dark:text-indigo-300 transition-colors text-sm">
+                  {currencySymbol}{Number(asset.currentValue).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </p>
+              </div>
+            </>
+          )}
         </div>
         
-        <div>
-          <div className="flex justify-between text-xs mb-1 transition-colors">
-            <span className="text-rose-600 dark:text-rose-400 font-medium transition-colors">Total Value Dropped</span>
-            <span className="text-slate-500 dark:text-slate-400 transition-colors font-medium">{asset.percentageLost.toFixed(1)}%</span>
+        {/* Only show the depreciation progress bar if it's currently active */}
+        {!isSold && (
+          <div>
+            <div className="flex justify-between text-xs mb-1 transition-colors">
+              <span className="text-rose-600 dark:text-rose-400 font-medium transition-colors">Total Value Dropped</span>
+              <span className="text-slate-500 dark:text-slate-400 transition-colors font-medium">{asset.percentageLost.toFixed(1)}%</span>
+            </div>
+            <div className="h-2 w-full bg-slate-100/80 dark:bg-slate-800/50 rounded-full overflow-hidden transition-colors shadow-inner backdrop-blur-sm border border-transparent dark:border-white/5">
+              <div 
+                className="h-full bg-rose-500 transition-all duration-1000 ease-out shadow-rose-500/50 shadow-[0_0_10px]" 
+                style={{ width: `${Math.min(asset.percentageLost, 100)}%` }}
+              ></div>
+            </div>
           </div>
-          <div className="h-2 w-full bg-slate-100/80 dark:bg-slate-800/50 rounded-full overflow-hidden transition-colors shadow-inner backdrop-blur-sm border border-transparent dark:border-white/5">
-            <div 
-              className="h-full bg-rose-500 transition-all duration-1000 ease-out shadow-rose-500/50 shadow-[0_0_10px]" 
-              style={{ width: `${Math.min(asset.percentageLost, 100)}%` }}
-            ></div>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
