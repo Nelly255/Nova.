@@ -419,7 +419,7 @@ export default function DashboardPage() {
               <div>
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-base md:text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100 transition-colors">
-                    {MONTHS[selectedMonth]} Velocity Health
+                    {MONTHS[selectedMonth]} Budget Health
                   </h3>
                   <Link href="/dashboard/budgets" className="text-xs md:text-sm text-slate-500 hover:text-indigo-500 dark:text-slate-400 dark:hover:text-indigo-400 transition font-semibold">View Details</Link>
                 </div>

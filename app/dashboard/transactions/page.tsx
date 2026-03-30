@@ -1,386 +1,511 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabase";
-import { Search, Filter, ArrowDownToLine, ArrowUpRight, Trash2, CalendarDays, ChevronLeft, ChevronRight, Pencil, ChevronDown } from "lucide-react";
-import EditTransactionModal from "@/components/EditTransactionModal"; 
+import AddTransactionModal from "@/components/AddTransactionModal";
+import { 
+  ArrowDownToLine, Receipt, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, 
+  Trash2, Edit2, UploadCloud, FileText, Loader2, CheckCircle2, AlertTriangle, X, Download, ListFilter
+} from "lucide-react";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const CATEGORIES = ["Housing", "Food", "Transportation", "Utilities", "Insurance", "Healthcare", "Savings", "Personal", "Debt Repayment", "Entertainment", "Income", "Asset Sale", "Loan Received", "Loan Given", "Other"];
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
-  const [searchQuery, setSearchQuery] = useState("");
+  const [currencySymbol, setCurrencySymbol] = useState("$");
   
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false);
-  
-  const [transactionToEdit, setTransactionToEdit] = useState<any>(null);
-  
-  // Custom state for our gorgeous new delete modal!
-  const [transactionToDelete, setTransactionToDelete] = useState<any>(null);
+  const [mounted, setMounted] = useState(false);
+
+  // 🚀 NEW: Filter State for the Tabs
+  const [activeFilter, setActiveFilter] = useState<'all' | 'income' | 'expense'>('all');
 
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 25;
-  const [currencySymbol, setCurrencySymbol] = useState("$");
+  const ITEMS_PER_PAGE = 10; 
 
-  const fetchAllTransactions = async () => {
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ id: "", title: "", amount: "", date: "", type: "expense", category: "" });
+
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importStatus, setImportStatus] = useState<{message: string, type: 'idle' | 'success' | 'error'}>({ message: "", type: 'idle' });
+
+  useEffect(() => setMounted(true), []);
+
+  const fetchTransactions = async () => {
+    setLoading(true);
     const { data, error } = await supabase
       .from("transactions")
       .select("*")
-      .order("date", { ascending: false });
-
-    if (!error && data) setTransactions(data);
+      .order("date", { ascending: false })
+      .order("created_at", { ascending: false });
+    
+    if (!error && data) {
+      setTransactions(data);
+    }
     setLoading(false);
   };
 
   useEffect(() => {
     const savedCurrency = localStorage.getItem("app_currency");
-    if (savedCurrency === "TZS") {
-      setCurrencySymbol("TSh ");
-    } else {
-      setCurrencySymbol("$");
-    }
-    
-    fetchAllTransactions();
+    setCurrencySymbol(savedCurrency === "TZS" ? "TSh " : "$");
+    fetchTransactions();
 
-    window.addEventListener("transactionUpdated", fetchAllTransactions);
-    return () => window.removeEventListener("transactionUpdated", fetchAllTransactions);
+    window.addEventListener("transactionUpdated", fetchTransactions);
+    return () => window.removeEventListener("transactionUpdated", fetchTransactions);
   }, []);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [filter, searchQuery, selectedMonth, selectedYear]);
+  }, [selectedMonth, selectedYear, activeFilter]);
 
-  // This now handles the actual deletion after the user clicks "Yes, Delete" in the modal
-  const confirmDelete = async () => {
-    if (!transactionToDelete) return;
-    
-    const { error } = await supabase.from("transactions").delete().eq("id", transactionToDelete.id);
+  // --- DELETE LOGIC ---
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from("transactions").delete().eq("id", id);
     if (!error) {
-      fetchAllTransactions();
-      window.dispatchEvent(new Event("transactionUpdated")); 
+      window.dispatchEvent(new Event("transactionUpdated"));
     }
-    setTransactionToDelete(null); // Close the modal
   };
 
-  const filteredTransactions = transactions.filter(t => {
-    const typeMatch = filter === 'all' || t.type === filter;
-    const searchMatch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                        t.category.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const d = new Date(t.date);
-    const monthMatch = d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
+  // --- EDIT LOGIC ("Oops" Button) ---
+  const openEditModal = (tx: any) => {
+    setEditForm({
+      id: tx.id,
+      title: tx.title,
+      amount: tx.amount.toString(),
+      date: tx.date.split('T')[0],
+      type: tx.type,
+      category: tx.category
+    });
+    setIsEditModalOpen(true);
+  };
 
-    return typeMatch && searchMatch && monthMatch;
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsEditing(true);
+
+    const { error } = await supabase
+      .from("transactions")
+      .update({
+        title: editForm.title,
+        amount: Number(editForm.amount.replace(/,/g, '')),
+        date: editForm.date,
+        type: editForm.type,
+        category: editForm.category
+      })
+      .eq("id", editForm.id);
+
+    setIsEditing(false);
+    if (!error) {
+      setIsEditModalOpen(false);
+      window.dispatchEvent(new Event("transactionUpdated"));
+    } else {
+      alert("Failed to update transaction.");
+    }
+  };
+
+  const handlePriceChange = (value: string) => {
+    const rawValue = value.replace(/[^0-9.]/g, '');
+    if (rawValue) {
+      const parts = rawValue.split('.');
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      setEditForm({ ...editForm, amount: parts.join('.') });
+    } else {
+      setEditForm({ ...editForm, amount: "" });
+    }
+  };
+
+  // --- CSV IMPORT LOGIC (The Power User Feature) ---
+  const handleFileDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) processCSV(file);
+  };
+
+  const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) processCSV(file);
+  };
+
+  const processCSV = async (file: File) => {
+    if (!file.name.endsWith('.csv')) {
+      setImportStatus({ message: "Please upload a valid .csv file.", type: 'error' });
+      return;
+    }
+
+    setIsImporting(true);
+    setImportStatus({ message: "Reading file...", type: 'idle' });
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const text = event.target?.result as string;
+        const lines = text.split('\n').filter(line => line.trim() !== '');
+        
+        if (lines.length < 2) throw new Error("File is empty or missing data.");
+
+        const headers = lines[0].toLowerCase().split(',').map(h => h.trim().replace(/"/g, ''));
+        const dateIdx = headers.findIndex(h => h.includes('date') || h.includes('time'));
+        const titleIdx = headers.findIndex(h => h.includes('title') || h.includes('desc') || h.includes('name'));
+        const amountIdx = headers.findIndex(h => h.includes('amount') || h.includes('value') || h.includes('price'));
+        const typeIdx = headers.findIndex(h => h.includes('type') || h.includes('kind'));
+        const catIdx = headers.findIndex(h => h.includes('category') || h.includes('cat'));
+
+        if (dateIdx === -1 || amountIdx === -1) {
+          throw new Error("Could not find 'Date' or 'Amount' columns in CSV.");
+        }
+
+        const bulkData = [];
+        for (let i = 1; i < lines.length; i++) {
+          const row = lines[i].split(',').map(cell => cell.trim().replace(/"/g, ''));
+          
+          if (!row[amountIdx]) continue; 
+
+          let rawAmount = row[amountIdx].replace(/[^0-9.-]/g, '');
+          let amountVal = parseFloat(rawAmount);
+          let txType = 'expense';
+
+          if (amountVal < 0) {
+            txType = 'expense';
+            amountVal = Math.abs(amountVal);
+          } else if (typeIdx !== -1 && row[typeIdx].toLowerCase().includes('income')) {
+            txType = 'income';
+          } else if (typeIdx === -1 && amountVal > 0 && row[titleIdx]?.toLowerCase().includes('deposit')) {
+             txType = 'income'; 
+          }
+
+          bulkData.push({
+            date: row[dateIdx] ? new Date(row[dateIdx]).toISOString() : new Date().toISOString(),
+            title: titleIdx !== -1 ? row[titleIdx] : "Imported Transaction",
+            amount: amountVal,
+            type: txType,
+            category: catIdx !== -1 ? row[catIdx] : "Other"
+          });
+        }
+
+        const { error } = await supabase.from('transactions').insert(bulkData);
+        if (error) throw error;
+
+        setImportStatus({ message: `Successfully imported ${bulkData.length} transactions!`, type: 'success' });
+        window.dispatchEvent(new Event("transactionUpdated"));
+        
+        setTimeout(() => {
+          setIsImportModalOpen(false);
+          setImportStatus({ message: "", type: 'idle' });
+        }, 2500);
+
+      } catch (err: any) {
+        setImportStatus({ message: err.message || "Failed to parse CSV.", type: 'error' });
+      }
+      setIsImporting(false);
+    };
+    reader.readAsText(file);
+  };
+
+  const downloadCSVTemplate = () => {
+    const csvContent = "Date,Description,Amount,Type,Category\n2026-03-30,Salary Deposit,500000,income,Income\n2026-03-31,Groceries,25000,expense,Food";
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `Nova_Import_Template.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // --- FILTERING & MATH ---
+  const currentPeriodTransactions = transactions.filter(t => {
+    const d = new Date(t.date);
+    return d.getFullYear() === selectedYear && d.getMonth() === selectedMonth;
+  });
+
+  // 🚀 Apply the Tab Filter
+  const filteredTransactions = currentPeriodTransactions.filter(t => {
+    if (activeFilter === 'all') return true;
+    return t.type === activeFilter;
   });
 
   const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE));
-  const paginatedTransactions = filteredTransactions.slice(
+  const paginatedTx = filteredTransactions.slice(
     (currentPage - 1) * ITEMS_PER_PAGE, 
     currentPage * ITEMS_PER_PAGE
   );
 
   return (
-    <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-6 md:space-y-8 pb-32 bg-transparent min-h-screen relative">
+    <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-6 md:space-y-8 pb-32 relative bg-transparent min-h-screen transition-colors duration-300">
       
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+      {/* HEADER */}
+      <header className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 transition-colors">Transactions</h1>
-          <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1 transition-colors">A detailed history of your finances.</p>
+          <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1 transition-colors">Manage your income and expenses.</p>
         </div>
         
-        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full md:w-auto">
-          <div className="relative z-50">
-            <button 
-              onClick={() => setIsPeriodDropdownOpen(!isPeriodDropdownOpen)}
-              className="w-full flex items-center justify-between md:justify-start gap-2 bg-white/60 dark:bg-slate-900/40 backdrop-blur-2xl border border-white/50 dark:border-white/5 hover:bg-white/80 dark:hover:bg-slate-800/50 px-4 py-2.5 md:py-2 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-300 transition-all cursor-pointer group shadow-sm"
-            >
-              <div className="flex items-center gap-2">
-                <CalendarDays size={18} className="text-brand group-hover:scale-110 transition-transform" />
-                <span>{MONTHS[selectedMonth]} {selectedYear}</span>
-              </div>
-              <ChevronDown size={14} className={`text-slate-400 transition-transform duration-300 ${isPeriodDropdownOpen ? 'rotate-180' : ''}`} />
-            </button>
+        <div className="w-full xl:w-auto relative">
+          <style dangerouslySetInnerHTML={{__html: '.nuke-scrollbar::-webkit-scrollbar { display: none !important; } .nuke-scrollbar { -ms-overflow-style: none !important; scrollbar-width: none !important; }'}} />
+          <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto nuke-scrollbar pb-2 xl:pb-0 w-full">
+            
+            {/* Period Selector */}
+            <div className="relative z-40 shrink-0">
+              <button 
+                onClick={() => setIsPeriodDropdownOpen(!isPeriodDropdownOpen)}
+                className="flex items-center justify-center gap-2 bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/60 dark:border-white/10 hover:bg-white/60 dark:hover:bg-white/10 rounded-2xl px-4 py-2.5 shadow-sm transition-all group hover:border-indigo-500/50"
+              >
+                <CalendarDays size={18} className="text-indigo-500 group-hover:scale-110 transition-transform" />
+                <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                  {MONTHS[selectedMonth]} {selectedYear}
+                </span>
+                <ChevronDown size={14} className={`text-slate-400 transition-transform duration-300 ${isPeriodDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
 
-            {isPeriodDropdownOpen && (
-              <>
-                <div 
-                  className="fixed inset-0 z-40 bg-slate-900/10 dark:bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
-                  onClick={() => setIsPeriodDropdownOpen(false)}
-                />
-                <div className="fixed left-4 right-4 top-24 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-3 z-50 sm:w-72 bg-white/90 dark:bg-slate-900/90 backdrop-blur-[64px] border border-white/60 dark:border-white/10 rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] p-5 animate-in fade-in zoom-in-95 origin-top sm:origin-top-right duration-200">
-                  <div className="flex justify-between items-center mb-6 px-2">
-                    <button onClick={() => setSelectedYear(y => y - 1)} className="p-1.5 rounded-full hover:bg-slate-200/50 dark:hover:bg-white/10 text-slate-500 transition-colors"><ChevronLeft size={18}/></button>
-                    <span className="font-extrabold text-lg text-slate-900 dark:text-white tracking-tight">{selectedYear}</span>
-                    <button onClick={() => setSelectedYear(y => y + 1)} className="p-1.5 rounded-full hover:bg-slate-200/50 dark:hover:bg-white/10 text-slate-500 transition-colors"><ChevronRight size={18}/></button>
+              {isPeriodDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-40 bg-slate-900/5 dark:bg-black/40 backdrop-blur-sm animate-in fade-in" onClick={() => setIsPeriodDropdownOpen(false)} />
+                  <div className="absolute right-0 sm:left-0 xl:right-0 xl:left-auto top-full mt-2 z-50 w-72 bg-white/90 dark:bg-slate-900/90 backdrop-blur-[64px] border border-white/60 dark:border-white/10 rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] p-5 animate-in fade-in zoom-in-95 origin-top-right">
+                    <div className="flex justify-between items-center mb-6 px-2">
+                      <button onClick={() => setSelectedYear(y => y - 1)} className="p-1.5 rounded-full hover:bg-slate-200/50 dark:hover:bg-white/10 text-slate-500 transition-colors"><ChevronLeft size={18}/></button>
+                      <span className="font-extrabold text-lg text-slate-900 dark:text-white tracking-tight">{selectedYear}</span>
+                      <button onClick={() => setSelectedYear(y => y + 1)} className="p-1.5 rounded-full hover:bg-slate-200/50 dark:hover:bg-white/10 text-slate-500 transition-colors"><ChevronRight size={18}/></button>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {MONTHS.map((monthStr, index) => {
+                        const isSelected = selectedMonth === index;
+                        return (
+                          <button 
+                            key={monthStr}
+                            onClick={() => { setSelectedMonth(index); setIsPeriodDropdownOpen(false); }}
+                            className={`py-2 rounded-xl text-sm font-bold transition-all duration-200 ${isSelected ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/25 scale-105' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}
+                          >
+                            {monthStr}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {MONTHS.map((monthStr, index) => {
-                      const isSelected = selectedMonth === index;
-                      const isCurrentRealMonth = index === now.getMonth() && selectedYear === now.getFullYear();
-
-                      return (
-                        <button 
-                          key={monthStr}
-                          onClick={() => { setSelectedMonth(index); setIsPeriodDropdownOpen(false); }}
-                          className={`py-2 rounded-xl text-sm font-bold transition-all duration-200 ${
-                            isSelected 
-                              ? 'bg-brand text-white shadow-md shadow-brand/25 scale-105' 
-                              : isCurrentRealMonth
-                                ? 'bg-brand/10 dark:bg-brand/10 text-brand dark:text-brand border border-brand/20 dark:border-brand/30'
-                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 border border-transparent'
-                          }`}
-                        >
-                          {monthStr}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className="flex gap-2 w-full md:w-auto">
-            <div className="relative flex-1 md:flex-none">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={18} />
-              <input 
-                type="text" 
-                placeholder="Search history..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-2xl border border-white/50 dark:border-white/5 rounded-xl pl-10 pr-4 py-2.5 md:py-2 text-sm text-slate-900 dark:text-slate-200 focus:outline-none focus:border-brand transition-colors w-full md:w-64 shadow-sm"
-              />
+                </>
+              )}
             </div>
-            <button className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-2xl border border-white/50 dark:border-white/5 p-2.5 md:p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-brand dark:hover:text-brand transition-colors shadow-sm shrink-0">
-              <Filter size={20} />
+
+            {/* Import CSV Button */}
+            <button 
+              onClick={() => setIsImportModalOpen(true)}
+              className="shrink-0 flex items-center justify-center gap-2 bg-white/80 hover:bg-white dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-white/10 transition-all active:scale-95 px-4 py-2.5 rounded-2xl font-bold text-sm shadow-sm"
+            >
+              <UploadCloud size={16} /> <span className="hidden sm:inline">Import Bank CSV</span><span className="sm:hidden">Import</span>
             </button>
+
+            {/* Add Transaction Button Override */}
+            <div className="shrink-0 flex items-center [&_button]:w-auto [&_button]:min-w-[160px]">
+              <AddTransactionModal />
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-white/5 pb-4 transition-colors relative z-10">
+      {/* 🚀 THE NEW FILTER TABS */}
+      <div className="flex bg-white/60 dark:bg-white/5 p-1.5 rounded-2xl w-fit border border-slate-200/80 dark:border-white/10 backdrop-blur-md shadow-sm">
         <button 
-          onClick={() => setFilter('all')} 
-          className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-            filter === 'all' 
-            ? 'bg-slate-900 text-white shadow-sm dark:bg-slate-800' 
-            : 'text-slate-500 hover:text-slate-900 hover:bg-white/80 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-white/5 backdrop-blur-sm'
-          }`}
+          onClick={() => setActiveFilter('all')} 
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeFilter === 'all' ? 'bg-white dark:bg-slate-800 shadow-[0_2px_10px_rgba(0,0,0,0.05)] text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
         >
-          All
+          <ListFilter size={16} /> All Transactions
         </button>
         <button 
-          onClick={() => setFilter('income')} 
-          className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-            filter === 'income' 
-            ? 'bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' 
-            : 'text-slate-500 hover:text-slate-900 hover:bg-white/80 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-white/5 backdrop-blur-sm'
-          }`}
+          onClick={() => setActiveFilter('income')} 
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeFilter === 'income' ? 'bg-emerald-50 dark:bg-emerald-500/10 shadow-[0_2px_10px_rgba(0,0,0,0.05)] text-emerald-600 dark:text-emerald-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
         >
-          Income
+          <ArrowDownToLine size={16} className="rotate-180" /> Income
         </button>
         <button 
-          onClick={() => setFilter('expense')} 
-          className={`flex-1 sm:flex-none px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-            filter === 'expense' 
-            ? 'bg-rose-100 text-rose-700 border border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20' 
-            : 'text-slate-500 hover:text-slate-900 hover:bg-white/80 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-white/5 backdrop-blur-sm'
-          }`}
+          onClick={() => setActiveFilter('expense')} 
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeFilter === 'expense' ? 'bg-rose-50 dark:bg-rose-500/10 shadow-[0_2px_10px_rgba(0,0,0,0.05)] text-rose-600 dark:text-rose-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
         >
-          Expenses
+          <Receipt size={16} /> Expenses
         </button>
       </div>
 
-      <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-2xl border border-white/50 dark:border-white/5 rounded-[2rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-2xl dark:shadow-black/50 transition-colors relative z-10">
-        
-        {/* ========================================= */}
-        {/* 💻 DESKTOP VIEW */}
-        {/* ========================================= */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[600px]">
-            <thead>
-              <tr className="border-b border-white/50 dark:border-white/5 bg-white/40 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider transition-colors backdrop-blur-md">
-                <th className="px-6 py-4 font-semibold min-w-[200px]">Transaction</th>
-                <th className="px-6 py-4 font-semibold">Category</th>
-                <th className="px-6 py-4 font-semibold">Date</th>
-                <th className="px-6 py-4 font-semibold text-right">Amount</th>
-                <th className="px-6 py-4 font-semibold text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/40 dark:divide-white/5 transition-colors">
-              {loading ? (
-                <tr><td colSpan={5} className="px-6 py-20 text-center text-slate-500">Loading history...</td></tr>
-              ) : paginatedTransactions.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-20 text-center text-slate-500">
-                    {searchQuery ? `No transactions found matching "${searchQuery}"` : `No transactions found for ${MONTHS[selectedMonth]} ${selectedYear}.`}
-                  </td>
-                </tr>
-              ) : (
-                paginatedTransactions.map((t) => (
-                  <tr key={t.id} className="hover:bg-white/80 dark:hover:bg-white/5 transition-colors group">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors border border-white/40 dark:border-white/5 ${
-                          t.type === 'income' ? 'bg-emerald-100/80 text-emerald-600 dark:bg-emerald-400/10 dark:text-emerald-400' : 'bg-rose-100/80 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
-                        }`}>
-                          {t.type === 'income' ? <ArrowDownToLine size={18}/> : <ArrowUpRight size={18}/>}
-                        </div>
-                        <span className="font-medium text-slate-900 dark:text-slate-200 transition-colors line-clamp-1">{t.title}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-xs font-medium text-slate-700 bg-white/60 dark:text-slate-300 dark:bg-white/10 px-3 py-1.5 rounded-full border border-white/80 dark:border-white/5 transition-colors whitespace-nowrap backdrop-blur-sm">
-                        {t.category}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 transition-colors whitespace-nowrap">
-                      {new Date(t.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </td>
-                    {/* UPGRADED: Expenses are now Red here in Desktop view! */}
-                    <td className={`px-6 py-4 text-right font-semibold tracking-wide transition-colors whitespace-nowrap ${
-                      t.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-                    }`}>
-                      {t.type === 'expense' ? '-' : '+'}
-                      {currencySymbol}
-                      {Number(t.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex justify-center items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        <button onClick={() => setTransactionToEdit(t)} className="text-slate-400 dark:text-slate-500 hover:text-brand dark:hover:text-brand hover:bg-brand/10 dark:hover:bg-brand/10 transition-colors p-2 rounded-lg" title="Edit Transaction"><Pencil size={18} /></button>
-                        <button onClick={() => setTransactionToDelete(t)} className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors p-2 rounded-lg" title="Delete Transaction"><Trash2 size={18} /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* ========================================= */}
-        {/* 📱 MOBILE VIEW */}
-        {/* ========================================= */}
-        <div className="md:hidden divide-y divide-white/40 dark:divide-white/5">
-          {loading ? (
-            <div className="px-6 py-20 text-center text-slate-500">Loading history...</div>
-          ) : paginatedTransactions.length === 0 ? (
-            <div className="px-6 py-20 text-center text-slate-500">
-              {searchQuery ? `No transactions found matching "${searchQuery}"` : `No transactions found for ${MONTHS[selectedMonth]} ${selectedYear}.`}
+      {/* TRANSACTIONS LIST */}
+      <div className="glass-card rounded-[2rem] p-2 sm:p-4 transition-colors shadow-sm">
+        {loading ? (
+          <div className="p-10 flex justify-center"><Loader2 className="animate-spin text-indigo-500" size={32} /></div>
+        ) : paginatedTx.length === 0 ? (
+          <div className="p-16 text-center flex flex-col items-center animate-in fade-in">
+            <div className="w-16 h-16 rounded-2xl bg-slate-100/80 dark:bg-white/5 flex items-center justify-center text-slate-400 mb-4 backdrop-blur-sm border border-slate-200/50 dark:border-white/5">
+              <FileText size={32} />
             </div>
-          ) : (
-            paginatedTransactions.map((t) => (
-              <div key={t.id} className="p-5 hover:bg-white/80 dark:hover:bg-white/5 transition-colors group">
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex items-start gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors mt-0.5 border border-white/40 dark:border-white/5 ${
-                      t.type === 'income' ? 'bg-emerald-100/80 text-emerald-600 dark:bg-emerald-400/10 dark:text-emerald-400' : 'bg-rose-100/80 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400'
-                    }`}>
-                      {t.type === 'income' ? <ArrowDownToLine size={18}/> : <ArrowUpRight size={18}/>}
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 line-clamp-1">{t.title}</h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium flex flex-wrap gap-1 items-center">
-                        <span>{new Date(t.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                        <span className="text-[10px] px-1.5 py-0.5 bg-white/60 dark:bg-white/10 rounded-full">{t.category}</span>
-                      </p>
-                    </div>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-200">No {activeFilter !== 'all' ? activeFilter : ''} transactions found</h3>
+            <p className="text-sm text-slate-500 mt-2">No records match your current filter for {MONTHS[selectedMonth]} {selectedYear}.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100 dark:divide-white/5 animate-in fade-in duration-300">
+            {paginatedTx.map((tx) => (
+              <div key={tx.id} className="flex items-center justify-between p-4 hover:bg-slate-50/80 dark:hover:bg-white/5 rounded-[1.5rem] transition-all group">
+                <div className="flex items-center gap-4 truncate">
+                  <div className={`w-12 h-12 shrink-0 rounded-[1.25rem] flex items-center justify-center border shadow-sm backdrop-blur-sm transition-colors ${tx.type === 'income' ? 'bg-emerald-50/80 dark:bg-emerald-500/10 border-emerald-200/50 dark:border-emerald-500/20 text-emerald-500' : 'bg-rose-50/80 dark:bg-rose-500/10 border-rose-200/50 dark:border-rose-500/20 text-rose-500'}`}>
+                    {tx.type === 'income' ? <ArrowDownToLine size={20} className="rotate-180"/> : <Receipt size={20} />}
                   </div>
-                  {/* UPGRADED: Expenses are now Red here in Mobile view too! */}
-                  <div className={`text-right font-extrabold text-base tracking-wide transition-colors whitespace-nowrap mt-0.5 ${
-                    t.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-                  }`}>
-                    {t.type === 'expense' ? '-' : '+'}{currencySymbol}{Number(t.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <div className="truncate">
+                    <p className="text-base font-bold text-slate-900 dark:text-slate-100 truncate pr-4">{tx.title}</p>
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{new Date(tx.date).toLocaleDateString()} • {tx.category}</p>
                   </div>
                 </div>
                 
-                <div className="flex justify-end gap-2 pt-3 border-t border-white/40 dark:border-white/5 mt-1">
-                  <button 
-                    onClick={() => setTransactionToEdit(t)} 
-                    className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-brand/10 text-brand dark:bg-brand/10 dark:text-brand rounded-lg text-xs font-bold transition-all active:scale-95"
-                  >
-                    <Pencil size={14} /> Edit
-                  </button>
-                  <button 
-                    onClick={() => setTransactionToDelete(t)} 
-                    className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400 rounded-lg text-xs font-bold transition-all active:scale-95"
-                  >
-                    <Trash2 size={14} /> Delete
-                  </button>
+                <div className="flex items-center gap-3 shrink-0 pl-2">
+                  {/* 🚀 FIXED: Color coded amounts matching the tabs */}
+                  <span className={`text-lg font-bold tracking-tight transition-colors ${tx.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                    {tx.type === 'expense' ? '-' : '+'}{currencySymbol}{Number(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                  
+                  {/* The "Oops" Buttons */}
+                  <div className="flex gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => openEditModal(tx)} className="p-2 text-slate-400 hover:text-indigo-600 bg-white/50 dark:bg-black/20 hover:bg-indigo-100 dark:hover:bg-indigo-500/10 rounded-lg transition-all" title="Edit">
+                      <Edit2 size={16} />
+                    </button>
+                    <button onClick={() => handleDelete(tx.id)} className="p-2 text-slate-400 hover:text-rose-600 bg-white/50 dark:bg-black/20 hover:bg-rose-100 dark:hover:bg-rose-500/10 rounded-lg transition-all" title="Delete">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
               </div>
-            ))
-          )}
-        </div>
-        
-        {/* Pagination */}
-        {!loading && filteredTransactions.length > 0 && (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-5 border-t border-white/50 dark:border-white/5 bg-white/40 dark:bg-white/5 transition-colors backdrop-blur-md">
-            <span className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400 text-center sm:text-left">
-              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredTransactions.length)} of {filteredTransactions.length} entries
-            </span>
-            
-            <div className="flex items-center gap-3">
-              <button 
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="p-2 rounded-lg border border-white/80 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white/60 dark:bg-transparent shadow-sm"
-              >
-                <ChevronLeft size={18} />
-              </button>
-              
-              <span className="text-sm font-bold text-slate-700 dark:text-slate-300 px-2">
-                Page {currentPage} / {totalPages}
-              </span>
-              
-              <button 
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="p-2 rounded-lg border border-white/80 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors bg-white/60 dark:bg-transparent shadow-sm"
-              >
-                <ChevronRight size={18} />
-              </button>
-            </div>
+            ))}
           </div>
         )}
       </div>
 
-      {transactionToEdit && (
-        <EditTransactionModal 
-          transaction={transactionToEdit} 
-          onClose={() => setTransactionToEdit(null)} 
-        />
-      )}
-
-      {/* ============================================== */}
-      {/* DANGER MODAL */}
-      {/* ============================================== */}
-      {transactionToDelete && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-          <div className="absolute inset-0 bg-slate-900/10 dark:bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setTransactionToDelete(null)} />
-          <div className="relative z-10 w-full max-w-sm bg-white/80 dark:bg-slate-900/90 backdrop-blur-xl border border-white/50 dark:border-white/10 rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6 text-center pt-8">
-              <div className="w-16 h-16 rounded-full bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto mb-4 border border-rose-200 dark:border-rose-500/30">
-                <Trash2 size={24} />
-              </div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">Delete Transaction?</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">
-                Are you sure you want to delete <span className="font-bold text-slate-700 dark:text-slate-300">{transactionToDelete.title}</span>? This action cannot be undone and will affect your balances.
-              </p>
-              <div className="flex gap-3">
-                <button onClick={() => setTransactionToDelete(null)} className="flex-1 py-3.5 rounded-xl font-bold text-slate-700 bg-white/80 border border-slate-200 hover:bg-white dark:text-slate-300 dark:border-white/5 dark:bg-white/5 dark:hover:bg-white/10 transition-colors active:scale-95 shadow-sm">Cancel</button>
-                <button onClick={confirmDelete} className="flex-1 py-3.5 rounded-xl font-bold text-white bg-rose-500 hover:bg-rose-600 shadow-[0_4px_14px_rgba(244,63,94,0.4)] transition-all hover:-translate-y-0.5 active:scale-95">Yes, Delete</button>
-              </div>
-            </div>
+      {/* Pagination */}
+      {filteredTransactions.length > ITEMS_PER_PAGE && (
+        <div className="flex items-center justify-between px-6 py-4 glass-card rounded-2xl shadow-sm">
+          <span className="text-sm font-medium text-slate-500">Page {currentPage} of {totalPages}</span>
+          <div className="flex gap-2">
+            <button onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} disabled={currentPage === 1} className="p-2 rounded-lg border border-slate-200 dark:border-white/10 text-slate-500 disabled:opacity-50 hover:bg-white dark:hover:bg-white/5"><ChevronLeft size={18} /></button>
+            <button onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} disabled={currentPage === totalPages} className="p-2 rounded-lg border border-slate-200 dark:border-white/10 text-slate-500 disabled:opacity-50 hover:bg-white dark:hover:bg-white/5"><ChevronRight size={18} /></button>
           </div>
         </div>
       )}
+
+      {/* 🚀 CSV DRAG & DROP MODAL */}
+      {isImportModalOpen && mounted && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm animate-in fade-in" onClick={() => !isImporting && setIsImportModalOpen(false)} />
+          <div className="relative z-10 w-full max-w-lg bg-white dark:bg-[#0A0A0E] rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] border border-slate-200 dark:border-white/10 overflow-hidden animate-in zoom-in-95">
+            
+            <div className="flex justify-between items-center p-6 border-b border-slate-200/80 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><UploadCloud size={20} className="text-indigo-500" /> Import Bank Statement</h3>
+              <button onClick={() => !isImporting && setIsImportModalOpen(false)} className="text-slate-500 hover:text-slate-900 dark:hover:text-white p-1 rounded-full"><X size={20}/></button>
+            </div>
+
+            <div className="p-8">
+              {importStatus.type === 'success' ? (
+                <div className="text-center py-6 animate-in zoom-in">
+                  <CheckCircle2 size={48} className="text-emerald-500 mx-auto mb-4" />
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Import Complete!</h3>
+                  <p className="text-slate-500">{importStatus.message}</p>
+                </div>
+              ) : importStatus.type === 'error' ? (
+                <div className="text-center py-6 animate-in zoom-in">
+                  <AlertTriangle size={48} className="text-rose-500 mx-auto mb-4" />
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Import Failed</h3>
+                  <p className="text-slate-500 mb-6">{importStatus.message}</p>
+                  <button onClick={() => setImportStatus({message:'', type:'idle'})} className="bg-slate-100 dark:bg-white/10 px-6 py-2 rounded-xl font-bold text-sm">Try Again</button>
+                </div>
+              ) : (
+                <>
+                  <div 
+                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={handleFileDrop}
+                    className={`border-2 border-dashed rounded-3xl p-10 flex flex-col items-center justify-center text-center transition-all duration-300 ${
+                      isDragging 
+                      ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-500/10 scale-105' 
+                      : 'border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    {isImporting ? (
+                      <Loader2 size={48} className="text-indigo-500 animate-spin mb-4" />
+                    ) : (
+                      <FileText size={48} className={`mb-4 transition-colors ${isDragging ? 'text-indigo-500' : 'text-slate-400'}`} />
+                    )}
+                    <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Drag & Drop CSV</h4>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">M-Pesa, CRDB, NMB, or standard CSVs.</p>
+                    
+                    <input type="file" id="csvUpload" accept=".csv" className="hidden" onChange={handleFileInput} disabled={isImporting} />
+                    <label htmlFor="csvUpload" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-6 rounded-xl cursor-pointer transition-all active:scale-95 shadow-md disabled:opacity-50">
+                      Browse Files
+                    </label>
+                  </div>
+                  
+                  <div className="mt-6 text-center">
+                    <button onClick={downloadCSVTemplate} className="text-xs font-bold text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 flex items-center justify-center gap-1 mx-auto transition-colors">
+                      <Download size={14}/> Download Template Format
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      , document.body)}
+
+      {/* 🚀 THE "OOPS" EDIT MODAL */}
+      {isEditModalOpen && mounted && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm animate-in fade-in" onClick={() => !isEditing && setIsEditModalOpen(false)} />
+          <div className="relative z-10 w-full max-w-md bg-white dark:bg-[#0A0A0E] rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] border border-slate-200 dark:border-white/10 overflow-hidden animate-in zoom-in-95">
+            <div className="flex justify-between items-center p-6 border-b border-zinc-200/80 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
+              <h3 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white flex items-center gap-2"><Edit2 size={20} className="text-indigo-500" /> Edit Transaction</h3>
+              <button onClick={() => !isEditing && setIsEditModalOpen(false)} className="text-zinc-500 hover:text-rose-500 p-1 rounded-full"><X size={20} /></button>
+            </div>
+
+            <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
+              
+              <div className="flex bg-slate-100 dark:bg-slate-900/50 p-1 rounded-xl mb-4 border border-slate-200/50 dark:border-white/5">
+                <button type="button" onClick={() => setEditForm({...editForm, type: 'expense'})} className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${editForm.type === 'expense' ? 'bg-white dark:bg-slate-800 shadow-sm text-rose-600 dark:text-rose-400' : 'text-slate-500'}`}>Expense</button>
+                <button type="button" onClick={() => setEditForm({...editForm, type: 'income'})} className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${editForm.type === 'income' ? 'bg-white dark:bg-slate-800 shadow-sm text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`}>Income</button>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-400 mb-1">Title</label>
+                <input required type="text" value={editForm.title} onChange={(e) => setEditForm({...editForm, title: e.target.value})} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:ring-1 focus:ring-indigo-500 outline-none" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-400 mb-1">Amount</label>
+                  <div className="flex items-center bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl px-3 py-3 focus-within:ring-1 focus-within:ring-indigo-500">
+                    <span className="text-slate-400 text-sm font-medium mr-1.5">{currencySymbol}</span>
+                    <input required type="text" inputMode="numeric" value={editForm.amount} onChange={(e) => handlePriceChange(e.target.value)} className="w-full bg-transparent text-slate-900 dark:text-white outline-none font-bold" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-400 mb-1">Date</label>
+                  <input required type="date" value={editForm.date} onChange={(e) => setEditForm({...editForm, date: e.target.value})} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:ring-1 focus:ring-indigo-500 outline-none [color-scheme:light] dark:[color-scheme:dark]" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-400 mb-1">Category</label>
+                <select value={editForm.category} onChange={(e) => setEditForm({...editForm, category: e.target.value})} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:ring-1 focus:ring-indigo-500 outline-none appearance-none">
+                  {CATEGORIES.map(cat => <option key={cat} value={cat} className="dark:bg-slate-900">{cat}</option>)}
+                </select>
+              </div>
+
+              <button type="submit" disabled={isEditing} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl shadow-[0_8px_20px_-6px_rgba(99,102,241,0.6)] transition-all active:scale-95 mt-4 flex justify-center items-center gap-2">
+                {isEditing ? <Loader2 className="animate-spin" size={20} /> : "Update Transaction"}
+              </button>
+            </form>
+          </div>
+        </div>
+      , document.body)}
 
     </div>
   );
