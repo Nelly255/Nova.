@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react"; 
 import { supabase } from "@/lib/supabase"; 
-import { LayoutDashboard, ArrowRightLeft, Target, ShieldCheck, Settings, PiggyBank, Briefcase, Menu, ChevronLeft, CreditCard, Activity, LogOut, Download, Search } from "lucide-react"; 
+import { LayoutDashboard, ArrowRightLeft, Target, ShieldCheck, Settings, PiggyBank, Briefcase, Menu, ChevronLeft, CreditCard, Activity, LogOut, Download, Search, Coffee } from "lucide-react"; 
 import UserProfile from "@/components/UserProfile"; 
 import AuthGuard from "@/components/AuthGuard";
 import QuickTourModal from "@/components/QuickTourModal"; 
@@ -94,6 +94,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <NavItem href="/dashboard/savings" icon={<PiggyBank size={20}/>} label="Savings Goals" active={pathname === "/dashboard/savings"} isCollapsed={isCollapsed} />
               <NavItem href="/dashboard/assets" icon={<Briefcase size={20}/>} label="Assets" active={pathname === "/dashboard/assets"} isCollapsed={isCollapsed} />
               <NavItem href="/dashboard/debts" icon={<CreditCard size={20}/>} label="Debts & Loans" active={pathname === "/dashboard/debts"} isCollapsed={isCollapsed} />
+              
+              {/* ☕ Ko-fi Button (Desktop) */}
+              <div className="pt-4 pb-2">
+                <a 
+                  href="https://ko-fi.com/nellyjackson" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  title={isCollapsed ? "Support on Ko-fi" : ""}
+                  className={`flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-start px-4 gap-3'} py-3 rounded-xl transition-all duration-300 font-bold group relative text-amber-700 dark:text-amber-400 bg-amber-100/80 dark:bg-amber-500/10 hover:bg-amber-200 dark:hover:bg-amber-500/20 border border-amber-200/50 dark:border-amber-500/20 shadow-sm`}
+                >
+                  <div className="relative z-10 shrink-0 transition-transform duration-300 ease-out group-hover:scale-110 group-hover:-translate-y-0.5 drop-shadow-[0_0_8px_rgba(251,191,36,0.4)]">
+                    <Coffee size={20} />
+                  </div>
+                  <div className={`relative z-10 overflow-hidden transition-all duration-500 flex items-center ${isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
+                    <span className="whitespace-nowrap">Support on Ko-fi</span>
+                  </div>
+                </a>
+              </div>
             </nav>
           </div>
 
@@ -131,6 +149,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           
           <div className="flex items-center gap-1 sm:gap-2">
             
+            {/* ☕ Ko-fi Button (Mobile) */}
+            <a 
+              href="https://ko-fi.com/nellyjackson" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300 transition-colors p-2 rounded-full hover:bg-amber-50 dark:hover:bg-amber-500/10 active:scale-95"
+              title="Support on Ko-fi"
+            >
+              <Coffee size={20} />
+            </a>
+
             {/* 🚀 NEW: The Mobile Search Trigger */}
             <button 
               onClick={() => window.dispatchEvent(new Event("open-command-palette"))}

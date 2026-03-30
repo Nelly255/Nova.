@@ -4,32 +4,42 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { 
   CreditCard, Home, Car, GraduationCap, Building, 
-  PlusCircle, Trash2, DollarSign, TrendingDown, Target, X, Loader2, ChevronDown 
+  PlusCircle, Trash2, DollarSign, TrendingDown, Target, X, Loader2, ChevronDown, 
+  ArrowUpRight, Users, Briefcase, Wallet
 } from "lucide-react";
 
 const DEBT_CATEGORIES = ["Credit Card", "Car Loan", "Student Loan", "Mortgage", "Personal Loan"];
+const RECEIVABLE_CATEGORIES = ["Friend/Family", "Business", "Personal Loan", "IOU", "Other"];
 
 export default function DebtsPage() {
   const [debts, setDebts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currencySymbol, setCurrencySymbol] = useState("$");
 
+  const [activeTab, setActiveTab] = useState<'liability' | 'receivable'>('liability');
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
-  const [addForm, setAddForm] = useState({ name: "", total_amount: "", interest_rate: "", min_payment: "", category: "Credit Card" });
+  
+  const [addForm, setAddForm] = useState({ 
+    name: "", total_amount: "", interest_rate: "", min_payment: "", 
+    category: "Credit Card", type: "liability" as 'liability' | 'receivable' 
+  });
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
 
   const [paymentModal, setPaymentModal] = useState({ isOpen: false, id: "", name: "", remaining: 0 });
   const [paymentAmount, setPaymentAmount] = useState("");
   const [isPaying, setIsPaying] = useState(false);
 
-  // New state for the custom delete modal
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: "", name: "" });
   const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchDebts = async () => {
     const { data, error } = await supabase.from("debts").select("*").order("created_at", { ascending: false });
-    if (!error && data) setDebts(data);
+    if (!error && data) {
+      const processedData = data.map(d => ({ ...d, type: d.type || 'liability' }));
+      setDebts(processedData);
+    }
     setLoading(false);
   };
 
@@ -54,8 +64,20 @@ export default function DebtsPage() {
       case "Car Loan": return <Car size={24} />;
       case "Student Loan": return <GraduationCap size={24} />;
       case "Personal Loan": return <Building size={24} />;
+      case "Friend/Family": return <Users size={24} />;
+      case "Business": return <Briefcase size={24} />;
+      case "IOU": return <CreditCard size={24} />;
+      case "Other": return <Target size={24} />;
       default: return <CreditCard size={24} />;
     }
+  };
+
+  const handleTypeToggle = (type: 'liability' | 'receivable') => {
+    setAddForm({
+      ...addForm,
+      type,
+      category: type === 'liability' ? "Credit Card" : "Friend/Family"
+    });
   };
 
   const handleAddDebt = async (e: React.FormEvent) => {
@@ -70,25 +92,50 @@ export default function DebtsPage() {
       remaining_amount: amount, 
       interest_rate: parseFloat(addForm.interest_rate) || 0,
       min_payment: parseFloat(addForm.min_payment) || 0,
-      category: addForm.category
+      category: addForm.category,
+      type: addForm.type 
     }]);
 
-    setIsAdding(false);
     if (!error) {
+      const isLiability = addForm.type === 'liability';
+      const { error: txError } = await supabase.from("transactions").insert([{
+        title: isLiability ? `Borrowed: ${addForm.name}` : `Lent: ${addForm.name}`,
+        amount: amount,
+        type: isLiability ? 'income' : 'expense', 
+        category: isLiability ? 'Loan Received' : 'Loan Given',
+        date: new Date().toISOString().split("T")[0],
+      }]);
+
+      if (txError) {
+        console.error("Failed to adjust liquid cash:", txError);
+      } else {
+        window.dispatchEvent(new Event("transactionUpdated"));
+      }
+
       setIsAddModalOpen(false);
-      setAddForm({ name: "", total_amount: "", interest_rate: "", min_payment: "", category: "Credit Card" });
+      setAddForm({ name: "", total_amount: "", interest_rate: "", min_payment: "", category: "Credit Card", type: "liability" });
       fetchDebts();
     } else {
-      alert("Failed to add debt.");
+      alert("Failed to add record.");
     }
+    setIsAdding(false);
   };
 
   const handleRecordPayment = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const payAmount = parseFloat(paymentAmount) || 0;
+    
+    // Server-side safety net: don't process if overpaying
+    if (payAmount > paymentModal.remaining) {
+      return;
+    }
+
     setIsPaying(true);
     
-    const payAmount = parseFloat(paymentAmount);
     const newRemaining = Math.max(0, paymentModal.remaining - payAmount);
+    const targetRecord = debts.find(d => d.id === paymentModal.id);
+    const isReceivable = targetRecord?.type === 'receivable';
 
     const { error: debtError } = await supabase
       .from("debts")
@@ -98,10 +145,10 @@ export default function DebtsPage() {
     const { error: txError } = await supabase
       .from("transactions")
       .insert([{
-        title: `Payment: ${paymentModal.name}`,
+        title: isReceivable ? `Received: ${paymentModal.name}` : `Payment: ${paymentModal.name}`,
         amount: payAmount,
-        type: "expense",
-        category: "Debt Paydown",
+        type: isReceivable ? "income" : "expense",
+        category: isReceivable ? "Debt Repayment" : "Debt Paydown",
         date: new Date().toISOString().split("T")[0],
       }]);
 
@@ -116,7 +163,6 @@ export default function DebtsPage() {
     }
   };
 
-  // Updated delete function to work with our new modal
   const handleConfirmDelete = async () => {
     setIsDeleting(true);
     const { error } = await supabase.from("debts").delete().eq("id", deleteModal.id);
@@ -126,15 +172,18 @@ export default function DebtsPage() {
       setDeleteModal({ isOpen: false, id: "", name: "" });
       fetchDebts();
     } else {
-      alert("Failed to delete liability.");
+      alert("Failed to delete record.");
     }
   };
 
-  const totalOutstanding = debts.reduce((acc, d) => acc + Number(d.remaining_amount), 0);
-  const totalOriginal = debts.reduce((acc, d) => acc + Number(d.total_amount), 0);
-  const totalMinPayments = debts.reduce((acc, d) => acc + (d.remaining_amount > 0 ? Number(d.min_payment) : 0), 0);
-  
+  const displayedDebts = debts.filter(d => d.type === activeTab);
+  const totalOutstanding = displayedDebts.reduce((acc, d) => acc + Number(d.remaining_amount), 0);
+  const totalOriginal = displayedDebts.reduce((acc, d) => acc + Number(d.total_amount), 0);
+  const totalMinPayments = displayedDebts.reduce((acc, d) => acc + (d.remaining_amount > 0 ? Number(d.min_payment) : 0), 0);
   const overallProgress = totalOriginal > 0 ? ((totalOriginal - totalOutstanding) / totalOriginal) * 100 : 0;
+
+  const isLiabilityTab = activeTab === 'liability';
+  const themeColor = isLiabilityTab ? 'rose' : 'emerald';
 
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-6 md:space-y-8 pb-32 relative bg-transparent min-h-screen transition-colors duration-300">
@@ -142,7 +191,7 @@ export default function DebtsPage() {
       <header className="flex justify-between items-end relative z-50">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 transition-colors">Debts & Loans</h1>
-          <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1 transition-colors">Track your liabilities and crush your debt snowball.</p>
+          <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1 transition-colors">Track what you owe, and what is owed to you.</p>
         </div>
         
         <div className="relative">
@@ -150,7 +199,7 @@ export default function DebtsPage() {
             onClick={() => setIsAddModalOpen(true)}
             className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-[0_8px_20px_-6px_rgba(99,102,241,0.6)] border border-white/20 transition-all duration-300 hover:-translate-y-0.5 active:scale-95 px-4 py-2 md:px-5 md:py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 text-xs md:text-sm"
           >
-            <PlusCircle size={16} /> <span className="hidden sm:inline">Add Liability</span><span className="sm:hidden">Add</span>
+            <PlusCircle size={16} /> <span className="hidden sm:inline">Add Record</span><span className="sm:hidden">Add</span>
           </button>
 
           {isAddModalOpen && (
@@ -163,19 +212,39 @@ export default function DebtsPage() {
               <div className="fixed left-4 right-4 top-24 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-3 z-50 sm:w-[420px] glass-card rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] overflow-hidden animate-in fade-in zoom-in-95 origin-top sm:origin-top-right duration-200 flex flex-col max-h-[85vh]">
                 
                 <div className="flex justify-between items-center p-6 border-b border-slate-200/80 dark:border-white/5 transition-colors shrink-0">
-                  <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Add New Liability</h3>
+                  <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Add New Record</h3>
                   <button onClick={() => setIsAddModalOpen(false)} className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors p-1 rounded-full hover:bg-slate-100 dark:hover:bg-white/5">
                     <X size={20} />
                   </button>
                 </div>
 
                 <form onSubmit={handleAddDebt} className="p-6 space-y-4 overflow-y-auto custom-scrollbar pb-32">
+                  
+                  <div className="flex bg-slate-100 dark:bg-slate-900/50 p-1 rounded-xl mb-2 border border-slate-200/50 dark:border-white/5">
+                    <button 
+                      type="button"
+                      onClick={() => handleTypeToggle('liability')} 
+                      className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-lg transition-all ${addForm.type === 'liability' ? 'bg-white dark:bg-slate-800 shadow-sm text-rose-600 dark:text-rose-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+                    >
+                      <TrendingDown size={14}/> I Owe Money
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => handleTypeToggle('receivable')} 
+                      className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-lg transition-all ${addForm.type === 'receivable' ? 'bg-white dark:bg-slate-800 shadow-sm text-emerald-600 dark:text-emerald-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+                    >
+                      <ArrowUpRight size={14}/> Owed To Me
+                    </button>
+                  </div>
+
                   <div>
-                    <label className="block text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-400 mb-1">Debt Name</label>
+                    <label className="block text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-400 mb-1">
+                      {addForm.type === 'liability' ? 'Debt Name' : 'Who owes you?'}
+                    </label>
                     <input 
                       required 
                       type="text" 
-                      placeholder="e.g., Chase Sapphire, Car Loan" 
+                      placeholder={addForm.type === 'liability' ? "e.g., Chase Sapphire, Car Loan" : "e.g., John Doe, Dinner Split"} 
                       value={addForm.name} 
                       onChange={(e) => setAddForm({...addForm, name: e.target.value})} 
                       className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors" 
@@ -184,7 +253,7 @@ export default function DebtsPage() {
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-400 mb-1">Total Owed ({currencySymbol})</label>
+                      <label className="block text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-400 mb-1">Total Amount ({currencySymbol})</label>
                       <input 
                         required 
                         type="text" 
@@ -192,7 +261,7 @@ export default function DebtsPage() {
                         placeholder="0.00" 
                         value={formatAmountForDisplay(addForm.total_amount)} 
                         onChange={(e) => setAddForm({...addForm, total_amount: cleanNumber(e.target.value)})} 
-                        className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-rose-600 dark:text-rose-400 font-bold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors" 
+                        className={`w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 font-bold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors ${addForm.type === 'liability' ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`} 
                       />
                     </div>
                     
@@ -211,7 +280,7 @@ export default function DebtsPage() {
                         <>
                           <div className="fixed inset-0 z-40" onClick={() => setIsCategoryOpen(false)} />
                           <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                            {DEBT_CATEGORIES.map((cat) => (
+                            {(addForm.type === 'liability' ? DEBT_CATEGORIES : RECEIVABLE_CATEGORIES).map((cat) => (
                               <button
                                 key={cat}
                                 type="button"
@@ -263,7 +332,7 @@ export default function DebtsPage() {
                     disabled={isAdding} 
                     className="w-full shrink-0 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-[0_8px_20px_-6px_rgba(99,102,241,0.6)] border border-white/20 transition-all duration-300 hover:-translate-y-0.5 active:scale-95 font-bold py-3.5 rounded-xl mt-4 flex justify-center items-center gap-2 disabled:opacity-70 disabled:hover:translate-y-0"
                   >
-                    {isAdding ? <Loader2 className="animate-spin" size={20} /> : "Save Liability"}
+                    {isAdding ? <Loader2 className="animate-spin" size={20} /> : "Save Record"}
                   </button>
                 </form>
               </div>
@@ -272,16 +341,32 @@ export default function DebtsPage() {
         </div>
       </header>
 
+      {/* NEW: Tab Navigation */}
+      <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-2xl w-fit border border-slate-200 dark:border-white/10 relative z-40">
+        <button 
+          onClick={() => setActiveTab('liability')} 
+          className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeTab === 'liability' ? 'bg-white dark:bg-slate-800 shadow-sm text-rose-600 dark:text-rose-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+        >
+          Money I Owe
+        </button>
+        <button 
+          onClick={() => setActiveTab('receivable')} 
+          className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeTab === 'receivable' ? 'bg-white dark:bg-slate-800 shadow-sm text-emerald-600 dark:text-emerald-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+        >
+          Owed To Me
+        </button>
+      </div>
+
       {/* The Master Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-500">
         
-        {/* Total Outstanding Card */}
-        <div className="glass-card p-6 md:p-8 rounded-[2rem] relative overflow-hidden transition-colors border border-rose-500/10">
-          <div className="absolute -top-24 -right-24 w-64 h-64 bg-rose-500/10 blur-3xl rounded-full pointer-events-none"></div>
+        <div className={`glass-card p-6 md:p-8 rounded-[2rem] relative overflow-hidden transition-colors border border-${themeColor}-500/10`}>
+          <div className={`absolute -top-24 -right-24 w-64 h-64 bg-${themeColor}-500/10 blur-3xl rounded-full pointer-events-none transition-colors`}></div>
           <div className="relative z-10 flex justify-between items-start">
             <div>
-              <p className="text-rose-600 dark:text-rose-400 font-bold mb-1 tracking-wide uppercase text-xs md:text-sm flex items-center gap-2 transition-colors">
-                <TrendingDown size={16} /> Total Outstanding Debt
+              <p className={`text-${themeColor}-600 dark:text-${themeColor}-400 font-bold mb-1 tracking-wide uppercase text-xs md:text-sm flex items-center gap-2 transition-colors`}>
+                {isLiabilityTab ? <TrendingDown size={16} /> : <ArrowUpRight size={16} />}
+                {isLiabilityTab ? "Total Outstanding Debt" : "Total Owed To Me"}
               </p>
               <h2 className="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white mt-2 transition-colors break-words leading-tight">
                 {currencySymbol}{totalOutstanding.toLocaleString(undefined, { maximumFractionDigits: 0 })}
@@ -289,21 +374,22 @@ export default function DebtsPage() {
             </div>
           </div>
           <div className="relative z-10 mt-6 pt-6 border-t border-slate-200/50 dark:border-white/5 flex flex-col sm:flex-row justify-between sm:items-center gap-2 transition-colors">
-            <span className="text-xs md:text-sm font-medium text-slate-500 dark:text-slate-400">Total Monthly Minimums:</span>
+            <span className="text-xs md:text-sm font-medium text-slate-500 dark:text-slate-400">
+              {isLiabilityTab ? "Total Monthly Minimums:" : "Expected Monthly Returns:"}
+            </span>
             <span className="font-bold text-slate-700 dark:text-slate-200 text-sm md:text-base">{currencySymbol}{totalMinPayments.toLocaleString(undefined, { maximumFractionDigits: 0 })}/mo</span>
           </div>
         </div>
 
-        {/* Overall Paydown Progress */}
-        <div className="glass-card p-6 md:p-8 rounded-[2rem] flex flex-col justify-center transition-colors border border-emerald-500/10 relative overflow-hidden">
-          <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-emerald-500/10 blur-3xl rounded-full pointer-events-none"></div>
+        <div className="glass-card p-6 md:p-8 rounded-[2rem] flex flex-col justify-center transition-colors border border-indigo-500/10 relative overflow-hidden">
+          <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-indigo-500/10 blur-3xl rounded-full pointer-events-none transition-colors"></div>
           <div className="relative z-10">
             <div className="flex justify-between items-end mb-4">
               <div>
-                <p className="text-emerald-600 dark:text-emerald-400 font-bold mb-1 tracking-wide uppercase text-xs md:text-sm flex items-center gap-2 transition-colors">
-                  <Target size={16} /> Paydown Progress
+                <p className="text-indigo-600 dark:text-indigo-400 font-bold mb-1 tracking-wide uppercase text-xs md:text-sm flex items-center gap-2 transition-colors">
+                  <Target size={16} /> {isLiabilityTab ? "Paydown Progress" : "Collection Progress"}
                 </p>
-                <h3 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white transition-colors">{overallProgress.toFixed(1)}% Paid Off</h3>
+                <h3 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white transition-colors">{overallProgress.toFixed(1)}% {isLiabilityTab ? "Paid Off" : "Collected"}</h3>
               </div>
               <div className="text-right">
                 <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 font-medium">Original Total</p>
@@ -313,7 +399,7 @@ export default function DebtsPage() {
             
             <div className="h-3 md:h-4 w-full bg-slate-100/80 dark:bg-slate-900/50 rounded-full overflow-hidden transition-colors shadow-inner border border-slate-200/50 dark:border-white/5">
               <div 
-                className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(16,185,129,0.5)]" 
+                className="h-full bg-gradient-to-r from-indigo-400 to-indigo-500 transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(99,102,241,0.5)]" 
                 style={{ width: `${overallProgress}%` }}
               ></div>
             </div>
@@ -325,25 +411,33 @@ export default function DebtsPage() {
       {/* Debt Grid */}
       <div className="mt-8">
         {loading ? (
-          <p className="text-slate-500 transition-colors font-medium">Loading liabilities...</p>
-        ) : debts.length === 0 ? (
+          <p className="text-slate-500 transition-colors font-medium">Loading records...</p>
+        ) : displayedDebts.length === 0 ? (
           <div className="glass-card p-12 md:p-16 text-center rounded-[2rem] flex flex-col items-center transition-colors">
             <div className="w-16 h-16 rounded-2xl bg-slate-100/80 dark:bg-white/5 flex items-center justify-center text-slate-400 mb-4 backdrop-blur-sm border border-slate-200/50 dark:border-white/5">
-              <CreditCard size={32} />
+              {isLiabilityTab ? <CreditCard size={32} /> : <Wallet size={32} />}
             </div>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-200 transition-colors">Debt Free! (For now)</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 transition-colors">Add your first credit card or loan to start tracking your paydown.</p>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-200 transition-colors">
+              {isLiabilityTab ? "Debt Free! (For now)" : "No Pending Debts"}
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 transition-colors">
+              {isLiabilityTab ? "Add your first credit card or loan to start tracking your paydown." : "Add a record if someone owes you money."}
+            </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {debts.map((debt) => {
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-in fade-in duration-500">
+            {displayedDebts.map((debt) => {
               const isPaidOff = debt.remaining_amount <= 0;
               const progress = ((debt.total_amount - debt.remaining_amount) / debt.total_amount) * 100;
+
+              // Styling logic depending on liability vs receivable
+              const cardColor = isLiabilityTab 
+                ? (isPaidOff ? 'emerald' : 'rose')
+                : (isPaidOff ? 'slate' : 'emerald');
 
               return (
                 <div key={debt.id} className={`glass-card p-6 rounded-[2rem] relative group flex flex-col justify-between transition-all duration-300 ${isPaidOff ? 'opacity-60 grayscale hover:grayscale-0 hover:opacity-100' : 'hover:bg-white/40 dark:hover:bg-white/5 border border-transparent hover:border-slate-200/50 dark:hover:border-white/10'}`}>
                   
-                  {/* Updated Delete Trigger */}
                   <button 
                     onClick={() => setDeleteModal({ isOpen: true, id: debt.id, name: debt.name })}
                     className="absolute top-4 right-4 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 bg-white/50 dark:bg-black/20 hover:bg-rose-100 dark:hover:bg-rose-500/10 p-2 rounded-lg opacity-100 md:opacity-0 group-hover:opacity-100 transition-all z-10 backdrop-blur-md"
@@ -353,7 +447,7 @@ export default function DebtsPage() {
 
                   <div>
                     <div className="flex items-center gap-4 mb-6">
-                      <div className={`w-12 h-12 md:w-14 md:h-14 shrink-0 rounded-2xl border flex items-center justify-center shadow-sm backdrop-blur-sm transition-colors ${isPaidOff ? 'bg-emerald-50/80 dark:bg-emerald-500/10 border-emerald-200/50 dark:border-emerald-500/20 text-emerald-500' : 'bg-rose-50/80 dark:bg-rose-500/10 border-rose-200/50 dark:border-rose-500/20 text-rose-500'}`}>
+                      <div className={`w-12 h-12 md:w-14 md:h-14 shrink-0 rounded-2xl border flex items-center justify-center shadow-sm backdrop-blur-sm transition-colors bg-${cardColor}-50/80 dark:bg-${cardColor}-500/10 border-${cardColor}-200/50 dark:border-${cardColor}-500/20 text-${cardColor}-500`}>
                         {getCategoryIcon(debt.category)}
                       </div>
                       <div className="truncate pr-8">
@@ -365,7 +459,7 @@ export default function DebtsPage() {
                     <div className="flex justify-between items-end mb-2">
                       <div>
                         <p className="text-[10px] md:text-xs font-medium text-slate-500 dark:text-slate-400 mb-0.5">Remaining Balance</p>
-                        <span className={`text-2xl md:text-3xl font-extrabold transition-colors break-words ${isPaidOff ? 'text-emerald-500' : 'text-slate-900 dark:text-white'}`}>
+                        <span className={`text-2xl md:text-3xl font-extrabold transition-colors break-words ${isPaidOff && isLiabilityTab ? 'text-emerald-500' : 'text-slate-900 dark:text-white'}`}>
                           {currencySymbol}{Number(debt.remaining_amount).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                         </span>
                       </div>
@@ -373,7 +467,7 @@ export default function DebtsPage() {
                     
                     <div className="h-2 md:h-2.5 w-full bg-slate-100/80 dark:bg-slate-950/50 rounded-full overflow-hidden border border-slate-200/50 dark:border-white/5 mb-6 transition-colors shadow-inner">
                       <div 
-                        className={`h-full transition-all duration-1000 ease-out ${isPaidOff ? 'bg-emerald-500' : 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.4)]'}`} 
+                        className={`h-full transition-all duration-1000 ease-out bg-${cardColor}-500 shadow-[0_0_10px_rgba(0,0,0,0.2)]`} 
                         style={{ width: `${progress}%` }}
                       ></div>
                     </div>
@@ -388,11 +482,14 @@ export default function DebtsPage() {
                       disabled={isPaidOff}
                       className={`flex-1 py-3 rounded-xl font-bold flex justify-center items-center gap-2 text-sm md:text-base transition-all ${
                         isPaidOff 
-                        ? 'bg-emerald-100/50 text-emerald-600 border border-emerald-200/50 dark:bg-emerald-500/10 dark:text-emerald-400/80 dark:border-emerald-500/20' 
+                        ? 'bg-slate-100/50 text-slate-600 border border-slate-200/50 dark:bg-white/5 dark:text-slate-400 dark:border-white/10' 
                         : 'bg-white/80 text-slate-700 hover:bg-white border-slate-200 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 dark:border-white/10 border shadow-sm active:scale-95'
                       }`}
                     >
-                      {isPaidOff ? "Debt Crushed! 🎉" : <><DollarSign size={16} /> Log Payment</>}
+                      {isPaidOff 
+                        ? (isLiabilityTab ? "Debt Crushed! 🎉" : "Fully Collected! ✅") 
+                        : <>{isLiabilityTab ? "Log Payment" : "Log Receipt"}</>
+                      }
                     </button>
                   </div>
                 </div>
@@ -408,17 +505,40 @@ export default function DebtsPage() {
           <div className="absolute inset-0 bg-slate-900/10 dark:bg-black/40 backdrop-blur-sm animate-in fade-in" onClick={() => setPaymentModal({...paymentModal, isOpen: false})} />
           <div className="relative z-10 w-full max-w-sm glass-card rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] overflow-hidden animate-in zoom-in-95">
             <div className="flex justify-between items-center p-6 border-b border-slate-200/80 dark:border-white/5">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">Log Payment</h3>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                {debts.find(d => d.id === paymentModal.id)?.type === 'receivable' ? 'Record Receipt' : 'Log Payment'}
+              </h3>
               <button onClick={() => setPaymentModal({...paymentModal, isOpen: false})} className="text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 p-1 rounded-full"><X size={20} /></button>
             </div>
             <form onSubmit={handleRecordPayment} className="p-6 space-y-4">
-              <p className="text-sm font-medium text-slate-500 mb-2">Payment towards <span className="font-bold text-indigo-600 dark:text-indigo-400">{paymentModal.name}</span>.</p>
+              <p className="text-sm font-medium text-slate-500 mb-2">
+                {debts.find(d => d.id === paymentModal.id)?.type === 'receivable' ? 'Payment received for ' : 'Payment towards '}
+                <span className="font-bold text-indigo-600 dark:text-indigo-400">{paymentModal.name}</span>.
+              </p>
               <div>
                 <label className="block text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-400 mb-1">Amount ({currencySymbol})</label>
-                <input required autoFocus type="text" inputMode="decimal" placeholder="0.00" value={formatAmountForDisplay(paymentAmount)} onChange={(e) => setPaymentAmount(cleanNumber(e.target.value))} className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-emerald-500 text-lg font-bold text-slate-900 dark:text-slate-200 transition-colors" />
+                <input 
+                  required autoFocus type="text" inputMode="decimal" placeholder="0.00" 
+                  value={formatAmountForDisplay(paymentAmount)} 
+                  onChange={(e) => setPaymentAmount(cleanNumber(e.target.value))} 
+                  className={`w-full bg-slate-50 dark:bg-slate-950/50 border rounded-xl px-4 py-3 focus:outline-none focus:ring-1 text-lg font-bold transition-colors ${
+                    (parseFloat(paymentAmount) || 0) > paymentModal.remaining 
+                      ? 'border-rose-500 focus:ring-rose-500 text-rose-600 dark:text-rose-400' 
+                      : 'border-slate-200/80 dark:border-white/10 focus:ring-emerald-500 text-slate-900 dark:text-slate-200'
+                  }`} 
+                />
+                {((parseFloat(paymentAmount) || 0) > paymentModal.remaining) && (
+                  <p className="text-xs text-rose-500 font-semibold mt-2 animate-in slide-in-from-top-1">
+                    Cannot exceed remaining balance of {currencySymbol}{paymentModal.remaining.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </p>
+                )}
               </div>
-              <button type="submit" disabled={isPaying || !paymentAmount} className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white shadow-[0_8px_20px_-6px_rgba(16,185,129,0.6)] font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 hover:-translate-y-0.5 transition-all duration-300 active:scale-95 disabled:opacity-70 disabled:hover:translate-y-0">
-                {isPaying ? <Loader2 className="animate-spin" size={20} /> : "Record Payment"}
+              <button 
+                type="submit" 
+                disabled={isPaying || !paymentAmount || (parseFloat(paymentAmount) || 0) > paymentModal.remaining} 
+                className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white shadow-[0_8px_20px_-6px_rgba(16,185,129,0.6)] font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 hover:-translate-y-0.5 transition-all duration-300 active:scale-95 disabled:opacity-70 disabled:hover:translate-y-0 disabled:shadow-none"
+              >
+                {isPaying ? <Loader2 className="animate-spin" size={20} /> : "Confirm Amount"}
               </button>
             </form>
           </div>
@@ -439,7 +559,7 @@ export default function DebtsPage() {
                 <div className="bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 p-2 rounded-full">
                   <Trash2 size={20} />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">Delete Liability</h3>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">Delete Record</h3>
               </div>
               <button 
                 onClick={() => !isDeleting && setDeleteModal({ isOpen: false, id: "", name: "" })} 

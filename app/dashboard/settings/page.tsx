@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { 
   Save, Globe, Wallet, Download, FileSpreadsheet, Loader2, CheckCircle2, 
-  FileText, ArrowRight, CalendarDays, Moon, Sun, Trash2, X, AlertTriangle, Coffee
+  FileText, ArrowRight, CalendarDays, Moon, Sun, Trash2, X, AlertTriangle
 } from "lucide-react"; 
 
 export default function SettingsPage() {
@@ -66,11 +66,22 @@ export default function SettingsPage() {
   const executeClearData = async () => {
     setIsWiping(true);
     try {
-      await supabase.from("transactions").delete().not('id', 'is', null);
-      await supabase.from("assets").delete().not('id', 'is', null);
-      await supabase.from("subscriptions").delete().not('id', 'is', null);
+      // 🚀 UPGRADED: Nuking absolutely everything in parallel for speed
+      await Promise.all([
+        supabase.from("transactions").delete().not('id', 'is', null),
+        supabase.from("assets").delete().not('id', 'is', null),
+        supabase.from("subscriptions").delete().not('id', 'is', null),
+        supabase.from("budgets").delete().not('id', 'is', null),
+        supabase.from("savings_goals").delete().not('id', 'is', null),
+        supabase.from("debts").delete().not('id', 'is', null)
+      ]);
 
+      // Fire events so all pages know the data is gone
       window.dispatchEvent(new Event("transactionUpdated"));
+      window.dispatchEvent(new Event("assetUpdated"));
+      window.dispatchEvent(new Event("subscriptionUpdated"));
+      window.dispatchEvent(new Event("budgetUpdated"));
+      window.dispatchEvent(new Event("goalUpdated"));
       
       setIsWiping(false);
       setWipeSuccess(true);
@@ -362,7 +373,6 @@ export default function SettingsPage() {
     if (!error && data) {
       const currentYear = new Date().getFullYear();
       
-      // UPGRADED: Calculate actual Depreciation Math before sending to PDF engine
       const formattedAssets = data.map(asset => {
         const purchaseYear = new Date(asset.purchase_date).getFullYear();
         const rate = Number(asset.depreciation_rate) / 100;
@@ -576,31 +586,6 @@ export default function SettingsPage() {
           <CheckCircle2 size={16} className="shrink-0 mt-0.5" />
           <p>Your exports are generated purely locally in your browser for maximum privacy. No data is sent to external report servers.</p>
         </div>
-      </div>
-
-      {/* ========================================= */}
-      {/* SUPPORT NOVA (Ko-fi) */}
-      {/* ========================================= */}
-      <div className="bg-gradient-to-br from-rose-500/10 to-orange-500/10 dark:from-rose-500/5 dark:to-orange-500/5 backdrop-blur-2xl border border-rose-200/50 dark:border-rose-500/20 rounded-[2rem] p-6 md:p-8 shadow-lg transition-colors flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="flex items-center gap-5">
-          <div className="w-14 h-14 bg-gradient-to-br from-rose-400 to-orange-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-rose-500/30 shrink-0 transform -rotate-6 hover:rotate-0 transition-all duration-300">
-            <Coffee size={28} />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-1">Enjoying Nova?</h2>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-              Nova is designed, built, and maintained by an independent developer. If this vault helps you organize your financial life, consider supporting the project on Ko-fi to keep the servers running! ☕
-            </p>
-          </div>
-        </div>
-        <a 
-          href="https://ko-fi.com/nellyjackson" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="w-full md:w-auto whitespace-nowrap px-6 py-3.5 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 text-white dark:text-slate-900 font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center gap-2"
-        >
-          Support on Ko-fi
-        </a>
       </div>
 
       {/* ========================================= */}
