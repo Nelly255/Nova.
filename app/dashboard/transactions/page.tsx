@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabase";
 import AddTransactionModal from "@/components/AddTransactionModal";
@@ -26,6 +26,12 @@ export default function TransactionsPage() {
   // Filter & Search States
   const [activeFilter, setActiveFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // 🚀 NEW: Expandable Search State & Ref
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const [expandedTxId, setExpandedTxId] = useState<string | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10; 
@@ -64,7 +70,6 @@ export default function TransactionsPage() {
     return () => window.removeEventListener("transactionUpdated", fetchTransactions);
   }, []);
 
-  // Reset pagination when changing filters or search
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedMonth, selectedYear, activeFilter, searchQuery]);
@@ -222,17 +227,13 @@ export default function TransactionsPage() {
     document.body.removeChild(link);
   };
 
-  // --- FILTERING, SEARCHING & MATH ---
   const currentPeriodTransactions = transactions.filter(t => {
     const d = new Date(t.date);
     return d.getFullYear() === selectedYear && d.getMonth() === selectedMonth;
   });
 
   const filteredTransactions = currentPeriodTransactions.filter(t => {
-    // Tab Filter
     const matchTab = activeFilter === 'all' ? true : t.type === activeFilter;
-    
-    // Search Query Filter
     const matchSearch = searchQuery === "" || 
       t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
       t.category.toLowerCase().includes(searchQuery.toLowerCase());
@@ -254,7 +255,7 @@ export default function TransactionsPage() {
     <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-6 md:space-y-8 pb-32 relative bg-transparent min-h-screen transition-colors duration-300">
       
       {/* HEADER */}
-      <header className="relative z-50 flex flex-col xl:flex-row justify-between items-start xl:items-end gap-4">
+      <header className="relative z-[120] flex flex-col xl:flex-row justify-between items-start xl:items-end gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 transition-colors">Transactions</h1>
           <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1 transition-colors">Manage your income and expenses.</p>
@@ -265,12 +266,12 @@ export default function TransactionsPage() {
           
           <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full [&_button]:w-auto">
             
-            {/* 🚀 FIXED CALENDAR DROPDOWN: No Portals, pure z-index layering */}
+            {/* Period Selector (Calendar) */}
             <div className="relative z-[100] shrink-0">
               
               <button 
                 onClick={() => setIsPeriodDropdownOpen(!isPeriodDropdownOpen)}
-                className="relative z-50 flex items-center justify-center gap-2 bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/60 dark:border-white/10 hover:bg-white/60 dark:hover:bg-white/10 rounded-2xl px-4 py-2.5 shadow-sm transition-all group hover:border-indigo-500/50"
+                className="relative z-50 flex items-center justify-center gap-2 bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/60 dark:border-white/10 hover:bg-white/60 dark:hover:bg-white/10 rounded-2xl px-4 py-2.5 shadow-sm transition-all group hover:border-indigo-500/50 h-[42px]"
               >
                 <CalendarDays size={18} className="text-indigo-500 group-hover:scale-110 transition-transform" />
                 <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
@@ -279,7 +280,6 @@ export default function TransactionsPage() {
                 <ChevronDown size={14} className={`text-slate-400 transition-transform duration-300 ${isPeriodDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
-              {/* 🚀 THE FIX: This backdrop sits right behind the menu but covers the whole screen */}
               {isPeriodDropdownOpen && (
                 <div 
                   className="fixed inset-0 bg-slate-900/20 dark:bg-black/50 backdrop-blur-sm z-40 animate-in fade-in" 
@@ -288,7 +288,7 @@ export default function TransactionsPage() {
               )}
 
               {isPeriodDropdownOpen && (
-                <div className="absolute right-0 sm:left-0 xl:right-0 xl:left-auto top-full mt-2 z-50 w-72 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-white/60 dark:border-white/10 rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] p-5 animate-in fade-in zoom-in-95 origin-top-right">
+                <div className="absolute left-0 md:left-auto md:right-0 top-full mt-2 z-50 w-72 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-white/60 dark:border-white/10 rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] p-5 animate-in fade-in zoom-in-95 origin-top-left md:origin-top-right">
                   <div className="flex justify-between items-center mb-6 px-2">
                     <button onClick={() => setSelectedYear(y => y - 1)} className="p-1.5 rounded-full hover:bg-slate-200/50 dark:hover:bg-white/10 text-slate-500 transition-colors"><ChevronLeft size={18}/></button>
                     <span className="font-extrabold text-lg text-slate-900 dark:text-white tracking-tight">{selectedYear}</span>
@@ -312,35 +312,59 @@ export default function TransactionsPage() {
               )}
             </div>
 
-            {/* Search Bar Input */}
-            <div className="relative shrink-0 flex-1 sm:flex-none min-w-[140px] sm:min-w-[180px] z-40">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                <Search size={16} className="text-slate-400" />
+            {/* 🚀 EXPANDABLE SEARCH BAR */}
+            <div
+              className={`relative z-40 shrink-0 flex items-center transition-all duration-500 ease-out overflow-hidden bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white/60 dark:border-white/10 rounded-2xl shadow-sm focus-within:border-indigo-500/50 ${
+                isSearchExpanded || searchQuery ? 'w-[180px] sm:w-64 border-indigo-500/30' : 'w-[42px] cursor-pointer hover:bg-white/80 dark:hover:bg-white/10'
+              }`}
+              style={{ height: '42px' }}
+              onClick={() => {
+                if (!isSearchExpanded) {
+                  setIsSearchExpanded(true);
+                  setTimeout(() => searchInputRef.current?.focus(), 100);
+                }
+              }}
+            >
+              <div className="w-[42px] h-full flex items-center justify-center shrink-0">
+                <Search size={18} className={`transition-colors duration-300 ${isSearchExpanded || searchQuery ? "text-indigo-500" : "text-slate-500 dark:text-slate-400 group-hover:text-indigo-500"}`} />
               </div>
+              
               <input
+                ref={searchInputRef}
                 type="text"
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/60 dark:border-white/10 rounded-2xl py-2.5 pl-10 pr-4 text-sm font-bold text-slate-700 dark:text-slate-200 placeholder-slate-400/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all shadow-sm"
+                onBlur={() => { if (!searchQuery) setIsSearchExpanded(false); }}
+                className={`h-full bg-transparent text-sm font-bold text-slate-700 dark:text-slate-200 placeholder-slate-400/80 focus:outline-none transition-all duration-300 ${
+                  isSearchExpanded || searchQuery ? 'w-full opacity-100 pr-8' : 'w-0 opacity-0 pointer-events-none'
+                }`}
               />
-              {searchQuery && (
-                <button onClick={() => setSearchQuery("")} className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors">
+              
+              {(isSearchExpanded || searchQuery) ? (
+                <button 
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    setSearchQuery(""); 
+                    setIsSearchExpanded(false); 
+                  }} 
+                  className="absolute right-0 top-0 h-full w-8 flex items-center justify-center text-slate-400 hover:text-rose-500 transition-colors animate-in fade-in"
+                >
                   <X size={14} />
                 </button>
-              )}
+              ) : null}
             </div>
 
             {/* Import CSV Button */}
             <button 
               onClick={() => setIsImportModalOpen(true)}
-              className="relative z-40 shrink-0 flex items-center justify-center gap-2 bg-white/80 hover:bg-white dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-white/10 transition-all active:scale-95 px-4 py-2.5 rounded-2xl font-bold text-sm shadow-sm"
+              className="relative z-40 shrink-0 flex items-center justify-center gap-2 bg-white/80 hover:bg-white dark:bg-white/5 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-white/10 transition-all active:scale-95 px-4 py-2.5 rounded-2xl font-bold text-sm shadow-sm h-[42px]"
             >
               <UploadCloud size={16} /> <span className="hidden sm:inline">Import Bank CSV</span><span className="sm:hidden">Import</span>
             </button>
 
             {/* Add Transaction Button */}
-            <div className="relative z-40 shrink-0 flex items-center [&_button]:w-auto [&_button]:min-w-[160px]">
+            <div className="relative z-40 shrink-0 flex items-center [&_button]:w-auto [&_button]:min-w-[160px] [&_button]:h-[42px]">
               <AddTransactionModal />
             </div>
           </div>
@@ -406,38 +430,52 @@ export default function TransactionsPage() {
           </div>
         ) : (
           <div key={`list-${activeFilter}-${currentPage}-${searchQuery}`} className="divide-y divide-slate-100 dark:divide-white/5">
-            {paginatedTx.map((tx, index) => (
-              <div 
-                key={tx.id} 
-                className="flex items-center justify-between p-4 hover:bg-slate-50/80 dark:hover:bg-white/5 rounded-[1.5rem] transition-all group animate-in fade-in slide-in-from-bottom-4 duration-500"
-                style={{ animationDelay: `${index * 50}ms`, animationFillMode: "both" }}
-              >
-                <div className="flex items-center gap-4 truncate">
-                  <div className={`w-12 h-12 shrink-0 rounded-[1.25rem] flex items-center justify-center border shadow-sm backdrop-blur-sm transition-colors ${tx.type === 'income' ? 'bg-emerald-50/80 dark:bg-emerald-500/10 border-emerald-200/50 dark:border-emerald-500/20 text-emerald-500' : 'bg-rose-50/80 dark:bg-rose-500/10 border-rose-200/50 dark:border-rose-500/20 text-rose-500'}`}>
-                    {tx.type === 'income' ? <ArrowDownToLine size={20} className="rotate-180"/> : <Receipt size={20} />}
+            {paginatedTx.map((tx, index) => {
+              const isExpanded = expandedTxId === tx.id;
+              return (
+                <div 
+                  key={tx.id} 
+                  onClick={() => setExpandedTxId(isExpanded ? null : tx.id)}
+                  className="flex items-center justify-between p-4 hover:bg-slate-50/80 dark:hover:bg-white/5 rounded-[1.5rem] transition-all group animate-in fade-in slide-in-from-bottom-4 duration-500 cursor-pointer"
+                  style={{ animationDelay: `${index * 50}ms`, animationFillMode: "both" }}
+                >
+                  <div className="flex items-center gap-4 min-w-0 flex-1">
+                    <div className={`w-12 h-12 shrink-0 rounded-[1.25rem] flex items-center justify-center border shadow-sm backdrop-blur-sm transition-colors ${tx.type === 'income' ? 'bg-emerald-50/80 dark:bg-emerald-500/10 border-emerald-200/50 dark:border-emerald-500/20 text-emerald-500' : 'bg-rose-50/80 dark:bg-rose-500/10 border-rose-200/50 dark:border-rose-500/20 text-rose-500'}`}>
+                      {tx.type === 'income' ? <ArrowDownToLine size={20} className="rotate-180"/> : <Receipt size={20} />}
+                    </div>
+                    <div className="min-w-0 flex-1 pr-2">
+                      <p className={`text-base font-bold text-slate-900 dark:text-slate-100 transition-all duration-300 ${isExpanded ? 'whitespace-normal break-words' : 'truncate'}`}>
+                        {tx.title}
+                      </p>
+                      <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">{new Date(tx.date).toLocaleDateString()} • {tx.category}</p>
+                    </div>
                   </div>
-                  <div className="truncate">
-                    <p className="text-base font-bold text-slate-900 dark:text-slate-100 truncate pr-4">{tx.title}</p>
-                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">{new Date(tx.date).toLocaleDateString()} • {tx.category}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-3 shrink-0 pl-2">
-                  <span className={`text-lg font-bold tracking-tight transition-colors ${tx.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                    {tx.type === 'expense' ? '-' : '+'}{currencySymbol}{Number(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </span>
                   
-                  <div className="flex gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => openEditModal(tx)} className="p-2 text-slate-400 hover:text-indigo-600 bg-white/50 dark:bg-black/20 hover:bg-indigo-100 dark:hover:bg-indigo-500/10 rounded-lg transition-all" title="Edit">
-                      <Edit2 size={16} />
-                    </button>
-                    <button onClick={() => handleDelete(tx.id)} className="p-2 text-slate-400 hover:text-rose-600 bg-white/50 dark:bg-black/20 hover:bg-rose-100 dark:hover:bg-rose-500/10 rounded-lg transition-all" title="Delete">
-                      <Trash2 size={16} />
-                    </button>
+                  <div className="flex items-center gap-3 shrink-0 pl-2">
+                    <span className={`text-lg font-bold tracking-tight transition-colors ${tx.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                      {tx.type === 'expense' ? '-' : '+'}{currencySymbol}{Number(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                    
+                    <div className="flex gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); openEditModal(tx); }} 
+                        className="p-2 text-slate-400 hover:text-indigo-600 bg-white/50 dark:bg-black/20 hover:bg-indigo-100 dark:hover:bg-indigo-500/10 rounded-lg transition-all" 
+                        title="Edit"
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleDelete(tx.id); }} 
+                        className="p-2 text-slate-400 hover:text-rose-600 bg-white/50 dark:bg-black/20 hover:bg-rose-100 dark:hover:bg-rose-500/10 rounded-lg transition-all" 
+                        title="Delete"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

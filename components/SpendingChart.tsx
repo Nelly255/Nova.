@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Loader2 } from "lucide-react";
-import CategoryChart from "@/components/CategoryChart";
 
 export default function SpendingChart({ 
   selectedMonth, 
@@ -70,7 +69,7 @@ export default function SpendingChart({
     window.addEventListener('transactionUpdated', fetchAndBuildChart);
     return () => window.removeEventListener('transactionUpdated', fetchAndBuildChart);
     
-  }, [selectedMonth, selectedYear]); // UPGRADED: Re-runs instantly when the user changes the month/year!
+  }, [selectedMonth, selectedYear]); 
 
   if (loading) {
     return (
@@ -93,38 +92,43 @@ export default function SpendingChart({
   const maxAmount = Math.max(...chartData.map(d => d.amount), 1);
 
   return (
-    <div className="w-full h-48 flex items-end justify-between gap-2 sm:gap-4 pt-8">
+    <div className="w-full h-56 flex items-end justify-between gap-2 sm:gap-4 pt-12">
       {chartData.map((data, index) => {
-        // Calculate how tall the bar should be (minimum 5% so empty weeks still show a tiny nub)
+        // Minimum 5% height so empty weeks still show a tiny nub at the bottom
         const heightPercentage = Math.max((data.amount / maxAmount) * 100, 5);
         
         return (
           <div key={data.week} className="relative flex flex-col items-center flex-1 h-full justify-end group cursor-pointer">
             
-            {/* Interactive Hover Tooltip */}
-            <div className="absolute -top-12 opacity-0 group-hover:opacity-100 group-hover:-translate-y-2 transition-all duration-300 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold py-1.5 px-3 rounded-lg shadow-xl whitespace-nowrap z-10 pointer-events-none">
+            {/* 🚀 PREMIUM INTERACTIVE TOOLTIP */}
+            <div className="absolute -top-14 opacity-0 group-hover:opacity-100 group-hover:-translate-y-2 transition-all duration-300 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs sm:text-sm font-bold py-2 px-3 sm:px-4 rounded-xl shadow-2xl whitespace-nowrap z-20 pointer-events-none transform scale-95 group-hover:scale-100">
               {currencySymbol}{data.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
               {/* Tooltip Arrow */}
-              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900 dark:border-t-white"></div>
+              <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900 dark:border-t-white"></div>
             </div>
 
-            {/* The Animated Glass Bar */}
-            <div className="w-full relative flex justify-center h-full items-end">
-              {/* Background track (optional, looks cool for glassmorphism) */}
-              <div className="absolute w-full max-w-[3rem] h-full bg-slate-100/50 dark:bg-slate-800/20 rounded-t-xl z-0"></div>
+            {/* 🚀 THE ANIMATED PILL BARS */}
+            <div className="w-full relative flex justify-center h-full items-end transition-transform duration-300 group-hover:-translate-y-1">
               
-              {/* The Actual Data Bar */}
+              {/* Background Track (The subtle placeholder lane) */}
+              <div className="absolute w-8 sm:w-10 md:w-12 h-full bg-slate-100/80 dark:bg-white/5 rounded-t-full border border-slate-200/50 dark:border-white/5 transition-colors z-0"></div>
+              
+              {/* The Glowing Data Bar */}
               <div 
-                className="w-full max-w-[3rem] bg-gradient-to-t from-emerald-500 to-teal-400 rounded-t-xl z-10 transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(16,185,129,0.2)] group-hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] group-hover:brightness-110"
+                className="w-8 sm:w-10 md:w-12 bg-gradient-to-t from-indigo-600 via-violet-500 to-purple-500 rounded-t-full z-10 transition-all duration-1000 ease-out group-hover:brightness-125 relative overflow-hidden"
                 style={{ 
                   height: `${heightPercentage}%`,
-                  animationDelay: `${index * 100}ms` 
+                  animationDelay: `${index * 100}ms`,
+                  boxShadow: data.amount > 0 ? '0 0 20px rgba(139, 92, 246, 0.4)' : 'none'
                 }}
-              ></div>
+              >
+                {/* Inner 3D Highlight for the glass effect on hover */}
+                <div className="absolute inset-0 w-full h-full rounded-t-full bg-gradient-to-b from-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </div>
             </div>
             
             {/* X-Axis Label */}
-            <div className="mt-3 text-xs font-bold text-slate-400 dark:text-slate-500 group-hover:text-emerald-500 transition-colors">
+            <div className="mt-4 text-xs font-bold text-slate-400 dark:text-slate-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors">
               {data.week}
             </div>
             
