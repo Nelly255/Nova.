@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Plus, X, Loader2, ChevronDown, Search, PlusCircle } from "lucide-react";
+import { Plus, X, Loader2, ChevronDown, Search, PlusCircle, AlertCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 const DEFAULT_CATEGORIES = [
@@ -20,9 +20,15 @@ export default function AddTransactionModal() {
   const [isLoading, setIsLoading] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [categorySearch, setCategorySearch] = useState("");
+  const [totalBalance, setTotalBalance] = useState(0);
+  const [currencySymbol, setCurrencySymbol] = useState("$");
   
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    setMounted(true);
+    const savedCurrency = localStorage.getItem("app_currency");
+    setCurrencySymbol(savedCurrency === "TZS" ? "TSh " : "$");
+  }, []);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -32,7 +38,24 @@ export default function AddTransactionModal() {
     date: new Date().toISOString().split("T")[0], 
   });
 
-  // Filter categories based on search or allow creating new one
+  // 1. Fetch current liquid cash when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const fetchBalance = async () => {
+        const { data } = await supabase.from("transactions").select("amount, type");
+        if (data) {
+          const balance = data.reduce((acc, t) => 
+            t.type === "income" ? acc + Number(t.amount) : acc - Number(t.amount), 0
+          );
+          setTotalBalance(balance);
+        }
+      };
+      fetchBalance();
+    }
+  }, [isOpen]);
+
+  const isInsufficient = formData.type === "expense" && parseFloat(formData.amount || "0") > totalBalance;
+
   const filteredCategories = DEFAULT_CATEGORIES.filter(cat => 
     cat.toLowerCase().includes(categorySearch.toLowerCase())
   );
@@ -58,8 +81,9 @@ export default function AddTransactionModal() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    if (isInsufficient) return; // Guard clause
 
+    setIsLoading(true);
     const { error } = await supabase.from("transactions").insert([
       {
         title: formData.title,
@@ -74,7 +98,6 @@ export default function AddTransactionModal() {
 
     if (error) {
       console.error("Error saving transaction:", error.message);
-      alert("Failed to save transaction.");
     } else {
       setIsOpen(false);
       setIsCategoryOpen(false);
@@ -103,14 +126,18 @@ export default function AddTransactionModal() {
       <div className="relative z-10 w-full max-w-md bg-white dark:bg-[#0A0A0E] rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] border border-slate-200 dark:border-white/10 overflow-visible animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
         
         <div className="flex justify-between items-center p-6 md:p-8 border-b border-zinc-200/80 dark:border-white/5 shrink-0">
-          <h3 className="text-xl md:text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">New Transaction</h3>
+          <div>
+            <h3 className="text-xl md:text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100">New Entry</h3>
+            <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mt-1">
+              Available Cash: <span className={totalBalance < 0 ? "text-rose-500" : "text-emerald-500"}>{currencySymbol}{totalBalance.toLocaleString()}</span>
+            </p>
+          </div>
           <button onClick={() => { setIsOpen(false); setIsCategoryOpen(false); }} className="text-zinc-500 hover:text-rose-500 dark:text-zinc-400 p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-white/5">
             <X size={20} />
           </button>
         </div>
 
         <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar flex-1">
-          
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="grid grid-cols-2 gap-3 mb-2 shrink-0">
               <button
@@ -138,19 +165,19 @@ export default function AddTransactionModal() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">What was this for?</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">Description</label>
               <input 
                 required
                 type="text" 
-                placeholder="e.g., Starbucks, Salary"
+                placeholder="e.g., Starbucks Coffee"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-indigo-500 transition-colors"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div>
+              <div className="relative">
                 <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">Amount</label>
                 <input 
                   required
@@ -159,7 +186,7 @@ export default function AddTransactionModal() {
                   placeholder="0.00"
                   value={formatAmountForDisplay(formData.amount)} 
                   onChange={handleAmountChange} 
-                  className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                  className={`w-full bg-zinc-50 dark:bg-zinc-950/50 border rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none transition-colors ${isInsufficient ? 'border-rose-500 ring-1 ring-rose-500' : 'border-zinc-200/80 dark:border-white/10 focus:border-indigo-500'}`}
                 />
               </div>
               <div>
@@ -169,12 +196,21 @@ export default function AddTransactionModal() {
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors [color-scheme:light] dark:[color-scheme:dark]"
+                  className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-indigo-500 [color-scheme:light] dark:[color-scheme:dark]"
                 />
               </div>
             </div>
 
-            {/* SMART CATEGORY SELECTOR */}
+            {/* ERROR MESSAGE FOR INSUFFICIENT FUNDS */}
+            {isInsufficient && (
+              <div className="flex items-center gap-2 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl animate-in slide-in-from-top-2 duration-300">
+                <AlertCircle className="text-rose-500 shrink-0" size={16} />
+                <p className="text-[11px] font-bold text-rose-500 uppercase leading-tight">
+                  Insufficient funds! You only have {currencySymbol}{totalBalance.toLocaleString()} available.
+                </p>
+              </div>
+            )}
+
             <div className="relative">
               <label className="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-1.5">Category</label>
               <button 
@@ -190,8 +226,6 @@ export default function AddTransactionModal() {
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setIsCategoryOpen(false)} />
                   <div className="absolute left-0 right-0 bottom-full mb-2 z-50 bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-white/10 rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] overflow-hidden animate-in fade-in zoom-in-95 origin-bottom duration-200">
-                    
-                    {/* Search / Create Input */}
                     <div className="p-2 border-b border-zinc-100 dark:border-white/5 bg-zinc-50/50 dark:bg-zinc-950/50">
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
@@ -205,9 +239,7 @@ export default function AddTransactionModal() {
                         />
                       </div>
                     </div>
-
                     <div className="max-h-52 overflow-y-auto custom-scrollbar p-1.5">
-                      {/* Option to create new if it doesn't exist */}
                       {isNewCategory && (
                         <button
                           type="button"
@@ -218,11 +250,9 @@ export default function AddTransactionModal() {
                           }}
                           className="w-full text-left px-4 py-3 rounded-xl text-sm transition-colors flex items-center gap-2 text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-500/10 font-bold mb-1"
                         >
-                          <PlusCircle size={16} />
-                          Create "{categorySearch}"
+                          <PlusCircle size={16} /> Create "{categorySearch}"
                         </button>
                       )}
-
                       {filteredCategories.map((cat) => (
                         <button
                           key={cat}
@@ -241,12 +271,6 @@ export default function AddTransactionModal() {
                           {cat}
                         </button>
                       ))}
-
-                      {filteredCategories.length === 0 && !isNewCategory && (
-                        <div className="px-4 py-8 text-center text-zinc-500 text-xs">
-                          Type to create a custom category
-                        </div>
-                      )}
                     </div>
                   </div>
                 </>
@@ -255,13 +279,22 @@ export default function AddTransactionModal() {
 
             <button 
               type="submit" 
-              disabled={isLoading}
-              className="w-full shrink-0 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-[0_8px_20px_-6px_rgba(99,102,241,0.6)] border border-white/20 transition-all duration-300 hover:-translate-y-0.5 active:scale-95 font-bold py-4 rounded-xl mt-6 flex justify-center items-center gap-2 disabled:opacity-70 disabled:hover:translate-y-0"
+              disabled={isLoading || isInsufficient}
+              className={`w-full shrink-0 text-white shadow-lg border border-white/20 transition-all duration-300 font-bold py-4 rounded-xl mt-6 flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed ${
+                isInsufficient 
+                ? 'bg-rose-600 shadow-rose-500/20 grayscale-[0.5]' 
+                : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 hover:-translate-y-0.5 active:scale-95 shadow-indigo-500/20'
+              }`}
             >
-              {isLoading ? <Loader2 className="animate-spin" size={20} /> : "Save Transaction"}
+              {isLoading ? (
+                <Loader2 className="animate-spin" size={20} />
+              ) : isInsufficient ? (
+                "Insufficient Funds"
+              ) : (
+                "Save Transaction"
+              )}
             </button>
           </form>
-
         </div>
       </div>
     </div>
