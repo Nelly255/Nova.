@@ -28,7 +28,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState("User");
   
-  const [currencySymbol, setCurrencySymbol] = useState("TSh");
+  const [currencySymbol, setCurrencySymbol] = useState("TSh ");
   const [isDarkMode, setIsDarkMode] = useState(true);
 
   // Dynamic Greeting State
@@ -73,8 +73,12 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const savedCurrency = localStorage.getItem("app_currency");
-    if (savedCurrency === "TZS") setCurrencySymbol("TSh ");
-    else setCurrencySymbol("$");
+    // Default to TSh unless USD is explicitly saved
+    if (savedCurrency === "USD") {
+      setCurrencySymbol("$");
+    } else {
+      setCurrencySymbol("TSh ");
+    }
 
     const fetchUser = async () => {
       try {
