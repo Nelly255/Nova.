@@ -4,9 +4,24 @@ import { useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
-export default function EditBudgetModal({ budget, onClose }: { budget: any, onClose: () => void }) {
+// 🚀 UPDATED: Added selectedMonth and selectedYear to the props
+export default function EditBudgetModal({ 
+  budget, 
+  selectedMonth, 
+  selectedYear, 
+  onClose 
+}: { 
+  budget: any; 
+  selectedMonth: number; 
+  selectedYear: number; 
+  onClose: () => void; 
+}) {
   const [isLoading, setIsLoading] = useState(false);
-  const [limitAmount, setLimitAmount] = useState(budget.limit_amount.toString());
+  
+  // 🚀 UPDATED: Use active_limit if it exists so the input shows the correct historical amount
+  const [limitAmount, setLimitAmount] = useState(
+    budget.active_limit ? budget.active_limit.toString() : budget.limit_amount.toString()
+  );
 
   const formatAmountForDisplay = (value: string) => {
     if (!value) return "";
@@ -28,9 +43,36 @@ export default function EditBudgetModal({ budget, onClose }: { budget: any, onCl
     e.preventDefault();
     setIsLoading(true);
 
+    const newAmount = parseFloat(limitAmount);
+    const oldAmount = budget.limit_amount; // The previous base limit
+
+    // 🚀 SMART HISTORY LOGIC
+    const periodKey = `${selectedYear}-${selectedMonth}`;
+    const newHistory = { ...(budget.history || {}) };
+
+    // 1. Lock in the override for the month the user is currently editing
+    newHistory[periodKey] = newAmount;
+
+    // 2. To prevent past months from magically updating to the new base amount,
+    // we lock in the OLD base amount to the PREVIOUS month (if it doesn't already have an override).
+    let prevMonth = selectedMonth - 1;
+    let prevYear = selectedYear;
+    if (prevMonth < 0) {
+      prevMonth = 11;
+      prevYear -= 1;
+    }
+    const prevPeriodKey = `${prevYear}-${prevMonth}`;
+
+    if (newHistory[prevPeriodKey] === undefined) {
+      newHistory[prevPeriodKey] = oldAmount;
+    }
+
     const { error } = await supabase
       .from("budgets")
-      .update({ limit_amount: parseFloat(limitAmount) })
+      .update({ 
+        limit_amount: newAmount, // Update the new forward-facing baseline
+        history: newHistory      // Save our specific monthly overrides
+      })
       .eq("id", budget.id);
 
     setIsLoading(false);

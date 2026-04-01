@@ -21,10 +21,8 @@ export default function BudgetsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [budgets, setBudgets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  // 🚀 UPDATED: Default initial state to TSh
   const [currencySymbol, setCurrencySymbol] = useState("TSh ");
 
-  // 🚀 NEW: Date Filtering State
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
@@ -35,7 +33,6 @@ export default function BudgetsPage() {
 
   useEffect(() => {
     const savedCurrency = localStorage.getItem("app_currency");
-    // 🚀 UPDATED: Default to TSh unless USD is explicitly saved
     setCurrencySymbol(savedCurrency === "USD" ? "$" : "TSh ");
 
     const fetchData = async () => {
@@ -66,7 +63,6 @@ export default function BudgetsPage() {
     setBudgetToDelete(null);
   };
 
-  // 🚀 THE FIX: Filter transactions to ONLY the selected month & year before calculating spend
   const currentPeriodTransactions = transactions.filter(t => {
     const d = new Date(t.date);
     return d.getFullYear() === selectedYear && d.getMonth() === selectedMonth;
@@ -76,15 +72,23 @@ export default function BudgetsPage() {
     const spent = currentPeriodTransactions
       .filter(t => t.category === b.name)
       .reduce((acc, t) => acc + Number(t.amount), 0);
+
+    // 🚀 NEW: Check history for this specific month/year combination
+    const periodKey = `${selectedYear}-${selectedMonth}`;
+    const periodLimit = b.history && b.history[periodKey] !== undefined
+      ? Number(b.history[periodKey])
+      : Number(b.limit_amount);
       
     return {
       ...b,
       spent: spent,
+      active_limit: periodLimit, // We now use this for all calculations instead of limit_amount
       icon: iconMap[b.name] || iconMap["Default"]
     };
   });
 
-  const totalBudgeted = activeBudgets.reduce((acc, b) => acc + Number(b.limit_amount), 0);
+  // 🚀 UPDATED: Calculate totals using the active_limit for the selected month
+  const totalBudgeted = activeBudgets.reduce((acc, b) => acc + Number(b.active_limit), 0);
   const totalSpent = activeBudgets.reduce((acc, b) => acc + b.spent, 0);
   const totalRemaining = Math.max(totalBudgeted - totalSpent, 0);
   
@@ -104,7 +108,6 @@ export default function BudgetsPage() {
         
         <div className="w-full md:w-auto flex items-center gap-3">
           
-          {/* 🚀 NEW: Period Selector (Calendar) */}
           <div className="relative shrink-0">
             <button 
               onClick={() => setIsPeriodDropdownOpen(!isPeriodDropdownOpen)}
@@ -149,7 +152,6 @@ export default function BudgetsPage() {
             )}
           </div>
 
-          {/* Existing Create Button */}
           <div className="relative z-40 shrink-0 flex items-center [&_button]:h-[42px]">
             <CreateBudgetModal />
           </div>
@@ -237,15 +239,16 @@ export default function BudgetsPage() {
         </>
       )}
 
-      {/* The Edit Modal */}
+      {/* 🚀 NEW: We must pass the currently selected period to the Edit Modal */}
       {budgetToEdit && (
         <EditBudgetModal 
-          budget={budgetToEdit} 
+          budget={budgetToEdit}
+          selectedMonth={selectedMonth}
+          selectedYear={selectedYear} 
           onClose={() => setBudgetToEdit(null)} 
         />
       )}
 
-      {/* The Beautiful Danger Modal */}
       {budgetToDelete && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
           <div 
@@ -290,7 +293,8 @@ export default function BudgetsPage() {
 // Sub-component
 function DetailedBudgetCard({ budget, currencySymbol, onEdit, onDelete }: any) {
   const Icon = budget.icon;
-  const percentage = budget.limit_amount > 0 ? (budget.spent / budget.limit_amount) * 100 : 0;
+  // 🚀 UPDATED: Calculate percentage and values based on active_limit
+  const percentage = budget.active_limit > 0 ? (budget.spent / budget.active_limit) * 100 : 0;
   const isOver = percentage >= 100;
   
   let colorTheme = { text: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-500", glow: "shadow-emerald-500/20" };
@@ -325,7 +329,8 @@ function DetailedBudgetCard({ budget, currencySymbol, onEdit, onDelete }: any) {
           <div className="truncate">
             <h3 className="text-base font-bold text-slate-900 dark:text-slate-200 transition-colors truncate">{budget.name}</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 transition-colors">
-              {currencySymbol}{Number(budget.limit_amount).toLocaleString(undefined, { maximumFractionDigits: 0 })} Limit
+              {/* 🚀 UPDATED: Show the active_limit */}
+              {currencySymbol}{Number(budget.active_limit).toLocaleString(undefined, { maximumFractionDigits: 0 })} Limit
             </p>
           </div>
         </div>
@@ -349,7 +354,8 @@ function DetailedBudgetCard({ budget, currencySymbol, onEdit, onDelete }: any) {
           ></div>
         </div>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 text-right transition-colors">
-          {isOver ? "Over budget" : `${currencySymbol}${Number(budget.limit_amount - budget.spent).toLocaleString(undefined, { maximumFractionDigits: 0 })} left`}
+          {/* 🚀 UPDATED: Math logic uses active_limit */}
+          {isOver ? "Over budget" : `${currencySymbol}${Number(budget.active_limit - budget.spent).toLocaleString(undefined, { maximumFractionDigits: 0 })} left`}
         </p>
       </div>
     </div>
