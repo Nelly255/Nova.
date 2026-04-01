@@ -5,15 +5,30 @@ import { Bell, CalendarClock, Info, CheckCircle2, AlertTriangle, X } from "lucid
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
+// Helper for Relative Timestamps
+const getRelativeTime = (timestamp: string) => {
+  const date = new Date(timestamp);
+  // Fallback for old notifications that saved static strings like "10:30 AM"
+  if (isNaN(date.getTime())) return timestamp; 
+
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffInSeconds < 60) return "Just now";
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  return date.toLocaleDateString();
+};
+
 export default function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
-  const getCurrentTime = () => {
-    return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
+  // 🚀 UPDATED: We now use full ISO strings for relative time math
+  const getCurrentTime = () => new Date().toISOString();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -25,9 +40,10 @@ export default function NotificationBell() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // 1. Initial Notification Generation
   useEffect(() => {
     const generateNotifications = async () => {
-      // 1. Get real-time alerts from DB
+      // Get real-time alerts from DB (Subscriptions)
       const { data } = await supabase.from("subscriptions").select("*");
       const currentDate = new Date();
       const today = currentDate.getDate();
@@ -49,24 +65,31 @@ export default function NotificationBell() {
         });
       }
 
-      // 🚀 NEW: 1st of the Month Warm Budget Reminder
-      if (today === 1) {
-        liveAlerts.push({
-          id: `budget-reminder-${currentDate.getFullYear()}-${currentDate.getMonth()}`,
-          type: "info",
-          title: "Happy New Month! 🎯",
-          message: "A fresh month means fresh goals. Take a moment to review and set your new budgets.",
-          time: getCurrentTime(),
-          read: false,
-          isPersistent: false // Keeps it as a dynamic live alert only on the 1st
-        });
-      }
-
-      // 2. Pull local history of custom actions
+      // Pull local history of custom actions
       const savedHistory = localStorage.getItem("nova_notif_history");
       let historyItems = savedHistory ? JSON.parse(savedHistory) : [];
 
-      // 3. The Welcome Message 
+      // Persistent 1st of the Month Warm Budget Reminder
+      if (today === 1) {
+        const yearMonthId = `budget-reminder-${currentDate.getFullYear()}-${currentDate.getMonth()}`;
+        const hasBudgetReminder = historyItems.some((n: any) => n.id === yearMonthId);
+        
+        if (!hasBudgetReminder) {
+          const budgetNotif = {
+            id: yearMonthId,
+            type: "info",
+            title: "Happy New Month! 🎯",
+            message: "A fresh month means fresh goals. Take a moment to review and set your new budgets.",
+            time: getCurrentTime(),
+            read: false,
+            isPersistent: true 
+          };
+          historyItems = [budgetNotif, ...historyItems];
+          localStorage.setItem("nova_notif_history", JSON.stringify(historyItems));
+        }
+      }
+
+      // The Welcome Message 
       const hasGeneratedWelcome = localStorage.getItem("has_generated_welcome_notif");
       if (!hasGeneratedWelcome) {
         const welcomeNotif = {
@@ -89,6 +112,7 @@ export default function NotificationBell() {
     generateNotifications();
   }, []);
 
+  // 2. Custom Local Event Listener
   useEffect(() => {
     const handleCustomNotification = (event: Event) => {
       const customEvent = event as CustomEvent;
@@ -113,6 +137,46 @@ export default function NotificationBell() {
     return () => window.removeEventListener('newNotification', handleCustomNotification);
   }, []);
 
+  // 🚀 NEW: 3. Supabase Real-Time Listener
+  useEffect(() => {
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'subscriptions' },
+        (payload) => {
+          const newSub = payload.new;
+          
+          const newNotif = {
+            id: `realtime-sub-${newSub.id}-${Date.now()}`,
+            type: "success",
+            title: "New Subscription Tracked",
+            message: `${newSub.name} was successfully added to your bills.`,
+            time: getCurrentTime(),
+            read: false,
+            isPersistent: true
+          };
+
+          setNotifications(prev => {
+            // Prevent duplicate pings if our local event fired first
+            if (prev.some(n => n.message.includes(newSub.name) && n.time === newNotif.time)) {
+              return prev;
+            }
+            const updatedList = [newNotif, ...prev];
+            const persistentOnly = updatedList.filter(n => n.isPersistent).slice(0, 10);
+            localStorage.setItem("nova_notif_history", JSON.stringify(persistentOnly));
+            return updatedList;
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Click Handlers
   const handleNotificationClick = (id: string, type: string) => {
     setNotifications((prev) => {
       const updated = prev.map((n) => n.id === id ? { ...n, read: true } : n);
@@ -122,14 +186,23 @@ export default function NotificationBell() {
       return updated;
     });
     
-    // 🚀 UPDATED: Added smart routing based on the specific notification clicked
-    if (type === "warning" || id.startsWith("sub-")) {
+    if (type === "warning" || id.startsWith("sub-") || id.startsWith("realtime-sub-")) {
       setIsOpen(false); 
       router.push("/dashboard/subscriptions"); 
     } else if (id.startsWith("budget-reminder")) {
       setIsOpen(false);
       router.push("/dashboard/budgets");
     }
+  };
+
+  // 🚀 NEW: Mark all as read
+  const markAllAsRead = () => {
+    setNotifications(prev => {
+      const updated = prev.map(n => ({ ...n, read: true }));
+      const persistentOnly = updated.filter(n => n.isPersistent);
+      localStorage.setItem("nova_notif_history", JSON.stringify(persistentOnly));
+      return updated;
+    });
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -166,9 +239,20 @@ export default function NotificationBell() {
                   </span>
                 )}
               </div>
-              <button onClick={() => setIsOpen(false)} className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors p-1 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 sm:hidden">
-                <X size={20} />
-              </button>
+              <div className="flex items-center gap-4">
+                {/* 🚀 NEW: Render Mark All As Read button if unread notifications exist */}
+                {unreadCount > 0 && (
+                  <button 
+                    onClick={markAllAsRead}
+                    className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                  >
+                    Mark all read
+                  </button>
+                )}
+                <button onClick={() => setIsOpen(false)} className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors p-1 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 sm:hidden">
+                  <X size={20} />
+                </button>
+              </div>
             </div>
             
             <div className="overflow-y-auto custom-scrollbar flex-1 max-h-[320px] pb-2">
@@ -205,7 +289,8 @@ export default function NotificationBell() {
                         {notif.title}
                       </p>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">{notif.message}</p>
-                      <p className="text-[10px] font-semibold tracking-wider uppercase text-slate-400 dark:text-slate-500 mt-2">{notif.time}</p>
+                      {/* 🚀 UPDATED: Display relative time calculation */}
+                      <p className="text-[10px] font-semibold tracking-wider uppercase text-slate-400 dark:text-slate-500 mt-2">{getRelativeTime(notif.time)}</p>
                     </div>
                     
                     {!notif.read && (
