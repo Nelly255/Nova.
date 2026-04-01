@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import CreateBudgetModal from "@/components/CreateBudgetModal";
 import EditBudgetModal from "@/components/EditBudgetModal"; 
-import { Target, ShoppingBag, Utensils, Car, Tv, Zap, AlertCircle, TrendingUp, Wallet, Trash2, Pencil, X } from "lucide-react";
+import { Target, ShoppingBag, Utensils, Car, Tv, Zap, AlertCircle, TrendingUp, Wallet, Trash2, Pencil, X, CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 const iconMap: Record<string, any> = {
   "Groceries": ShoppingBag,
@@ -20,6 +22,12 @@ export default function BudgetsPage() {
   const [budgets, setBudgets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currencySymbol, setCurrencySymbol] = useState("$");
+
+  // 🚀 NEW: Date Filtering State
+  const now = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false);
 
   const [budgetToEdit, setBudgetToEdit] = useState<any>(null);
   const [budgetToDelete, setBudgetToDelete] = useState<any>(null);
@@ -60,8 +68,14 @@ export default function BudgetsPage() {
     setBudgetToDelete(null);
   };
 
+  // 🚀 THE FIX: Filter transactions to ONLY the selected month & year before calculating spend
+  const currentPeriodTransactions = transactions.filter(t => {
+    const d = new Date(t.date);
+    return d.getFullYear() === selectedYear && d.getMonth() === selectedMonth;
+  });
+
   const activeBudgets = budgets.map(b => {
-    const spent = transactions
+    const spent = currentPeriodTransactions
       .filter(t => t.category === b.name)
       .reduce((acc, t) => acc + Number(t.amount), 0);
       
@@ -82,17 +96,66 @@ export default function BudgetsPage() {
   const strokeDashoffset = circleCircumference - (overallPercentage / 100) * circleCircumference;
 
   return (
-    // UPGRADED: Added pb-32 so the mobile bottom nav doesn't cover your cards
     <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-6 md:space-y-8 pb-32 bg-transparent min-h-screen relative transition-colors duration-300">
       
-      {/* UPGRADED: Flex-col on mobile so the header stacks cleanly */}
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 relative z-50">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 relative z-[100]">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 transition-colors">Budgets</h1>
           <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1 transition-colors">Keep your spending in check this month.</p>
         </div>
-        <div className="w-full md:w-auto">
-          <CreateBudgetModal />
+        
+        <div className="w-full md:w-auto flex items-center gap-3">
+          
+          {/* 🚀 NEW: Period Selector (Calendar) */}
+          <div className="relative shrink-0">
+            <button 
+              onClick={() => setIsPeriodDropdownOpen(!isPeriodDropdownOpen)}
+              className="relative z-50 flex items-center justify-center gap-2 bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/60 dark:border-white/10 hover:bg-white/60 dark:hover:bg-white/10 rounded-2xl px-4 py-2.5 shadow-sm transition-all group hover:border-indigo-500/50 h-[42px]"
+            >
+              <CalendarDays size={18} className="text-indigo-500 group-hover:scale-110 transition-transform" />
+              <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                {MONTHS[selectedMonth]} {selectedYear}
+              </span>
+              <ChevronDown size={14} className={`text-slate-400 transition-transform duration-300 ${isPeriodDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isPeriodDropdownOpen && (
+              <div 
+                className="fixed inset-0 bg-slate-900/20 dark:bg-black/50 backdrop-blur-sm z-40 animate-in fade-in" 
+                onClick={() => setIsPeriodDropdownOpen(false)} 
+              />
+            )}
+
+            {isPeriodDropdownOpen && (
+              <div className="absolute left-0 md:left-auto md:right-0 top-full mt-2 z-50 w-72 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-white/60 dark:border-white/10 rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] p-5 animate-in fade-in zoom-in-95 origin-top-left md:origin-top-right">
+                <div className="flex justify-between items-center mb-6 px-2">
+                  <button onClick={() => setSelectedYear(y => y - 1)} className="p-1.5 rounded-full hover:bg-slate-200/50 dark:hover:bg-white/10 text-slate-500 transition-colors"><ChevronLeft size={18}/></button>
+                  <span className="font-extrabold text-lg text-slate-900 dark:text-white tracking-tight">{selectedYear}</span>
+                  <button onClick={() => setSelectedYear(y => y + 1)} className="p-1.5 rounded-full hover:bg-slate-200/50 dark:hover:bg-white/10 text-slate-500 transition-colors"><ChevronRight size={18}/></button>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {MONTHS.map((monthStr, index) => {
+                    const isSelected = selectedMonth === index;
+                    return (
+                      <button 
+                        key={monthStr}
+                        onClick={() => { setSelectedMonth(index); setIsPeriodDropdownOpen(false); }}
+                        className={`py-2 rounded-xl text-sm font-bold transition-all duration-200 ${isSelected ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/25 scale-105' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}
+                      >
+                        {monthStr}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Existing Create Button */}
+          <div className="relative z-40 shrink-0 flex items-center [&_button]:h-[42px]">
+            <CreateBudgetModal />
+          </div>
+
         </div>
       </header>
 
@@ -111,10 +174,9 @@ export default function BudgetsPage() {
         </div>
       ) : (
         <>
-          <div className="glass-card p-6 md:p-8 rounded-[2rem] relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-6 md:gap-8 animate-in fade-in duration-500 transition-colors">
+          <div className="glass-card p-6 md:p-8 rounded-[2rem] relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-6 md:gap-8 animate-in fade-in duration-500 transition-colors z-10">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400"></div>
             
-            {/* UPGRADED: Flex-row on mobile! Text on the left, Circle on the right! */}
             <div className="flex flex-row items-center justify-between md:justify-start w-full md:w-auto gap-4 md:gap-8">
               
               <div className="text-left flex-1">
@@ -128,7 +190,6 @@ export default function BudgetsPage() {
               </div>
 
               <div className="relative w-24 h-24 md:w-32 md:h-32 shrink-0 flex items-center justify-center">
-                {/* UPGRADED: Added viewBox="0 0 128 128" so the SVG shrinks perfectly on mobile */}
                 <svg viewBox="0 0 128 128" className="w-full h-full transform -rotate-90">
                   <circle cx="64" cy="64" r={circleRadius} stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-100 dark:text-slate-800/50 transition-colors" />
                   <circle 
@@ -164,7 +225,7 @@ export default function BudgetsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500 z-10 relative">
             {activeBudgets.map((budget) => (
               <DetailedBudgetCard 
                 key={budget.id} 

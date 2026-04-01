@@ -15,7 +15,8 @@ const CATEGORIES = ["Housing", "Food", "Transportation", "Utilities", "Insurance
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currencySymbol, setCurrencySymbol] = useState("$");
+  // 🚀 UPDATED: Default initial state to TSh
+  const [currencySymbol, setCurrencySymbol] = useState("TSh ");
   
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
@@ -63,7 +64,8 @@ export default function TransactionsPage() {
 
   useEffect(() => {
     const savedCurrency = localStorage.getItem("app_currency");
-    setCurrencySymbol(savedCurrency === "TZS" ? "TSh " : "$");
+    // 🚀 UPDATED: Default to TSh unless USD is explicitly saved
+    setCurrencySymbol(savedCurrency === "USD" ? "$" : "TSh ");
     fetchTransactions();
 
     window.addEventListener("transactionUpdated", fetchTransactions);

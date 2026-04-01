@@ -29,7 +29,8 @@ export default function NotificationBell() {
     const generateNotifications = async () => {
       // 1. Get real-time alerts from DB
       const { data } = await supabase.from("subscriptions").select("*");
-      const today = new Date().getDate();
+      const currentDate = new Date();
+      const today = currentDate.getDate();
       let liveAlerts: any[] = [];
 
       if (data) {
@@ -45,6 +46,19 @@ export default function NotificationBell() {
               isPersistent: false
             });
           }
+        });
+      }
+
+      // 🚀 NEW: 1st of the Month Warm Budget Reminder
+      if (today === 1) {
+        liveAlerts.push({
+          id: `budget-reminder-${currentDate.getFullYear()}-${currentDate.getMonth()}`,
+          type: "info",
+          title: "Happy New Month! 🎯",
+          message: "A fresh month means fresh goals. Take a moment to review and set your new budgets.",
+          time: getCurrentTime(),
+          read: false,
+          isPersistent: false // Keeps it as a dynamic live alert only on the 1st
         });
       }
 
@@ -108,9 +122,13 @@ export default function NotificationBell() {
       return updated;
     });
     
-    if (type === "warning") {
+    // 🚀 UPDATED: Added smart routing based on the specific notification clicked
+    if (type === "warning" || id.startsWith("sub-")) {
       setIsOpen(false); 
       router.push("/dashboard/subscriptions"); 
+    } else if (id.startsWith("budget-reminder")) {
+      setIsOpen(false);
+      router.push("/dashboard/budgets");
     }
   };
 
@@ -153,7 +171,6 @@ export default function NotificationBell() {
               </button>
             </div>
             
-            {/* UPGRADED: Added max-h-[320px] here to perfectly show ~3 notifications before scrolling! */}
             <div className="overflow-y-auto custom-scrollbar flex-1 max-h-[320px] pb-2">
               {notifications.length === 0 ? (
                 <div className="p-8 text-center text-slate-500 dark:text-slate-400 text-sm font-medium">You're all caught up!</div>
