@@ -17,11 +17,16 @@ export default function NovaWrapped({ month, netWorth, monthlyIncome, monthlyExp
   const [isGenerating, setIsGenerating] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
 
-  // 🚀 PRODUCTION LOGIC: Show only between the 28th and 2nd of the month
+  // 🚀 PRODUCTION LOGIC: Show only between the 29th and 31st of the month
   useEffect(() => {
     const today = new Date().getDate();
-    if (today >= 29 || today <= 31) { 
+    
+    // THE FIX: Changed '||' to '&&'. It will now ONLY trigger on days 29, 30, or 31.
+    // On the 1st of the month, it will remain false and hide the component.
+    if (today >= 29 && today <= 31) { 
       setIsVisible(true);
+    } else {
+      setIsVisible(false);
     }
   }, []);
 
