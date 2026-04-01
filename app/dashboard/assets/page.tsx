@@ -26,7 +26,8 @@ const formatCompactNumber = (number: number) => {
 export default function AssetsPage() {
   const [assets, setAssets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currencySymbol, setCurrencySymbol] = useState("$");
+  // 🚀 UPDATED: Default initial state to TSh
+  const [currencySymbol, setCurrencySymbol] = useState("TSh ");
   
   const [activeTab, setActiveTab] = useState<'active' | 'sold'>('active');
   
@@ -113,7 +114,8 @@ export default function AssetsPage() {
 
   useEffect(() => {
     const savedCurrency = localStorage.getItem("app_currency");
-    setCurrencySymbol(savedCurrency === "TZS" ? "TSh " : "$");
+    // 🚀 UPDATED: Default to TSh unless USD is explicitly saved
+    setCurrencySymbol(savedCurrency === "USD" ? "$" : "TSh ");
     fetchAssets();
 
     window.addEventListener("assetUpdated", fetchAssets);

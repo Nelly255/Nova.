@@ -21,7 +21,8 @@ export default function BudgetsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [budgets, setBudgets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currencySymbol, setCurrencySymbol] = useState("$");
+  // 🚀 UPDATED: Default initial state to TSh
+  const [currencySymbol, setCurrencySymbol] = useState("TSh ");
 
   // 🚀 NEW: Date Filtering State
   const now = new Date();
@@ -34,11 +35,8 @@ export default function BudgetsPage() {
 
   useEffect(() => {
     const savedCurrency = localStorage.getItem("app_currency");
-    if (savedCurrency === "TZS") {
-      setCurrencySymbol("TSh ");
-    } else {
-      setCurrencySymbol("$");
-    }
+    // 🚀 UPDATED: Default to TSh unless USD is explicitly saved
+    setCurrencySymbol(savedCurrency === "USD" ? "$" : "TSh ");
 
     const fetchData = async () => {
       const [txRes, bgRes] = await Promise.all([

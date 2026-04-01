@@ -8,7 +8,8 @@ import { PiggyBank, Target, Trash2, PlusCircle, TrendingUp, X, Loader2, Pencil }
 export default function SavingsPage() {
   const [goals, setGoals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currencySymbol, setCurrencySymbol] = useState("$");
+  // 🚀 UPDATED: Default initial state to TSh
+  const [currencySymbol, setCurrencySymbol] = useState("TSh ");
 
   // Custom Deposit Modal State
   const [depositModal, setDepositModal] = useState({ isOpen: false, goalId: "", goalName: "", currentAmount: 0 });
@@ -30,7 +31,8 @@ export default function SavingsPage() {
 
   useEffect(() => {
     const savedCurrency = localStorage.getItem("app_currency");
-    setCurrencySymbol(savedCurrency === "TZS" ? "TSh " : "$");
+    // 🚀 UPDATED: Default to TSh unless USD is explicitly saved
+    setCurrencySymbol(savedCurrency === "USD" ? "$" : "TSh ");
     
     fetchGoals();
 

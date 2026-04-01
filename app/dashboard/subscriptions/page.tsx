@@ -19,16 +19,17 @@ export default function SubscriptionsPage() {
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // State for our dynamic currency symbol
-  const [currencySymbol, setCurrencySymbol] = useState("$");
+  // State for our dynamic currency symbol, default set to TSh 
+  const [currencySymbol, setCurrencySymbol] = useState("TSh ");
 
   useEffect(() => {
     // 1. Check local storage for the saved currency preference
     const savedCurrency = localStorage.getItem("app_currency");
-    if (savedCurrency === "TZS") {
-      setCurrencySymbol("TSh ");
-    } else {
+    // If USD is explicitly saved, use it. Otherwise, default to TSh.
+    if (savedCurrency === "USD") {
       setCurrencySymbol("$");
+    } else {
+      setCurrencySymbol("TSh ");
     }
 
     // 2. Fetch the Subscriptions

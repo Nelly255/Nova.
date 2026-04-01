@@ -14,7 +14,8 @@ const RECEIVABLE_CATEGORIES = ["Friend/Family", "Business", "Personal Loan", "IO
 export default function DebtsPage() {
   const [debts, setDebts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currencySymbol, setCurrencySymbol] = useState("$");
+  // 🚀 UPDATED: Default initial state to TSh
+  const [currencySymbol, setCurrencySymbol] = useState("TSh ");
 
   const [activeTab, setActiveTab] = useState<'liability' | 'receivable'>('liability');
 
@@ -45,7 +46,8 @@ export default function DebtsPage() {
 
   useEffect(() => {
     const savedCurrency = localStorage.getItem("app_currency");
-    setCurrencySymbol(savedCurrency === "TZS" ? "TSh " : "$");
+    // 🚀 UPDATED: Default to TSh unless USD is explicitly saved
+    setCurrencySymbol(savedCurrency === "USD" ? "$" : "TSh ");
     fetchDebts();
   }, []);
 
