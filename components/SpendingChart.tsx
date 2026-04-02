@@ -6,20 +6,18 @@ import { Loader2 } from "lucide-react";
 
 export default function SpendingChart({ 
   selectedMonth, 
-  selectedYear 
+  selectedYear,
+  currencySymbol // 🚀 ADDED: Injected prop from DashboardPage
 }: { 
   selectedMonth: number; 
   selectedYear: number; 
+  currencySymbol: string; // 🚀 ADDED: Prop type
 }) {
   const [chartData, setChartData] = useState<{ week: string; amount: number }[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currencySymbol, setCurrencySymbol] = useState("$");
   const [hasData, setHasData] = useState(false);
 
   useEffect(() => {
-    const savedCurrency = localStorage.getItem("app_currency");
-    setCurrencySymbol(savedCurrency === "TZS" ? "TSh " : "$");
-
     const fetchAndBuildChart = async () => {
       setLoading(true);
       

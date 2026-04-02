@@ -262,15 +262,30 @@ export default function DashboardPage() {
           </p>
         </div>
         
-        <div className="flex items-center gap-2 md:gap-4">
+        {/* 🚀 PREMIUM MOBILE LAYOUT FIX: Reordered flex column for mobile, flex row for desktop */}
+        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-4">
+          
+          {/* Action Icons: Top on Mobile, Right on Desktop */}
+          <div className="flex items-center gap-2 md:gap-4 order-first sm:order-last">
+            <HelpModal />
+            <NotificationBell />
+            <button onClick={handleThemeToggle} className="text-slate-500 hover:text-amber-500 dark:text-slate-400 dark:hover:text-amber-400 transition-colors p-1" title="Toggle Theme">
+              {isDarkMode ? <Sun size={18} className="md:w-5 md:h-5" /> : <Moon size={18} className="md:w-5 md:h-5" />}
+            </button>
+            <div className="md:hidden ml-1 flex items-center justify-center cursor-pointer">
+              <UserProfile isCollapsed={true} popDirection="down" />
+            </div>
+          </div>
+
+          {/* Calendar Button: Bottom on Mobile, Left on Desktop */}
           {!isEmptyState && (
-            <div className="relative z-50">
+            <div className="relative z-50 order-last sm:order-first mt-1 sm:mt-0">
               <button 
                 onClick={() => setIsPeriodDropdownOpen(!isPeriodDropdownOpen)}
-                className="hidden md:flex items-center gap-2 glass-card hover:bg-white/60 dark:hover:bg-white/10 px-4 py-2.5 rounded-full text-sm font-bold text-slate-700 dark:text-slate-300 transition-all cursor-pointer group shadow-sm"
+                className="flex items-center gap-1.5 md:gap-2 glass-card hover:bg-white/60 dark:hover:bg-white/10 px-3 md:px-4 py-2 md:py-2.5 rounded-full text-xs md:text-sm font-bold text-slate-700 dark:text-slate-300 transition-all cursor-pointer group shadow-sm"
               >
-                <CalendarDays size={16} className="text-indigo-500 dark:text-indigo-400 group-hover:scale-110 transition-transform" />
-                <span>{MONTHS[selectedMonth]} {selectedYear}</span>
+                <CalendarDays size={16} className="text-indigo-500 dark:text-indigo-400 group-hover:scale-110 transition-transform hidden sm:block" />
+                <span className="whitespace-nowrap">{MONTHS[selectedMonth]} {selectedYear}</span>
                 <ChevronDown size={14} className={`text-slate-400 transition-transform duration-300 ${isPeriodDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
@@ -308,16 +323,6 @@ export default function DashboardPage() {
             </div>
           )}
 
-          <HelpModal />
-          <NotificationBell />
-
-          <button onClick={handleThemeToggle} className="text-slate-500 hover:text-amber-500 dark:text-slate-400 dark:hover:text-amber-400 transition-colors p-1" title="Toggle Theme">
-            {isDarkMode ? <Sun size={18} className="md:w-5 md:h-5" /> : <Moon size={18} className="md:w-5 md:h-5" />}
-          </button>
-          
-          <div className="md:hidden ml-1 flex items-center justify-center cursor-pointer">
-            <UserProfile isCollapsed={true} popDirection="down" />
-          </div>
         </div>
       </header>
 
@@ -444,7 +449,7 @@ export default function DashboardPage() {
                           spent={spent} 
                           total={Number(budget.limit_amount)} 
                           currencySymbol={currencySymbol} 
-                          isCurrentMonth={isViewingCurrentMonth} // 🚀 Pacing variable injected
+                          isCurrentMonth={isViewingCurrentMonth}
                         />
                       );
                     })}
@@ -494,7 +499,8 @@ export default function DashboardPage() {
               <h3 className="text-base md:text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100 transition-colors">Where it went</h3>
               <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-1 transition-colors font-medium">Spending by category</p>
               <div className="flex-1 w-full">
-                <CategoryChart selectedMonth={selectedMonth} selectedYear={selectedYear} />
+                {/* 🚀 ADDED: currencySymbol prop injected here */}
+                <CategoryChart selectedMonth={selectedMonth} selectedYear={selectedYear} currencySymbol={currencySymbol} />
               </div>
             </div>
           </div>
@@ -540,7 +546,8 @@ export default function DashboardPage() {
               <h3 className="text-base md:text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100 transition-colors">Monthly Trends</h3>
               <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-4 transition-colors font-medium">Spending analysis</p>
               <div className="flex-1 flex items-end">
-                <SpendingChart selectedMonth={selectedMonth} selectedYear={selectedYear} />
+                {/* 🚀 ADDED: currencySymbol prop injected here */}
+                <SpendingChart selectedMonth={selectedMonth} selectedYear={selectedYear} currencySymbol={currencySymbol} />
               </div>
             </div>
           </div>

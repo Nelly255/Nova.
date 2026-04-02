@@ -16,19 +16,24 @@ const COLORS = [
   "#14b8a6", // Teal
 ];
 
-export default function CategoryChart({ selectedMonth, selectedYear }: { selectedMonth: number, selectedYear: number }) {
+// 🚀 UPDATED: Added currencySymbol to the props and type definition
+export default function CategoryChart({ 
+  selectedMonth, 
+  selectedYear,
+  currencySymbol 
+}: { 
+  selectedMonth: number; 
+  selectedYear: number; 
+  currencySymbol: string;
+}) {
   const [chartData, setChartData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currencySymbol, setCurrencySymbol] = useState("$");
   const [totalSpent, setTotalSpent] = useState(0);
   
   // Track which slice the user is hovering over
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
 
   useEffect(() => {
-    const savedCurrency = localStorage.getItem("app_currency");
-    setCurrencySymbol(savedCurrency === "TZS" ? "TSh " : "$");
-
     const fetchCategories = async () => {
       setLoading(true);
       const { data, error } = await supabase.from("transactions").select("*").eq("type", "expense");
