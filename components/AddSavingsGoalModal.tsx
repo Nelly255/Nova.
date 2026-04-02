@@ -8,9 +8,13 @@ export default function AddSavingsGoalModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Default start date to today
+  const today = new Date().toISOString().split('T')[0];
+
   const [formData, setFormData] = useState({
     name: "",
     target_amount: "",
+    start_date: today, // 🚀 Tracks when the saving goal was started
     target_date: "",
   });
 
@@ -40,6 +44,7 @@ export default function AddSavingsGoalModal() {
         target_amount: parseFloat(formData.target_amount),
         current_amount: 0,
         target_date: formData.target_date,
+        created_at: new Date(formData.start_date).toISOString(), // Overrides default creation date for the Time Machine
       },
     ]);
 
@@ -50,7 +55,7 @@ export default function AddSavingsGoalModal() {
       alert("Failed to save goal.");
     } else {
       setIsOpen(false);
-      setFormData({ name: "", target_amount: "", target_date: "" });
+      setFormData({ name: "", target_amount: "", start_date: today, target_date: "" });
       
       window.dispatchEvent(new Event("goalUpdated")); 
     }
@@ -99,17 +104,29 @@ export default function AddSavingsGoalModal() {
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-semibold tracking-wide text-zinc-700 dark:text-zinc-400 mb-1 transition-colors">Target Amount</label>
+                <input 
+                  required
+                  type="text" 
+                  inputMode="decimal"
+                  placeholder="e.g., 5,000"
+                  value={formatAmountForDisplay(formData.target_amount)}
+                  onChange={handleAmountChange}
+                  className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
+                />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold tracking-wide text-zinc-700 dark:text-zinc-400 mb-1 transition-colors">Target Amount</label>
+                  {/* 🚀 UPGRADED: Renamed label to Start Date */}
+                  <label className="block text-sm font-semibold tracking-wide text-zinc-700 dark:text-zinc-400 mb-1 transition-colors">Start Date</label>
                   <input 
                     required
-                    type="text" 
-                    inputMode="decimal"
-                    placeholder="e.g., 5,000"
-                    value={formatAmountForDisplay(formData.target_amount)}
-                    onChange={handleAmountChange}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
+                    type="date" 
+                    value={formData.start_date}
+                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                    className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors [color-scheme:light] dark:[color-scheme:dark]"
                   />
                 </div>
                 <div>

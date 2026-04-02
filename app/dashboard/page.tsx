@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { Zap, ArrowUpRight, ArrowDownToLine, CalendarDays, Receipt, Sun, Moon, Scale, ChevronDown, ChevronLeft, ChevronRight, Briefcase, PiggyBank, CreditCard, TrendingUp, Target, Rocket, Loader2 } from "lucide-react"; 
 import SpendingChart from "@/components/SpendingChart";
@@ -9,7 +9,6 @@ import HelpModal from "@/components/HelpModal";
 import NotificationBell from "@/components/NotificationBell"; 
 import CategoryChart from "@/components/CategoryChart";
 import UserProfile from "@/components/UserProfile"; 
-// 🚀 INJECTED: Nova Wrapped Import
 import dynamic from "next/dynamic";
 const NovaWrapped = dynamic(() => import("@/components/NovaWrapped"), { ssr: false });
 import { supabase } from "@/lib/supabase";
@@ -35,9 +34,18 @@ export default function DashboardPage() {
   const [greeting, setGreeting] = useState("Hello");
 
   const now = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
-  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  
+  // 🚀 NEW: Range Selection State
+  const [dateRange, setDateRange] = useState({
+    from: new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0),
+    to: new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
+  });
+  
   const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false);
+  const [calendarView, setCalendarView] = useState({ month: now.getMonth(), year: now.getFullYear() });
+  
+  // Temp state for while the user is actively clicking the calendar
+  const [tempSelection, setTempSelection] = useState<{from: Date | null, to: Date | null}>({ from: null, to: null });
 
   // Check the user's local time for the greeting
   useEffect(() => {
@@ -73,7 +81,6 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const savedCurrency = localStorage.getItem("app_currency");
-    // Default to TSh unless USD is explicitly saved
     if (savedCurrency === "USD") {
       setCurrencySymbol("$");
     } else {
@@ -89,7 +96,6 @@ export default function DashboardPage() {
           const name = user.user_metadata?.full_name || user.email?.split('@')[0] || "User";
           setUserName(name);
 
-          // 🚀 THE PREMIUM WELCOME EMAIL TRIPWIRE 🚀
           const createdAt = new Date(user.created_at).getTime();
           const timeSinceCreation = new Date().getTime() - createdAt;
           const hasSentEmail = localStorage.getItem('nova_welcome_sent');
@@ -157,6 +163,20 @@ export default function DashboardPage() {
     });
   };
 
+  // 🚀 CALENDAR RANGE FORMATTER
+  const formatRangeDisplay = (from: Date, to: Date) => {
+    if (from.getFullYear() !== to.getFullYear()) {
+      return `${MONTHS[from.getMonth()]} ${from.getDate()}, ${from.getFullYear()} - ${MONTHS[to.getMonth()]} ${to.getDate()}, ${to.getFullYear()}`;
+    }
+    if (from.getMonth() !== to.getMonth()) {
+      return `${MONTHS[from.getMonth()]} ${from.getDate()} - ${MONTHS[to.getMonth()]} ${to.getDate()}, ${to.getFullYear()}`;
+    }
+    if (from.getDate() !== to.getDate()) {
+       return `${MONTHS[from.getMonth()]} ${from.getDate()} - ${to.getDate()}, ${to.getFullYear()}`;
+    }
+    return `${MONTHS[from.getMonth()]} ${from.getDate()}, ${to.getFullYear()}`;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-[#0A0A0E] flex flex-col items-center justify-center transition-colors duration-300">
@@ -166,33 +186,40 @@ export default function DashboardPage() {
     );
   }
 
-  const previousTransactions = transactions.filter(t => {
+  // 🚀 TIME MACHINE CORE LOGIC: Uses dateRange.to as the absolute anchor
+  const endOfSelectedPeriod = dateRange.to;
+  const startOfSelectedPeriod = dateRange.from;
+  
+  const transactionsUpToSelected = transactions.filter(t => new Date(t.date) <= endOfSelectedPeriod);
+
+  const previousTransactions = transactions.filter(t => new Date(t.date) < startOfSelectedPeriod);
+  
+  const currentPeriodTransactions = transactions.filter(t => {
     const d = new Date(t.date);
-    return d.getFullYear() < selectedYear || (d.getFullYear() === selectedYear && d.getMonth() < selectedMonth);
-  });
-  const currentMonthTransactions = transactions.filter(t => {
-    const d = new Date(t.date);
-    return d.getFullYear() === selectedYear && d.getMonth() === selectedMonth;
+    return d >= startOfSelectedPeriod && d <= endOfSelectedPeriod;
   });
 
   const prevIncome = previousTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + Number(t.amount), 0);
   const prevExpense = previousTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + Number(t.amount), 0);
   const openingBalance = prevIncome - prevExpense;
 
-  const currentMonthIncome = currentMonthTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + Number(t.amount), 0);
-  const currentMonthExpense = currentMonthTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + Number(t.amount), 0);
-  const safeToSpend = openingBalance + currentMonthIncome - currentMonthExpense;
+  const currentPeriodIncome = currentPeriodTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + Number(t.amount), 0);
+  const currentPeriodExpense = currentPeriodTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + Number(t.amount), 0);
+  const safeToSpend = openingBalance + currentPeriodIncome - currentPeriodExpense;
 
-  const totalAllTimeIncome = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + Number(t.amount), 0);
-  const totalAllTimeExpense = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + Number(t.amount), 0);
-  const liquidCash = totalAllTimeIncome - totalAllTimeExpense;
+  const totalHistoricalIncome = transactionsUpToSelected.filter(t => t.type === 'income').reduce((acc, t) => acc + Number(t.amount), 0);
+  const totalHistoricalExpense = transactionsUpToSelected.filter(t => t.type === 'expense').reduce((acc, t) => acc + Number(t.amount), 0);
+  const liquidCash = totalHistoricalIncome - totalHistoricalExpense;
 
-  const totalSavings = savings.reduce((acc, g) => acc + Number(g.current_amount), 0);
-  
-  // 🚀 UPGRADED: Synced perfectly with the Daily Pro-Rata engine from the Assets page
-  const isViewingCurrentMonth = selectedMonth === now.getMonth() && selectedYear === now.getFullYear();
+  const totalSavings = savings.reduce((acc, g) => {
+    const addedDate = new Date(g.created_at || now);
+    if (addedDate <= endOfSelectedPeriod) {
+      return acc + Number(g.current_amount);
+    }
+    return acc;
+  }, 0);
 
-  // 🚀 THE FIX: Filter out 'sold' assets so they don't artificially inflate your NBV
+  const isViewingCurrentRange = now >= dateRange.from && now <= dateRange.to;
   const activeAssetsOnly = assets.filter(asset => asset.status === 'active' || !asset.status);
 
   const totalAssetsValue = activeAssetsOnly.reduce((acc, asset) => {
@@ -200,15 +227,12 @@ export default function DashboardPage() {
     const rate = Number(asset.depreciation_rate) / 100;
     const purchasePrice = Number(asset.purchase_price);
     const salvageValue = Number(asset.salvage_value) || 0;
+    
+    const actualTargetDate = endOfSelectedPeriod > now ? now : endOfSelectedPeriod;
+    let currentValue = 0; 
 
-    // Daily Math Target Dates
-    const targetDateEnd = selectedYear === now.getFullYear() ? now : new Date(selectedYear, 11, 31, 23, 59, 59);
-
-    let currentValue = purchasePrice;
-
-    if (targetDateEnd >= purchaseDate) {
-      // Exact fractional years
-      const daysOwnedEnd = (targetDateEnd.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24);
+    if (actualTargetDate >= purchaseDate) {
+      const daysOwnedEnd = (actualTargetDate.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24);
       const exactYearsOwnedEnd = daysOwnedEnd / 365.25;
 
       currentValue = purchasePrice * Math.pow(1 - rate, exactYearsOwnedEnd);
@@ -218,15 +242,53 @@ export default function DashboardPage() {
     return acc + currentValue;
   }, 0);
 
-  const totalDebts = debts.reduce((acc, d) => acc + Number(d.remaining_amount), 0);
+  const totalDebts = debts.reduce((acc, d) => {
+    const addedDate = new Date(d.created_at || now);
+    if (addedDate <= endOfSelectedPeriod) {
+      return acc + Number(d.remaining_amount);
+    }
+    return acc;
+  }, 0);
+  
   const trueNetWorth = liquidCash + totalSavings + totalAssetsValue - totalDebts;
 
-  const today = new Date().getDate();
-  const upcomingBills = subscriptions.filter(sub => sub.billing_date >= today);
+  // 🚀 WEALTH GRAPH: Loops exactly 6 months back from the End Date
+  const generateSparklineData = () => {
+    const data = [];
+    const labels = [];
+    let runningNW = trueNetWorth;
+
+    const endYear = dateRange.to.getFullYear();
+    const endMonth = dateRange.to.getMonth();
+
+    for (let i = 0; i < 6; i++) {
+      const targetDate = new Date(endYear, endMonth - i, 1);
+      const mYear = targetDate.getFullYear();
+      const mMonth = targetDate.getMonth();
+
+      const mTx = transactions.filter(t => {
+        const d = new Date(t.date);
+        return d.getFullYear() === mYear && d.getMonth() === mMonth;
+      });
+
+      const mIncome = mTx.filter(t => t.type === 'income').reduce((sum, t) => sum + Number(t.amount), 0);
+      const mExpense = mTx.filter(t => t.type === 'expense').reduce((sum, t) => sum + Number(t.amount), 0);
+      const mNet = mIncome - mExpense;
+
+      data.unshift(runningNW); 
+      labels.unshift(`${MONTHS[mMonth]} ${mYear}`);
+      runningNW = runningNW - mNet; 
+    }
+    return { sparklineData: data, sparklineLabels: labels };
+  };
+
+  const { sparklineData, sparklineLabels } = transactions.length > 0 ? generateSparklineData() : { sparklineData: [], sparklineLabels: [] };
+
+  const todayDate = new Date().getDate();
+  const upcomingBills = subscriptions.filter(sub => sub.billing_date >= todayDate);
   const nextBill = upcomingBills.length > 0 ? upcomingBills[0] : (subscriptions.length > 0 ? subscriptions[0] : null);
 
-  // 🚀 Calculate Data for Nova Wrapped (TYPESCRIPT SAFE)
-  const categoryTotals = currentMonthTransactions.reduce((acc, t) => {
+  const categoryTotals = currentPeriodTransactions.reduce((acc, t) => {
     if (t.type === 'expense') {
       acc[t.category] = (acc[t.category] || 0) + Number(t.amount);
     }
@@ -236,7 +298,6 @@ export default function DashboardPage() {
   let topCategory = "No Spending";
   let topCategoryAmount = 0;
   
-  // Explicitly tell TypeScript that `amt` is a number to avoid the build crash
   for (const [cat, amt] of Object.entries(categoryTotals)) {
     const amount = amt as number; 
     
@@ -247,6 +308,59 @@ export default function DashboardPage() {
   }
 
   const isEmptyState = transactions.length === 0 && budgets.length === 0 && assets.length === 0 && savings.length === 0 && debts.length === 0;
+
+
+  // 🚀 CALENDAR LOGIC HELPERS
+  const daysInMonth = new Date(calendarView.year, calendarView.month + 1, 0).getDate();
+  const firstDayOfMonth = new Date(calendarView.year, calendarView.month, 1).getDay();
+  const calendarDays = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  const blankDays = Array.from({ length: firstDayOfMonth }, (_, i) => i);
+
+  const handleDayClick = (day: number) => {
+    const clickedDate = new Date(calendarView.year, calendarView.month, day);
+    
+    if (!tempSelection.from || (tempSelection.from && tempSelection.to)) {
+      // Start new selection
+      setTempSelection({ from: new Date(clickedDate.setHours(0, 0, 0, 0)), to: null });
+    } else {
+      // Complete selection
+      const newTo = new Date(clickedDate.setHours(23, 59, 59, 999));
+      if (newTo < tempSelection.from) {
+        // Swap if selected backwards
+        setDateRange({ from: new Date(newTo.setHours(0,0,0,0)), to: new Date(tempSelection.from.setHours(23,59,59,999)) });
+      } else {
+        setDateRange({ from: tempSelection.from, to: newTo });
+      }
+      setIsPeriodDropdownOpen(false);
+      setTempSelection({ from: null, to: null }); // Reset temp
+    }
+  };
+
+  const setPreset = (type: string) => {
+    const t = new Date();
+    let start, end;
+
+    if (type === 'this_month') {
+      start = new Date(t.getFullYear(), t.getMonth(), 1, 0, 0, 0);
+      end = new Date(t.getFullYear(), t.getMonth() + 1, 0, 23, 59, 59);
+    } else if (type === 'last_month') {
+      start = new Date(t.getFullYear(), t.getMonth() - 1, 1, 0, 0, 0);
+      end = new Date(t.getFullYear(), t.getMonth(), 0, 23, 59, 59);
+    } else if (type === 'last_3_months') {
+      start = new Date(t.getFullYear(), t.getMonth() - 2, 1, 0, 0, 0);
+      end = new Date(t.getFullYear(), t.getMonth() + 1, 0, 23, 59, 59);
+    } else if (type === 'ytd') {
+      start = new Date(t.getFullYear(), 0, 1, 0, 0, 0);
+      end = new Date(t.getFullYear(), t.getMonth() + 1, 0, 23, 59, 59);
+    }
+
+    if (start && end) {
+      setDateRange({ from: start, to: end });
+      setCalendarView({ month: end.getMonth(), year: end.getFullYear() });
+      setIsPeriodDropdownOpen(false);
+      setTempSelection({ from: null, to: null });
+    }
+  };
 
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-6 md:space-y-8 pb-32 relative bg-transparent min-h-screen transition-colors duration-300">
@@ -262,10 +376,8 @@ export default function DashboardPage() {
           </p>
         </div>
         
-        {/* 🚀 PREMIUM MOBILE LAYOUT FIX: Reordered flex column for mobile, flex row for desktop */}
         <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-4">
           
-          {/* Action Icons: Top on Mobile, Right on Desktop */}
           <div className="flex items-center gap-2 md:gap-4 order-first sm:order-last">
             <HelpModal />
             <NotificationBell />
@@ -277,46 +389,114 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Calendar Button: Bottom on Mobile, Left on Desktop */}
           {!isEmptyState && (
             <div className="relative z-50 order-last sm:order-first mt-1 sm:mt-0">
               <button 
-                onClick={() => setIsPeriodDropdownOpen(!isPeriodDropdownOpen)}
+                onClick={() => {
+                  setIsPeriodDropdownOpen(!isPeriodDropdownOpen);
+                  setTempSelection({ from: null, to: null });
+                  setCalendarView({ month: dateRange.to.getMonth(), year: dateRange.to.getFullYear() });
+                }}
                 className="flex items-center gap-1.5 md:gap-2 glass-card hover:bg-white/60 dark:hover:bg-white/10 px-3 md:px-4 py-2 md:py-2.5 rounded-full text-xs md:text-sm font-bold text-slate-700 dark:text-slate-300 transition-all cursor-pointer group shadow-sm"
               >
                 <CalendarDays size={16} className="text-indigo-500 dark:text-indigo-400 group-hover:scale-110 transition-transform hidden sm:block" />
-                <span className="whitespace-nowrap">{MONTHS[selectedMonth]} {selectedYear}</span>
+                <span className="whitespace-nowrap">{formatRangeDisplay(dateRange.from, dateRange.to)}</span>
                 <ChevronDown size={14} className={`text-slate-400 transition-transform duration-300 ${isPeriodDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
+              {/* 🚀 PREMIUM CUSTOM CALENDAR POPOVER */}
               {isPeriodDropdownOpen && (
                 <>
                   <div className="fixed inset-0 z-40 bg-slate-900/5 dark:bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setIsPeriodDropdownOpen(false)} />
-                  <div className="fixed left-4 right-4 top-24 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-3 z-50 sm:w-72 bg-white/80 dark:bg-slate-900/80 backdrop-blur-[64px] border border-white/60 dark:border-white/10 rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] p-5 animate-in fade-in zoom-in-95 origin-top sm:origin-top-right duration-200">
-                    <div className="flex justify-between items-center mb-6 px-2">
-                      <button onClick={() => setSelectedYear(y => y - 1)} className="p-1.5 rounded-full hover:bg-slate-200/50 dark:hover:bg-white/10 text-slate-500 transition-colors"><ChevronLeft size={18}/></button>
-                      <span className="font-extrabold text-lg text-slate-900 dark:text-white tracking-tight">{selectedYear}</span>
-                      <button onClick={() => setSelectedYear(y => y + 1)} className="p-1.5 rounded-full hover:bg-slate-200/50 dark:hover:bg-white/10 text-slate-500 transition-colors"><ChevronRight size={18}/></button>
+                  <div className="fixed left-4 right-4 top-24 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-3 z-50 sm:w-80 bg-white/90 dark:bg-slate-900/95 backdrop-blur-[64px] border border-white/60 dark:border-white/10 rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] p-5 animate-in fade-in zoom-in-95 origin-top sm:origin-top-right duration-200 overflow-hidden">
+                    
+                    {/* Header Controls */}
+                    <div className="flex justify-between items-center mb-4 px-2">
+                      <button 
+                        onClick={() => setCalendarView(prev => prev.month === 0 ? { month: 11, year: prev.year - 1 } : { ...prev, month: prev.month - 1 })}
+                        className="p-1.5 rounded-full hover:bg-slate-200/50 dark:hover:bg-white/10 text-slate-500 transition-colors"
+                      >
+                        <ChevronLeft size={18}/>
+                      </button>
+                      <span className="font-extrabold text-base text-slate-900 dark:text-white tracking-tight">
+                        {MONTHS[calendarView.month]} {calendarView.year}
+                      </span>
+                      <button 
+                        onClick={() => setCalendarView(prev => prev.month === 11 ? { month: 0, year: prev.year + 1 } : { ...prev, month: prev.month + 1 })}
+                        className="p-1.5 rounded-full hover:bg-slate-200/50 dark:hover:bg-white/10 text-slate-500 transition-colors"
+                      >
+                        <ChevronRight size={18}/>
+                      </button>
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {MONTHS.map((monthStr, index) => {
-                        const isSelected = selectedMonth === index;
-                        const isCurrentRealMonth = index === now.getMonth() && selectedYear === now.getFullYear();
+
+                    {/* Days of Week */}
+                    <div className="grid grid-cols-7 gap-1 mb-2">
+                      {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                        <div key={day} className="text-center text-[10px] font-bold text-slate-400 dark:text-slate-500">{day}</div>
+                      ))}
+                    </div>
+
+                    {/* Calendar Grid */}
+                    <div className="grid grid-cols-7 gap-1 mb-4">
+                      {blankDays.map((_, i) => (
+                        <div key={`blank-${i}`} className="h-8 w-8" />
+                      ))}
+                      {calendarDays.map(day => {
+                        const currentIterDate = new Date(calendarView.year, calendarView.month, day);
+                        
+                        // Interaction State Math
+                        const activeFrom = tempSelection.from || dateRange.from;
+                        const activeTo = tempSelection.to || dateRange.to;
+
+                        const isFromDate = activeFrom && currentIterDate.setHours(0,0,0,0) === activeFrom.setHours(0,0,0,0);
+                        const isToDate = activeTo && currentIterDate.setHours(0,0,0,0) === activeTo.setHours(0,0,0,0);
+                        
+                        let inRange = false;
+                        if (activeFrom && activeTo) {
+                          inRange = currentIterDate > activeFrom && currentIterDate < activeTo;
+                        }
+
+                        let baseClasses = "h-8 w-8 text-sm font-semibold rounded-full flex items-center justify-center transition-all duration-200 ";
+                        
+                        if (isFromDate || isToDate) {
+                           baseClasses += "bg-indigo-500 text-white shadow-md shadow-indigo-500/25 scale-105 z-10 relative";
+                        } else if (inRange) {
+                           baseClasses += "bg-indigo-50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 rounded-none scale-100";
+                        } else {
+                           baseClasses += "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10";
+                        }
+
+                        // Connect the edges if in range
+                        if (isFromDate && activeTo && currentIterDate < activeTo) {
+                          baseClasses += " rounded-r-none";
+                        }
+                        if (isToDate && activeFrom && currentIterDate > activeFrom) {
+                          baseClasses += " rounded-l-none";
+                        }
+
                         return (
-                          <button 
-                            key={monthStr}
-                            onClick={() => { setSelectedMonth(index); setIsPeriodDropdownOpen(false); }}
-                            className={`py-2 rounded-xl text-sm font-bold transition-all duration-200 ${
-                              isSelected ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/25 scale-105' 
-                              : isCurrentRealMonth ? 'bg-indigo-50/50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30'
-                              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 border border-transparent'
-                            }`}
-                          >
-                            {monthStr}
-                          </button>
+                          <div key={day} className="relative flex justify-center">
+                            {/* Background connector for range flow */}
+                            {inRange && <div className="absolute inset-0 bg-indigo-50 dark:bg-indigo-500/20 -z-10 w-full" />}
+                            {isFromDate && activeTo && currentIterDate < activeTo && <div className="absolute inset-y-0 right-0 w-1/2 bg-indigo-50 dark:bg-indigo-500/20 -z-10" />}
+                            {isToDate && activeFrom && currentIterDate > activeFrom && <div className="absolute inset-y-0 left-0 w-1/2 bg-indigo-50 dark:bg-indigo-500/20 -z-10" />}
+                            
+                            <button onClick={() => handleDayClick(day)} className={baseClasses}>
+                              {day}
+                            </button>
+                          </div>
                         );
                       })}
                     </div>
+
+                    {/* Presets */}
+                    <div className="grid grid-cols-2 gap-2 pt-4 border-t border-slate-200/50 dark:border-white/10">
+                      <button onClick={() => setPreset('this_month')} className="py-1.5 px-3 text-xs font-bold bg-slate-100/50 dark:bg-white/5 hover:bg-slate-200/50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400 rounded-lg transition-colors">This Month</button>
+                      <button onClick={() => setPreset('last_month')} className="py-1.5 px-3 text-xs font-bold bg-slate-100/50 dark:bg-white/5 hover:bg-slate-200/50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400 rounded-lg transition-colors">Last Month</button>
+                      <button onClick={() => setPreset('last_3_months')} className="py-1.5 px-3 text-xs font-bold bg-slate-100/50 dark:bg-white/5 hover:bg-slate-200/50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400 rounded-lg transition-colors">Last 3 Months</button>
+                      <button onClick={() => setPreset('ytd')} className="py-1.5 px-3 text-xs font-bold bg-slate-100/50 dark:bg-white/5 hover:bg-slate-200/50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400 rounded-lg transition-colors">Year to Date</button>
+                    </div>
+
                   </div>
                 </>
               )}
@@ -332,25 +512,28 @@ export default function DashboardPage() {
       ) : (
         <>
           <NovaWrapped 
-            month={`${MONTHS[selectedMonth]} ${selectedYear}`}
+            month={formatRangeDisplay(dateRange.from, dateRange.to)}
             netWorth={`${currencySymbol}${trueNetWorth.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
-            monthlyIncome={`+${currencySymbol}${currentMonthIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
-            monthlyExpense={`-${currencySymbol}${currentMonthExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+            monthlyIncome={`+${currencySymbol}${currentPeriodIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+            monthlyExpense={`-${currencySymbol}${currentPeriodExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
             topCategory={topCategory}
-            transactionCount={currentMonthTransactions.length}
+            transactionCount={currentPeriodTransactions.length}
           />
 
           {/* Massive True Net Worth Banner */}
           <div className="glass-card p-6 md:p-8 rounded-[2rem] relative overflow-hidden transition-colors border-t border-white/40 dark:border-white/10 shadow-xl shadow-brand/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div className="absolute -left-24 -top-24 w-64 h-64 bg-emerald-500/20 blur-3xl rounded-full pointer-events-none"></div>
             
+            {/* Indigo Glow */}
+            <div className="absolute -left-24 -top-24 w-64 h-64 bg-indigo-500/20 blur-3xl rounded-full pointer-events-none z-0"></div>
+
             <div className="relative z-10 w-full md:w-auto">
-              <p className="text-emerald-600 dark:text-emerald-400 font-bold tracking-widest uppercase text-xs flex items-center gap-2 mb-2">
+              <p className="text-indigo-600 dark:text-indigo-400 font-bold tracking-widest uppercase text-xs flex items-center gap-2 mb-2">
                 <TrendingUp size={16} /> True Net Worth
               </p>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white transition-colors break-words leading-tight">
                 {currencySymbol}{trueNetWorth.toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </h2>
+              <p className="text-[10px] md:text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">As of {MONTHS[dateRange.to.getMonth()]} {dateRange.to.getDate()}, {dateRange.to.getFullYear()}</p>
             </div>
 
             <div className="relative z-10 grid grid-cols-2 md:flex md:flex-wrap gap-4 md:gap-8 mt-2 md:mt-0 w-full md:w-auto">
@@ -373,6 +556,31 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* Standalone Premium Trajectory Graph Card */}
+          {!isEmptyState && sparklineData.length > 0 && (
+            <div className="glass-card p-6 md:p-8 rounded-[2rem] flex flex-col h-48 md:h-64 transition-colors relative overflow-visible z-10 hover:z-50">
+              <div className="flex justify-between items-center mb-6 relative z-10">
+                <div>
+                  <h3 className="text-base md:text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100 transition-colors">Wealth Trajectory</h3>
+                  <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 font-medium">6 Months up to {MONTHS[dateRange.to.getMonth()]} {dateRange.to.getFullYear()}</p>
+                </div>
+                {/* Indigo Up Badge */}
+                {sparklineData[sparklineData.length - 1] >= sparklineData[0] ? (
+                  <div className="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full text-xs font-bold border border-indigo-200 dark:border-indigo-500/20 flex items-center gap-1 shadow-sm">
+                    <TrendingUp size={12} /> Up Trending
+                  </div>
+                ) : (
+                  <div className="bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 px-3 py-1 rounded-full text-xs font-bold border border-rose-200 dark:border-rose-500/20 flex items-center gap-1 shadow-sm">
+                    <TrendingUp size={12} className="rotate-180" /> Down Trending
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 w-full relative -mx-2 sm:-mx-4 mt-2">
+                 <NetWorthSparkline data={sparklineData} labels={sparklineLabels} currencySymbol={currencySymbol} />
+              </div>
+            </div>
+          )}
+
           {/* Hero Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 glass-card p-6 md:p-8 rounded-[2rem] relative transition-colors">
@@ -382,7 +590,7 @@ export default function DashboardPage() {
               
               <div className="relative z-10">
                 <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm font-semibold tracking-wider uppercase transition-colors">
-                  {selectedMonth === now.getMonth() && selectedYear === now.getFullYear() ? "Safe to Spend" : `End of ${MONTHS[selectedMonth]} Balance`}
+                  {isViewingCurrentRange ? "Safe to Spend" : `End of Period Balance`}
                 </p>
                 <h2 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tighter mt-2 md:mt-3 text-slate-900 dark:text-white transition-colors break-words leading-tight">
                   {currencySymbol}{safeToSpend.toLocaleString(undefined, { maximumFractionDigits: 0 })}
@@ -428,7 +636,7 @@ export default function DashboardPage() {
               <div>
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-base md:text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100 transition-colors">
-                    {MONTHS[selectedMonth]} Budget Health
+                    Period Budget Health
                   </h3>
                   <Link href="/dashboard/budgets" className="text-xs md:text-sm text-slate-500 hover:text-indigo-500 dark:text-slate-400 dark:hover:text-indigo-400 transition font-semibold">View Details</Link>
                 </div>
@@ -438,7 +646,7 @@ export default function DashboardPage() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 mb-4">
                     {budgets.slice(0, 6).map(budget => {
-                      const spent = currentMonthTransactions
+                      const spent = currentPeriodTransactions
                         .filter(t => t.category === budget.name)
                         .reduce((acc, t) => acc + Number(t.amount), 0);
                         
@@ -449,7 +657,7 @@ export default function DashboardPage() {
                           spent={spent} 
                           total={Number(budget.limit_amount)} 
                           currencySymbol={currencySymbol} 
-                          isCurrentMonth={isViewingCurrentMonth}
+                          isCurrentRange={isViewingCurrentRange} 
                         />
                       );
                     })}
@@ -457,13 +665,12 @@ export default function DashboardPage() {
                 )}
               </div>
 
-              {/* 🚀 RESTORED OVERALL BUDGET USAGE BAR */}
               {budgets.length > 0 && (
                 <div className="mt-6 pt-6 border-t border-slate-200/50 dark:border-white/5">
                   {(() => {
                     const totalLimit = budgets.reduce((acc, b) => acc + Number(b.limit_amount), 0);
                     const totalSpent = budgets.reduce((acc, b) => {
-                      const spent = currentMonthTransactions
+                      const spent = currentPeriodTransactions
                         .filter(t => t.category === b.name)
                         .reduce((sum, t) => sum + Number(t.amount), 0);
                       return acc + spent;
@@ -499,8 +706,8 @@ export default function DashboardPage() {
               <h3 className="text-base md:text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100 transition-colors">Where it went</h3>
               <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-1 transition-colors font-medium">Spending by category</p>
               <div className="flex-1 w-full">
-                {/* 🚀 ADDED: currencySymbol prop injected here */}
-                <CategoryChart selectedMonth={selectedMonth} selectedYear={selectedYear} currencySymbol={currencySymbol} />
+                {/* Notice: You may need to adapt CategoryChart to accept dateRange instead of selectedMonth */}
+                <CategoryChart selectedMonth={dateRange.to.getMonth()} selectedYear={dateRange.to.getFullYear()} currencySymbol={currencySymbol} />
               </div>
             </div>
           </div>
@@ -509,14 +716,14 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 glass-card p-6 md:p-8 rounded-[2rem] transition-colors">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-base md:text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100 transition-colors">Activity in {MONTHS[selectedMonth]}</h3>
+                <h3 className="text-base md:text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100 transition-colors">Activity in Period</h3>
                 <Link href="/dashboard/transactions" className="text-xs md:text-sm text-slate-500 hover:text-indigo-500 dark:text-slate-400 dark:hover:text-indigo-400 transition font-semibold">View all</Link>
               </div>
               <div className="space-y-3">
                 {openingBalance !== 0 && (
                   <TransactionRow 
                     icon={<Scale size={16} />} 
-                    title={`${MONTHS[selectedMonth]} Opening Balance`} 
+                    title={`Period Opening Balance`} 
                     date="Carried over" 
                     amount={`${openingBalance >= 0 ? '+' : ''}${currencySymbol}${openingBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
                     color={openingBalance >= 0 ? "text-indigo-600 dark:text-indigo-400" : "text-rose-600 dark:text-rose-400"} 
@@ -524,10 +731,10 @@ export default function DashboardPage() {
                   />
                 )}
 
-                {currentMonthTransactions.length === 0 ? (
-                  <p className="text-slate-500 text-center py-6 text-sm font-medium">No transactions found for {MONTHS[selectedMonth]} {selectedYear}.</p>
+                {currentPeriodTransactions.length === 0 ? (
+                  <p className="text-slate-500 text-center py-6 text-sm font-medium">No transactions found for this period.</p>
                 ) : (
-                  currentMonthTransactions.slice(0, 5).map((t) => (
+                  currentPeriodTransactions.slice(0, 5).map((t) => (
                     <TransactionRow 
                       key={t.id} 
                       icon={t.type === 'income' ? <ArrowDownToLine size={16}/> : <Receipt size={16}/>} 
@@ -546,8 +753,8 @@ export default function DashboardPage() {
               <h3 className="text-base md:text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100 transition-colors">Monthly Trends</h3>
               <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-4 transition-colors font-medium">Spending analysis</p>
               <div className="flex-1 flex items-end">
-                {/* 🚀 ADDED: currencySymbol prop injected here */}
-                <SpendingChart selectedMonth={selectedMonth} selectedYear={selectedYear} currencySymbol={currencySymbol} />
+                {/* Notice: You may need to adapt SpendingChart to accept dateRange instead of selectedMonth */}
+                <SpendingChart selectedMonth={dateRange.to.getMonth()} selectedYear={dateRange.to.getFullYear()} currencySymbol={currencySymbol} />
               </div>
             </div>
           </div>
@@ -558,14 +765,13 @@ export default function DashboardPage() {
   );
 }
 
-// 🚀 UPGRADED: The Rocket-Money Velocity Speedometer Logic
-function BudgetMiniBar({ name, spent, total, currencySymbol, isCurrentMonth }: any) {
+function BudgetMiniBar({ name, spent, total, currencySymbol, isCurrentRange }: any) {
   const percentage = Math.min((spent / total) * 100, 100);
   
   let progressColor = "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]";
   let pacingUI = null;
 
-  if (isCurrentMonth) {
+  if (isCurrentRange) {
     const today = new Date().getDate();
     const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
     const daysRemainingInMonth = daysInMonth - today;
@@ -574,7 +780,6 @@ function BudgetMiniBar({ name, spent, total, currencySymbol, isCurrentMonth }: a
        progressColor = "bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]";
        pacingUI = <p className="text-[10px] mt-1.5 font-bold text-rose-500 dark:text-rose-400">🛑 Budget exhausted</p>;
     } else if (spent > 0) {
-      // Calculate daily burn rate and project when they run out
       const dailyBurnRate = spent / today;
       const budgetRemaining = total - spent;
       const daysOfBudgetLeft = budgetRemaining / dailyBurnRate;
@@ -627,6 +832,119 @@ function TransactionRow({ icon, title, date, amount, color, bg }: any) {
         </div>
       </div>
       <span className={`text-sm md:text-base font-bold tracking-tight shrink-0 ${color} transition-colors`}>{amount}</span>
+    </div>
+  );
+}
+
+function NetWorthSparkline({ data, labels, currencySymbol }: { data: number[], labels: string[], currencySymbol: string }) {
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  if (!data || data.length < 2) return null;
+
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min === 0 ? 1 : max - min;
+
+  const isTrendingUp = data[data.length - 1] >= data[0];
+  const strokeColor = isTrendingUp ? '#6366f1' : '#f43f5e'; 
+
+  const points = data.map((val, i) => {
+    const x = (i / (data.length - 1)) * 100;
+    const y = range === 1 && max === min ? 50 : 100 - (((val - min) / range) * 70 + 15);
+    return [x, y];
+  });
+
+  const smoothPath = points.reduce((acc, point, i, a) => {
+    if (i === 0) return `M ${point[0]},${point[1]}`;
+    const p0 = a[i - 1];
+    const cp1x = p0[0] + (point[0] - p0[0]) * 0.5;
+    const cp1y = p0[1];
+    const cp2x = p0[0] + (point[0] - p0[0]) * 0.5;
+    const cp2y = point[1];
+    return `${acc} C ${cp1x},${cp1y} ${cp2x},${cp2y} ${point[0]},${point[1]}`;
+  }, "");
+
+  const fillPath = `${smoothPath} L 100,100 L 0,100 Z`;
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+    const percentage = x / rect.width;
+    const index = Math.round(percentage * (data.length - 1));
+    setHoverIndex(index);
+  };
+
+  return (
+    <div 
+      className="absolute inset-0 w-full h-full cursor-crosshair"
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => setHoverIndex(null)}
+      onTouchMove={(e) => {
+        if (!containerRef.current) return;
+        const touch = e.touches[0];
+        const rect = containerRef.current.getBoundingClientRect();
+        const x = Math.max(0, Math.min(touch.clientX - rect.left, rect.width));
+        const percentage = x / rect.width;
+        const index = Math.round(percentage * (data.length - 1));
+        setHoverIndex(index);
+      }}
+      onTouchEnd={() => setHoverIndex(null)}
+    >
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full overflow-visible absolute inset-0 pointer-events-none">
+        <defs>
+          <linearGradient id="sparkline-up-card" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#6366f1" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id="sparkline-down-card" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#f43f5e" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        
+        <path d={fillPath} fill={`url(#${isTrendingUp ? 'sparkline-up-card' : 'sparkline-down-card'})`} />
+        
+        <path
+          d={smoothPath}
+          fill="none"
+          stroke={strokeColor}
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="drop-shadow-[0_4px_6px_rgba(0,0,0,0.15)]"
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
+
+      {hoverIndex !== null && (
+        <div 
+          className="absolute top-0 bottom-0 border-l-2 border-dashed border-slate-400/50 dark:border-slate-500/50 pointer-events-none transition-all duration-75 ease-out z-20"
+          style={{ left: `${points[hoverIndex][0]}%` }}
+        >
+          <div 
+            className="absolute w-3.5 h-3.5 rounded-full bg-white dark:bg-slate-900 border-[3px] shadow-[0_0_10px_rgba(0,0,0,0.2)] -translate-x-1/2 -translate-y-1/2 transition-all duration-75 ease-out"
+            style={{ 
+              top: `${points[hoverIndex][1]}%`,
+              borderColor: strokeColor,
+              boxShadow: `0 0 12px ${strokeColor}80` 
+            }}
+          />
+          
+          <div className="absolute -top-6 -translate-x-1/2 -translate-y-full z-50 pointer-events-none">
+            <div className="glass-card px-4 py-2 rounded-2xl whitespace-nowrap shadow-xl border border-white/40 dark:border-white/10 text-center bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
+              <p className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-0.5">
+                {labels[hoverIndex]}
+              </p>
+              <p className="text-sm md:text-base font-extrabold text-slate-900 dark:text-white">
+                {currencySymbol}{data[hoverIndex].toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
