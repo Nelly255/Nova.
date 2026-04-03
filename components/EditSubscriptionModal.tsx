@@ -71,12 +71,12 @@ export default function EditSubscriptionModal({ sub }: { sub: any }) {
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-400 mb-1 transition-colors">Service Name</label>
+                {/* 🚀 PATCHED: Security Lock Applied Here */}
                 <input 
-                  required
                   type="text" 
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-slate-400"
+                  disabled
+                  className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-500 dark:text-slate-500 cursor-not-allowed opacity-70"
                 />
               </div>
 

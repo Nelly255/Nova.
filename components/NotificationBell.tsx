@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 // Helper for Relative Timestamps
 const getRelativeTime = (timestamp: string) => {
   const date = new Date(timestamp);
-  // Fallback for old notifications that saved static strings like "10:30 AM"
   if (isNaN(date.getTime())) return timestamp; 
 
   const now = new Date();
@@ -27,7 +26,6 @@ export default function NotificationBell() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
-  // 🚀 UPDATED: We now use full ISO strings for relative time math
   const getCurrentTime = () => new Date().toISOString();
 
   useEffect(() => {
@@ -43,31 +41,77 @@ export default function NotificationBell() {
   // 1. Initial Notification Generation
   useEffect(() => {
     const generateNotifications = async () => {
-      // Get real-time alerts from DB (Subscriptions)
-      const { data } = await supabase.from("subscriptions").select("*");
+      const currentMonthStr = new Date().toISOString().slice(0, 7); 
+      
+      const [subsRes, txRes] = await Promise.all([
+        supabase.from("subscriptions").select("*"),
+        supabase.from("transactions").select("*").eq("category", "Subscription").like("date", `${currentMonthStr}%`)
+      ]);
+
       const currentDate = new Date();
       const today = currentDate.getDate();
-      let liveAlerts: any[] = [];
 
-      if (data) {
-        data.forEach(sub => {
-          if (sub.billing_date >= today && sub.billing_date <= today + 3) {
-            liveAlerts.push({
-              id: `sub-${sub.id}`,
-              type: "warning",
-              title: "Upcoming Bill",
-              message: `${sub.name} is due on the ${sub.billing_date}th!`,
-              time: getCurrentTime(), 
-              read: false,
-              isPersistent: false
-            });
+      const subs = subsRes.data || [];
+      const txs = txRes.data || [];
+
+      // 🚀 LOAD HISTORY FIRST: This allows us to check what Nova already sent
+      const savedHistory = localStorage.getItem("nova_notif_history");
+      let historyItems = savedHistory ? JSON.parse(savedHistory) : [];
+
+      const isPaidThisMonth = (subName: string) => {
+        return txs.some(tx => tx.title === `${subName} Subscription`);
+      };
+
+      if (subs.length > 0) {
+        subs.forEach(sub => {
+          const subAlertPrefix = `sub-alert-${sub.id}-${currentMonthStr}`;
+
+          // 🚀 SMART CLEANUP: If paid, remove any nagging notifications for this month
+          if (isPaidThisMonth(sub.name)) {
+            historyItems = historyItems.filter((n: any) => !n.id.startsWith(subAlertPrefix));
+            return;
+          }
+
+          const daysUntilDue = sub.billing_date - today;
+          let alertState = "";
+          let notifProps = null;
+
+          if (daysUntilDue < 0) {
+            alertState = "overdue";
+            notifProps = { type: "danger", title: "Overdue Subscription", message: `${sub.name} was due on the ${sub.billing_date}th. Please log payment!` };
+          } else if (daysUntilDue === 0) {
+            alertState = "today";
+            notifProps = { type: "warning", title: "Bill Due Today", message: `${sub.name} is due today! Have you paid it?` };
+          } else if (daysUntilDue === 1) {
+            alertState = "tmrw";
+            notifProps = { type: "info", title: "Upcoming Bill", message: `${sub.name} will be due tomorrow.` };
+          } else if (daysUntilDue > 1 && daysUntilDue <= 3) {
+            alertState = "upcoming";
+            notifProps = { type: "info", title: "Upcoming Bill", message: `${sub.name} is due in ${daysUntilDue} days.` };
+          }
+
+          if (alertState && notifProps) {
+            const specificId = `${subAlertPrefix}-${alertState}`;
+            
+            // 🚀 ANTI-SPAM: Check if this exact alert state was already sent and saved
+            const alreadyExists = historyItems.some((n: any) => n.id === specificId);
+
+            if (!alreadyExists) {
+              // Remove older states for this sub so they don't stack up (e.g. remove "upcoming" when it becomes "today")
+              historyItems = historyItems.filter((n: any) => !n.id.startsWith(subAlertPrefix));
+              
+              // Push the new alert into history
+              historyItems = [{
+                id: specificId,
+                ...notifProps,
+                time: getCurrentTime(), 
+                read: false,
+                isPersistent: true // Keeps it saved so it won't regenerate on refresh
+              }, ...historyItems];
+            }
           }
         });
       }
-
-      // Pull local history of custom actions
-      const savedHistory = localStorage.getItem("nova_notif_history");
-      let historyItems = savedHistory ? JSON.parse(savedHistory) : [];
 
       // Persistent 1st of the Month Warm Budget Reminder
       if (today === 1) {
@@ -85,7 +129,6 @@ export default function NotificationBell() {
             isPersistent: true 
           };
           historyItems = [budgetNotif, ...historyItems];
-          localStorage.setItem("nova_notif_history", JSON.stringify(historyItems));
         }
       }
 
@@ -103,10 +146,11 @@ export default function NotificationBell() {
         };
         historyItems = [welcomeNotif, ...historyItems];
         localStorage.setItem("has_generated_welcome_notif", "true");
-        localStorage.setItem("nova_notif_history", JSON.stringify(historyItems));
       }
 
-      setNotifications([...liveAlerts, ...historyItems]);
+      // Save everything back to local storage and update state
+      localStorage.setItem("nova_notif_history", JSON.stringify(historyItems));
+      setNotifications(historyItems);
     };
 
     generateNotifications();
@@ -137,7 +181,7 @@ export default function NotificationBell() {
     return () => window.removeEventListener('newNotification', handleCustomNotification);
   }, []);
 
-  // 🚀 NEW: 3. Supabase Real-Time Listener
+  // 3. Supabase Real-Time Listener
   useEffect(() => {
     const channel = supabase
       .channel('schema-db-changes')
@@ -158,7 +202,6 @@ export default function NotificationBell() {
           };
 
           setNotifications(prev => {
-            // Prevent duplicate pings if our local event fired first
             if (prev.some(n => n.message.includes(newSub.name) && n.time === newNotif.time)) {
               return prev;
             }
@@ -186,7 +229,7 @@ export default function NotificationBell() {
       return updated;
     });
     
-    if (type === "warning" || id.startsWith("sub-") || id.startsWith("realtime-sub-")) {
+    if (type === "warning" || type === "danger" || id.startsWith("sub-") || id.startsWith("realtime-sub-")) {
       setIsOpen(false); 
       router.push("/dashboard/subscriptions"); 
     } else if (id.startsWith("budget-reminder")) {
@@ -195,7 +238,6 @@ export default function NotificationBell() {
     }
   };
 
-  // 🚀 NEW: Mark all as read
   const markAllAsRead = () => {
     setNotifications(prev => {
       const updated = prev.map(n => ({ ...n, read: true }));
@@ -240,7 +282,6 @@ export default function NotificationBell() {
                 )}
               </div>
               <div className="flex items-center gap-4">
-                {/* 🚀 NEW: Render Mark All As Read button if unread notifications exist */}
                 {unreadCount > 0 && (
                   <button 
                     onClick={markAllAsRead}
@@ -289,7 +330,6 @@ export default function NotificationBell() {
                         {notif.title}
                       </p>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">{notif.message}</p>
-                      {/* 🚀 UPDATED: Display relative time calculation */}
                       <p className="text-[10px] font-semibold tracking-wider uppercase text-slate-400 dark:text-slate-500 mt-2">{getRelativeTime(notif.time)}</p>
                     </div>
                     

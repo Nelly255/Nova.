@@ -30,7 +30,7 @@ export default function PrivacyPolicy() {
           <h1 className={`${headerFont.className} text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white mb-4 tracking-tight`}>
             Privacy Policy
           </h1>
-          <p className="text-slate-500 dark:text-slate-400">Last updated: March 22, 2026</p>
+          <p className="text-slate-500 dark:text-slate-400">Last updated: April 3, 2026</p>
         </div>
 
         <div className="space-y-8 text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -50,15 +50,31 @@ export default function PrivacyPolicy() {
             </ul>
           </section>
 
+          {/* 🚀 NEW: Cookies and Local Storage Section */}
           <section>
-            <h2 className={`${headerFont.className} text-2xl font-bold text-slate-900 dark:text-white mb-3`}>3. Security of Your Information</h2>
+            <h2 className={`${headerFont.className} text-2xl font-bold text-slate-900 dark:text-white mb-3`}>3. Cookies and Local Storage</h2>
+            <p className="mb-3">
+              We use cookies and similar browser storage technologies (like Local Storage) to ensure the proper functionality of your vault. Specifically, these technologies are used to:
+            </p>
+            <ul className="list-disc pl-5 space-y-2 text-slate-600 dark:text-slate-400 mb-3">
+              <li>Maintain your secure, authenticated session within the app.</li>
+              <li>Remember your UI preferences, such as your selected currency and your choice of dark or light mode.</li>
+              <li>Save your cookie consent preferences so you are not repeatedly asked.</li>
+            </ul>
+            <p>
+              <strong>We do not use tracking cookies for third-party advertising.</strong> The data stored locally on your device is strictly to provide a seamless and personalized experience. You can choose to clear these in your browser settings at any time, though doing so will log you out and reset your local preferences.
+            </p>
+          </section>
+
+          <section>
+            <h2 className={`${headerFont.className} text-2xl font-bold text-slate-900 dark:text-white mb-3`}>4. Security of Your Information</h2>
             <p>
               We use administrative, technical, and physical security measures to help protect your personal and financial information. Our database infrastructure is powered by industry-leading providers (Supabase) to ensure your data is encrypted at rest and in transit. However, please be aware that no security measures are perfect or impenetrable, and no method of data transmission can be guaranteed against any interception or other type of misuse.
             </p>
           </section>
 
           <section>
-            <h2 className={`${headerFont.className} text-2xl font-bold text-slate-900 dark:text-white mb-3`}>4. Contact Us</h2>
+            <h2 className={`${headerFont.className} text-2xl font-bold text-slate-900 dark:text-white mb-3`}>5. Contact Us</h2>
             <p>
               If you have questions or comments about this Privacy Policy, please contact us at: info@nova.co.tz
             </p>

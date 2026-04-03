@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import CookieBanner from "@/components/CookieBanner"; // 🚀 NEW: Imported the Cookie Banner
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -87,6 +88,9 @@ export default function RootLayout({
         <div className="relative z-10 min-h-screen">
           {children}
         </div>
+        
+        {/* 🚀 NEW: Render the Cookie Banner globally */}
+        <CookieBanner />
         
       </body>
     </html>
