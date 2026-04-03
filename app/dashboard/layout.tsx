@@ -206,6 +206,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <MobileNavItem href="/dashboard" icon={<LayoutDashboard size={22}/>} label="Home" active={pathname === "/dashboard"} />
             <MobileNavItem href="/dashboard/transactions" icon={<ArrowRightLeft size={22}/>} label="Txns" active={pathname === "/dashboard/transactions"} />
             <MobileNavItem href="/dashboard/budgets" icon={<Target size={22}/>} label="Budgets" active={pathname === "/dashboard/budgets"} />
+            {/* 🚀 ADDED: Subscriptions Tab */}
+            <MobileNavItem href="/dashboard/subscriptions" icon={<ShieldCheck size={22}/>} label="Subs" active={pathname === "/dashboard/subscriptions"} />
             <MobileNavItem href="/dashboard/savings" icon={<PiggyBank size={22}/>} label="Save" active={pathname === "/dashboard/savings"} />
             <MobileNavItem href="/dashboard/debts" icon={<CreditCard size={22}/>} label="Debts" active={pathname === "/dashboard/debts"} />
             <MobileNavItem href="/dashboard/assets" icon={<Briefcase size={22}/>} label="Assets" active={pathname === "/dashboard/assets"} />
