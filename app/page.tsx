@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation"; // ADDED: Next.js router for redirects
-import { supabase } from "@/lib/supabase"; // ADDED: Supabase client
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase"; 
 import { Plus_Jakarta_Sans, Inter } from "next/font/google";
-import { ArrowRight, Shield, Zap, PieChart, Activity, TrendingUp, Wallet, Sun, Moon, CreditCard, Target, Lock } from "lucide-react";
+import { ArrowRight, Shield, Zap, PieChart, Activity, TrendingUp, TrendingDown, Wallet, Sun, Moon, CreditCard, Target, Lock, LineChart, Building, Calculator, Mail } from "lucide-react";
 
 // Initialize our premium startup fonts
 const headerFont = Plus_Jakarta_Sans({ subsets: ["latin"] });
@@ -13,9 +13,9 @@ const bodyFont = Inter({ subsets: ["latin"] });
 
 export default function WelcomePage() {
   const [theme, setTheme] = useState('dark');
-  const router = useRouter(); // ADDED: Initialize router
+  const router = useRouter(); 
 
-  // ADDED: Auth Check - Redirect logged-in users to dashboard instantly
+  // Auth Check - Redirect logged-in users to dashboard instantly
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -62,7 +62,7 @@ export default function WelcomePage() {
   return (
     <main className={`min-h-screen bg-slate-50 dark:bg-[#0A0A0E] text-slate-900 dark:text-slate-50 flex flex-col relative overflow-hidden selection:bg-indigo-500/30 transition-colors duration-500 ${bodyFont.className}`}>
       
-      {/* Background Glow Effects - Forced to z-0 so they never block clicks */}
+      {/* Background Glow Effects */}
       <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-indigo-600/10 dark:bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none opacity-60 animate-pulse duration-1000 z-0"></div>
       <div className="absolute top-[20%] right-[-5%] w-[500px] h-[500px] bg-purple-500/10 dark:bg-purple-500/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
 
@@ -76,8 +76,6 @@ export default function WelcomePage() {
         </div>
         
         <div className="flex items-center gap-2 sm:gap-4 relative z-[100]">
-          
-          {/* FIXED: Upgraded mobile tap target, added type="button", and fixed hover states for touch screens */}
           <button 
             type="button"
             onClick={toggleTheme}
@@ -117,27 +115,29 @@ export default function WelcomePage() {
             Track assets, crush debt, and monitor subscriptions from one breathtaking dashboard. Stop wondering where your money went, and start directing where it goes.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 relative z-30">
-            <Link href="/signup" className="group inline-flex items-center justify-center gap-3 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-900 px-8 py-4 rounded-full text-base font-bold transition-all hover:-translate-y-1 hover:shadow-xl dark:hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.4)] active:scale-95 w-full sm:w-auto relative z-30">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto relative z-30 mb-8">
+            <Link href="/signup" className="group flex items-center justify-center gap-3 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-900 px-8 py-4 rounded-full text-base font-bold transition-all hover:-translate-y-1 hover:shadow-xl dark:hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.4)] active:scale-95 w-full sm:w-auto">
               Start Tracking <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
             </Link>
+            <a href="#free-tools" className="group flex items-center justify-center gap-2 bg-white dark:bg-white/5 backdrop-blur-md border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 px-8 py-4 rounded-full text-base font-bold transition-all hover:bg-slate-50 dark:hover:bg-white/10 hover:-translate-y-1 hover:shadow-md active:scale-95 w-full sm:w-auto">
+              Explore Free Tools
+            </a>
+          </div>
 
-            <div className="flex items-center gap-3 text-xs md:text-sm text-slate-500 font-medium mt-2 sm:mt-0 transition-colors">
-              <div className="flex -space-x-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="w-8 h-8 rounded-full border-2 border-white dark:border-[#0A0A0E] bg-slate-200 dark:bg-slate-800 flex items-center justify-center overflow-hidden transition-colors">
-                    <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${i + 10}&backgroundColor=transparent`} alt="avatar" className="w-full h-full object-cover opacity-80" />
-                  </div>
-                ))}
-              </div>
-              <span>Join 10k+ savers</span>
+          <div className="flex items-center gap-3 text-xs md:text-sm text-slate-500 font-medium transition-colors">
+            <div className="flex -space-x-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="w-8 h-8 rounded-full border-2 border-white dark:border-[#0A0A0E] bg-slate-200 dark:bg-slate-800 flex items-center justify-center overflow-hidden transition-colors">
+                  <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${i + 10}&backgroundColor=transparent`} alt="avatar" className="w-full h-full object-cover opacity-80" />
+                </div>
+              ))}
             </div>
+            <span>Join 10k+ savers in Tanzania</span>
           </div>
         </div>
 
         {/* Right Column: Illustration & Floating Widgets */}
         <div className="relative w-full h-[400px] lg:h-[550px] flex items-center justify-center order-1 lg:order-2 mt-10 lg:mt-0">
-          
           <div className="relative w-full max-w-md z-10 flex items-center justify-center animate-[pulse_6s_ease-in-out_infinite]">
             <img 
               src="/hero-illustration.svg" 
@@ -152,7 +152,7 @@ export default function WelcomePage() {
               <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-semibold mb-1 transition-colors">
                 <Wallet size={14} className="text-indigo-600 dark:text-indigo-400" /> Total Balance
               </div>
-              <h4 className={`${headerFont.className} text-2xl font-extrabold text-slate-900 dark:text-white transition-colors tracking-tight`}>$24,500.00</h4>
+              <h4 className={`${headerFont.className} text-2xl font-extrabold text-slate-900 dark:text-white transition-colors tracking-tight`}>24.5M TSH</h4>
               <div className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold mt-1 bg-indigo-100 dark:bg-indigo-400/10 px-2 py-0.5 rounded-full w-fit transition-colors border border-indigo-200 dark:border-transparent">
                 <TrendingUp size={10} /> +12% this month
               </div>
@@ -168,12 +168,43 @@ export default function WelcomePage() {
                 <span className="text-sm font-bold text-slate-900 dark:text-white transition-colors">Netflix Sub</span>
                 <span className="text-[10px] text-slate-500 dark:text-slate-400 transition-colors">Entertainment</span>
               </div>
-              <span className={`${headerFont.className} text-sm font-bold text-slate-700 dark:text-slate-200 transition-colors tracking-tight`}>-$15.99</span>
+              <span className={`${headerFont.className} text-sm font-bold text-slate-700 dark:text-slate-200 transition-colors tracking-tight`}>-35k</span>
             </div>
           </div>
 
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-indigo-500/10 dark:bg-indigo-500/20 blur-[80px] rounded-full pointer-events-none z-0 transition-colors"></div>
+        </div>
+      </div>
 
+      {/* 🔥 SEO NOVA FREE TOOLS SECTION */}
+      <div id="free-tools" className="w-full max-w-7xl mx-auto px-6 py-16 lg:py-24 z-10 scroll-mt-20 border-t border-slate-200/50 dark:border-white/5">
+        <div className="text-center max-w-2xl mx-auto mb-12">
+          <h2 className={`${headerFont.className} text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-4 transition-colors tracking-tight`}>Nova Free Tools.</h2>
+          <p className="text-slate-600 dark:text-slate-400 transition-colors">No account required. Generate premium PDF reports and calculate your financial standing instantly.</p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6">
+          <ToolCard
+            href="/net-worth-calculator"
+            icon={<LineChart size={24} />}
+            title="Net Worth Calculator"
+            description="Calculate your gross assets against your total liabilities to find your exact wealth standing."
+            colorClass="text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 border-purple-100 dark:border-purple-500/20"
+          />
+          <ToolCard
+            href="/depreciation-calculator"
+            icon={<Building size={24} />}
+            title="TRA Asset Depreciation"
+            description="Calculate capital allowance and reducing balances according to Tanzanian tax law."
+            colorClass="text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20"
+          />
+          <ToolCard
+            href="/budget-calculator"
+            icon={<Calculator size={24} />}
+            title="Zero-Based Budget"
+            description="Input your monthly salary to generate a strict, optimized 50/30/20 spending plan."
+            colorClass="text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-500/10 border-sky-100 dark:border-sky-500/20"
+          />
         </div>
       </div>
 
@@ -233,22 +264,95 @@ export default function WelcomePage() {
           </div>
           
           <h2 className={`${headerFont.className} text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-4 transition-colors tracking-tight`}>Take control of your future.</h2>
-          <p className="text-slate-600 dark:text-slate-400 text-base md:text-lg max-w-xl mx-auto leading-relaxed transition-colors">Your financial data is encrypted, secure, and entirely yours. Join thousands of users building wealth with Nova today.</p>
+          <p className="text-slate-600 dark:text-slate-400 text-base md:text-lg max-w-xl mx-auto leading-relaxed transition-colors mb-8">Your financial data is encrypted, secure, and entirely yours. Join thousands of users building wealth with Nova today.</p>
+          <Link href="/signup" className="inline-flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-full text-base font-bold transition-all hover:-translate-y-1 hover:shadow-xl active:scale-95">
+            Create Free Account
+          </Link>
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="w-full max-w-7xl mx-auto pt-8 pb-12 border-t border-slate-200 dark:border-white/5 text-center flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500 transition-colors z-10 px-6">
-        <div className="flex items-center gap-2">
-          <Activity size={16} className="text-indigo-500" />
-          <span className={`${headerFont.className} font-bold text-slate-600 dark:text-slate-400`}>Nova.</span> © {new Date().getFullYear()}
+      {/* 🔥 THE NEW SEO FAT FOOTER */}
+      <footer className="w-full max-w-7xl mx-auto pt-16 pb-12 border-t border-slate-200 dark:border-white/5 z-10 px-6 relative">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12 text-left">
+          
+          {/* Brand Column */}
+          <div className="col-span-2 md:col-span-1">
+            <div className="flex items-center gap-2 mb-4">
+              <Activity size={20} className="text-indigo-600 dark:text-indigo-400" />
+              <span className={`${headerFont.className} font-bold text-xl text-slate-900 dark:text-white`}>Nova.</span>
+            </div>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-xs">
+              Intelligent Wealth Management.
+            </p>
+            {/* NEW CONTACT LINK HERE */}
+            <Link href="/contact" className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
+              <Mail size={16} />
+              Contact Support
+            </Link>
+          </div>
+          
+          {/* Features Column (SEO Links) */}
+          <div>
+            <h4 className="font-bold text-slate-900 dark:text-white mb-4">Features</h4>
+            <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
+              <li><Link href="/expense-tracker" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Expense Tracker</Link></li>
+              <li><Link href="/net-worth-tracker" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Net Worth Tracker</Link></li>
+              <li><Link href="/subscription-tracker" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Subscription Radar</Link></li>
+              <li><Link href="/asset-tracker" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Asset Tracker</Link></li>
+            </ul>
+          </div>
+
+          {/* Free Tools Column (SEO Links) */}
+          <div>
+            <h4 className="font-bold text-slate-900 dark:text-white mb-4">Free Tools</h4>
+            <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
+              <li><Link href="/net-worth-calculator" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Net Worth Calculator</Link></li>
+              <li><Link href="/depreciation-calculator" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Depreciation Calculator</Link></li>
+              <li><Link href="/budget-calculator" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Zero-Based Budget</Link></li>
+            </ul>
+          </div>
+
+          {/* Company Column */}
+          <div>
+            <h4 className="font-bold text-slate-900 dark:text-white mb-4">Company</h4>
+            <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
+              <li><Link href="/blog" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Financial Blog</Link></li>
+              <li><Link href="/privacy" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Terms of Service</Link></li>
+            </ul>
+          </div>
+
         </div>
-        <div className="flex items-center gap-6">
-          <Link href="/privacy" className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors">Privacy Policy</Link>
-          <Link href="/terms" className="hover:text-slate-600 dark:hover:text-slate-300 transition-colors">Terms of Service</Link>
+
+        {/* Copyright & Security Bar */}
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500 pt-8 border-t border-slate-200 dark:border-white/5">
+          <span>© {new Date().getFullYear()} Nova Financial. All rights reserved.</span>
+          <div className="flex items-center gap-6">
+            <span className="flex items-center gap-2 font-medium"><Shield size={14} className="text-emerald-500"/> Bank-Grade Security</span>
+          </div>
         </div>
       </footer>
 
     </main>
+  );
+}
+
+// 🔥 HELPER COMPONENT FOR THE OPEN UTILITIES SECTION
+function ToolCard({ href, icon, title, description, colorClass }: { href: string, icon: React.ReactNode, title: string, description: string, colorClass: string }) {
+  return (
+    <Link href={href} className="group bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 p-8 rounded-[2rem] hover:shadow-xl dark:hover:bg-slate-800/50 transition-all overflow-hidden relative flex flex-col h-full">
+      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border mb-6 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3 ${colorClass}`}>
+        {icon}
+      </div>
+      <h3 className={`${headerFont.className} text-xl font-bold text-slate-900 dark:text-white mb-3 tracking-tight`}>
+        {title}
+      </h3>
+      <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed flex-grow mb-6">
+        {description}
+      </p>
+      <div className="font-bold text-sm flex items-center gap-2 text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+        Launch Tool <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+      </div>
+    </Link>
   );
 }
