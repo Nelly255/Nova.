@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Bell, CalendarClock, Info, CheckCircle2, AlertTriangle, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
@@ -38,123 +38,127 @@ export default function NotificationBell() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // 1. Initial Notification Generation
-  useEffect(() => {
-    const generateNotifications = async () => {
-      const currentMonthStr = new Date().toISOString().slice(0, 7); 
-      
-      const [subsRes, txRes] = await Promise.all([
-        supabase.from("subscriptions").select("*"),
-        supabase.from("transactions").select("*").eq("category", "Subscription").like("date", `${currentMonthStr}%`)
-      ]);
+  // 🚀 FIXED: Wrapped in useCallback so we can call it on mount AND when a payment is logged
+  const generateNotifications = useCallback(async () => {
+    const currentMonthStr = new Date().toISOString().slice(0, 7); 
+    
+    const [subsRes, txRes] = await Promise.all([
+      supabase.from("subscriptions").select("*"),
+      supabase.from("transactions").select("*").eq("category", "Subscription").like("date", `${currentMonthStr}%`)
+    ]);
 
-      const currentDate = new Date();
-      const today = currentDate.getDate();
+    const currentDate = new Date();
+    const today = currentDate.getDate();
 
-      const subs = subsRes.data || [];
-      const txs = txRes.data || [];
+    const subs = subsRes.data || [];
+    const txs = txRes.data || [];
 
-      // 🚀 LOAD HISTORY FIRST: This allows us to check what Nova already sent
-      const savedHistory = localStorage.getItem("nova_notif_history");
-      let historyItems = savedHistory ? JSON.parse(savedHistory) : [];
+    const savedHistory = localStorage.getItem("nova_notif_history");
+    let historyItems = savedHistory ? JSON.parse(savedHistory) : [];
 
-      const isPaidThisMonth = (subName: string) => {
-        return txs.some(tx => tx.title === `${subName} Subscription`);
-      };
-
-      if (subs.length > 0) {
-        subs.forEach(sub => {
-          const subAlertPrefix = `sub-alert-${sub.id}-${currentMonthStr}`;
-
-          // 🚀 SMART CLEANUP: If paid, remove any nagging notifications for this month
-          if (isPaidThisMonth(sub.name)) {
-            historyItems = historyItems.filter((n: any) => !n.id.startsWith(subAlertPrefix));
-            return;
-          }
-
-          const daysUntilDue = sub.billing_date - today;
-          let alertState = "";
-          let notifProps = null;
-
-          if (daysUntilDue < 0) {
-            alertState = "overdue";
-            notifProps = { type: "danger", title: "Overdue Subscription", message: `${sub.name} was due on the ${sub.billing_date}th. Please log payment!` };
-          } else if (daysUntilDue === 0) {
-            alertState = "today";
-            notifProps = { type: "warning", title: "Bill Due Today", message: `${sub.name} is due today! Have you paid it?` };
-          } else if (daysUntilDue === 1) {
-            alertState = "tmrw";
-            notifProps = { type: "info", title: "Upcoming Bill", message: `${sub.name} will be due tomorrow.` };
-          } else if (daysUntilDue > 1 && daysUntilDue <= 3) {
-            alertState = "upcoming";
-            notifProps = { type: "info", title: "Upcoming Bill", message: `${sub.name} is due in ${daysUntilDue} days.` };
-          }
-
-          if (alertState && notifProps) {
-            const specificId = `${subAlertPrefix}-${alertState}`;
-            
-            // 🚀 ANTI-SPAM: Check if this exact alert state was already sent and saved
-            const alreadyExists = historyItems.some((n: any) => n.id === specificId);
-
-            if (!alreadyExists) {
-              // Remove older states for this sub so they don't stack up (e.g. remove "upcoming" when it becomes "today")
-              historyItems = historyItems.filter((n: any) => !n.id.startsWith(subAlertPrefix));
-              
-              // Push the new alert into history
-              historyItems = [{
-                id: specificId,
-                ...notifProps,
-                time: getCurrentTime(), 
-                read: false,
-                isPersistent: true // Keeps it saved so it won't regenerate on refresh
-              }, ...historyItems];
-            }
-          }
-        });
-      }
-
-      // Persistent 1st of the Month Warm Budget Reminder
-      if (today === 1) {
-        const yearMonthId = `budget-reminder-${currentDate.getFullYear()}-${currentDate.getMonth()}`;
-        const hasBudgetReminder = historyItems.some((n: any) => n.id === yearMonthId);
-        
-        if (!hasBudgetReminder) {
-          const budgetNotif = {
-            id: yearMonthId,
-            type: "info",
-            title: "Happy New Month! 🎯",
-            message: "A fresh month means fresh goals. Take a moment to review and set your new budgets.",
-            time: getCurrentTime(),
-            read: false,
-            isPersistent: true 
-          };
-          historyItems = [budgetNotif, ...historyItems];
-        }
-      }
-
-      // The Welcome Message 
-      const hasGeneratedWelcome = localStorage.getItem("has_generated_welcome_notif");
-      if (!hasGeneratedWelcome) {
-        const welcomeNotif = {
-          id: "welcome",
-          type: "info",
-          title: "Welcome to Nova.",
-          message: "Your financial dashboard is ready to go.",
-          time: getCurrentTime(), 
-          read: false,
-          isPersistent: true
-        };
-        historyItems = [welcomeNotif, ...historyItems];
-        localStorage.setItem("has_generated_welcome_notif", "true");
-      }
-
-      // Save everything back to local storage and update state
-      localStorage.setItem("nova_notif_history", JSON.stringify(historyItems));
-      setNotifications(historyItems);
+    // 🚀 FIXED: Made the check smarter (case-insensitive includes) to ensure it catches the payment
+    const isPaidThisMonth = (subName: string) => {
+      return txs.some(tx => tx.title.toLowerCase().includes(subName.toLowerCase()));
     };
 
-    generateNotifications();
+    if (subs.length > 0) {
+      subs.forEach(sub => {
+        const subAlertPrefix = `sub-alert-${sub.id}-${currentMonthStr}`;
+
+        // SMART CLEANUP: If paid, remove any nagging notifications for this month
+        if (isPaidThisMonth(sub.name)) {
+          historyItems = historyItems.filter((n: any) => !n.id.startsWith(subAlertPrefix));
+          return;
+        }
+
+        const daysUntilDue = sub.billing_date - today;
+        let alertState = "";
+        let notifProps = null;
+
+        if (daysUntilDue < 0) {
+          alertState = "overdue";
+          notifProps = { type: "danger", title: "Overdue Subscription", message: `${sub.name} was due on the ${sub.billing_date}th. Please log payment!` };
+        } else if (daysUntilDue === 0) {
+          alertState = "today";
+          notifProps = { type: "warning", title: "Bill Due Today", message: `${sub.name} is due today! Have you paid it?` };
+        } else if (daysUntilDue === 1) {
+          alertState = "tmrw";
+          notifProps = { type: "info", title: "Upcoming Bill", message: `${sub.name} will be due tomorrow.` };
+        } else if (daysUntilDue > 1 && daysUntilDue <= 3) {
+          alertState = "upcoming";
+          notifProps = { type: "info", title: "Upcoming Bill", message: `${sub.name} is due in ${daysUntilDue} days.` };
+        }
+
+        if (alertState && notifProps) {
+          const specificId = `${subAlertPrefix}-${alertState}`;
+          
+          const alreadyExists = historyItems.some((n: any) => n.id === specificId);
+
+          if (!alreadyExists) {
+            historyItems = historyItems.filter((n: any) => !n.id.startsWith(subAlertPrefix));
+            
+            historyItems = [{
+              id: specificId,
+              ...notifProps,
+              time: getCurrentTime(), 
+              read: false,
+              isPersistent: true 
+            }, ...historyItems];
+          }
+        }
+      });
+    }
+
+    if (today === 1) {
+      const yearMonthId = `budget-reminder-${currentDate.getFullYear()}-${currentDate.getMonth()}`;
+      const hasBudgetReminder = historyItems.some((n: any) => n.id === yearMonthId);
+      
+      if (!hasBudgetReminder) {
+        const budgetNotif = {
+          id: yearMonthId,
+          type: "info",
+          title: "Happy New Month! 🎯",
+          message: "A fresh month means fresh goals. Take a moment to review and set your new budgets.",
+          time: getCurrentTime(),
+          read: false,
+          isPersistent: true 
+        };
+        historyItems = [budgetNotif, ...historyItems];
+      }
+    }
+
+    const hasGeneratedWelcome = localStorage.getItem("has_generated_welcome_notif");
+    if (!hasGeneratedWelcome) {
+      const welcomeNotif = {
+        id: "welcome",
+        type: "info",
+        title: "Welcome to Nova.",
+        message: "Your financial dashboard is ready to go.",
+        time: getCurrentTime(), 
+        read: false,
+        isPersistent: true
+      };
+      historyItems = [welcomeNotif, ...historyItems];
+      localStorage.setItem("has_generated_welcome_notif", "true");
+    }
+
+    localStorage.setItem("nova_notif_history", JSON.stringify(historyItems));
+    setNotifications(historyItems);
   }, []);
+
+  // 1. Run on load AND listen to transaction updates
+  useEffect(() => {
+    generateNotifications();
+    
+    // 🚀 FIXED: Now Nova listens for transactions and instantly cleans up overdue spams
+    window.addEventListener("transactionUpdated", generateNotifications);
+    window.addEventListener("subscriptionUpdated", generateNotifications);
+    
+    return () => {
+      window.removeEventListener("transactionUpdated", generateNotifications);
+      window.removeEventListener("subscriptionUpdated", generateNotifications);
+    };
+  }, [generateNotifications]);
 
   // 2. Custom Local Event Listener
   useEffect(() => {

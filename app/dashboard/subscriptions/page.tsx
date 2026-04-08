@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import AddSubscriptionModal from "@/components/AddSubscriptionModal";
 import EditSubscriptionModal from "@/components/EditSubscriptionModal"; 
-import { ShieldCheck, Play, Music, Dumbbell, Zap, CreditCard, CalendarClock, Trash2, CheckCircle2, History, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Loader2, PlusCircle, AlertCircle, CheckCircle, X } from "lucide-react";
+import { ShieldCheck, Play, Music, Dumbbell, Zap, CreditCard, CalendarClock, Trash2, CheckCircle2, History, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Loader2, PlusCircle, AlertCircle, CheckCircle, X, Smartphone, Landmark, Banknote, Wallet } from "lucide-react";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -17,15 +17,25 @@ const getSubIcon = (name: string) => {
   return <CreditCard size={24} />;
 };
 
+// 🚀 Helper for Wallet Icons
+const getWalletIcon = (type: string) => {
+  const lower = (type || "").toLowerCase();
+  if (lower.includes('mobile') || lower.includes('digital') || lower.includes('mpesa')) return <Smartphone size={18} />;
+  if (lower.includes('bank')) return <Landmark size={18} />;
+  if (lower.includes('cash')) return <Banknote size={18} />;
+  return <Wallet size={18} />;
+};
+
 export default function SubscriptionsPage() {
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [history, setHistory] = useState<any[]>([]);
+  const [wallets, setWallets] = useState<any[]>([]); // 🚀 NEW: Wallets State
   const [loading, setLoading] = useState(true);
   
   const [confirmPayment, setConfirmPayment] = useState<{isOpen: boolean, sub: any | null}>({ isOpen: false, sub: null });
+  const [selectedWalletId, setSelectedWalletId] = useState<string | null>(null); // 🚀 NEW: Selected Wallet
   const [isPaying, setIsPaying] = useState<string | null>(null);
   
-  // 🚀 UPDATED: Only Delete Modal State remains for History
   const [deleteTxModal, setDeleteTxModal] = useState({ isOpen: false, id: "", title: "", amount: "" });
   const [isUpdatingTx, setIsUpdatingTx] = useState(false);
 
@@ -35,19 +45,24 @@ export default function SubscriptionsPage() {
   
   const currentMonthStr = new Date().toISOString().slice(0, 7); 
   
-  // A shared filter month for both Completed and History tabs
   const [selectedMonth, setSelectedMonth] = useState(currentMonthStr);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [pickerYear, setPickerYear] = useState(parseInt(currentMonthStr.split('-')[0]));
 
   const fetchSubsAndHistory = async () => {
-    const [subsRes, txRes] = await Promise.all([
+    const [subsRes, txRes, walletsRes] = await Promise.all([
       supabase.from("subscriptions").select("*").order("billing_date", { ascending: true }),
-      supabase.from("transactions").select("*").eq("category", "Subscription").order("date", { ascending: false })
+      supabase.from("transactions").select("*").eq("category", "Subscription").order("date", { ascending: false }),
+      supabase.from("accounts").select("*").order("name", { ascending: true }) // 🚀 Fetch Wallets
     ]);
 
     if (!subsRes.error && subsRes.data) setSubscriptions(subsRes.data);
     if (!txRes.error && txRes.data) setHistory(txRes.data);
+    if (!walletsRes.error && walletsRes.data) {
+      setWallets(walletsRes.data);
+      // Auto-select first wallet if available
+      if (walletsRes.data.length > 0) setSelectedWalletId(walletsRes.data[0].id);
+    }
     
     setLoading(false);
   };
@@ -71,56 +86,84 @@ export default function SubscriptionsPage() {
     }
   };
 
+  // 🚀 UPGRADED: Logs payment AND deducts from Wallet
   const executeLogPayment = async () => {
-    if (!confirmPayment.sub) return;
+    if (!confirmPayment.sub || !selectedWalletId) return;
     
     setIsPaying(confirmPayment.sub.id);
     const todayStr = new Date().toISOString().split('T')[0];
+    const subAmount = Number(confirmPayment.sub.amount);
+    const selectedWallet = wallets.find(w => w.id === selectedWalletId);
     
-    const { error } = await supabase.from("transactions").insert([{
-      title: `${confirmPayment.sub.name} Subscription`,
-      amount: confirmPayment.sub.amount,
-      type: "expense",
-      category: "Subscription",
-      date: todayStr
-    }]);
+    try {
+      // 1. Insert Transaction
+      const { error: txError } = await supabase.from("transactions").insert([{
+        title: `${confirmPayment.sub.name} Subscription`,
+        amount: subAmount,
+        type: "expense",
+        category: "Subscription",
+        date: todayStr,
+        account_id: selectedWalletId // Link to wallet!
+      }]);
 
-    setIsPaying(null);
-    setConfirmPayment({ isOpen: false, sub: null });
-    
-    if (!error) {
+      if (txError) throw txError;
+
+      // 2. Update Wallet Balance
+      const newBalance = Number(selectedWallet.balance) - subAmount;
+      const { error: accError } = await supabase
+        .from("accounts")
+        .update({ balance: newBalance })
+        .eq("id", selectedWalletId);
+        
+      if (accError) throw accError;
+
+      setConfirmPayment({ isOpen: false, sub: null });
       fetchSubsAndHistory(); 
-    } else {
-      alert("Failed to log payment.");
+      window.dispatchEvent(new Event("transactionUpdated")); // Update global dashboard cards
+    } catch (error) {
+      alert("Failed to log payment or update wallet.");
+    } finally {
+      setIsPaying(null);
     }
   };
 
-  // Delete an existing payment record
+  // 🚀 UPGRADED: Deletes payment AND refunds Wallet
   const confirmDeleteTx = async () => {
     setIsUpdatingTx(true);
-    const { error } = await supabase.from("transactions").delete().eq("id", deleteTxModal.id);
-    
-    setIsUpdatingTx(false);
-    if (!error) {
+    try {
+      // Find original transaction to know which account to refund
+      const { data: txData } = await supabase.from("transactions").select("*").eq("id", deleteTxModal.id).single();
+      
+      if (txData && txData.account_id) {
+        const { data: accData } = await supabase.from("accounts").select("balance").eq("id", txData.account_id).single();
+        if (accData) {
+          const restoredBalance = Number(accData.balance) + Number(txData.amount);
+          await supabase.from("accounts").update({ balance: restoredBalance }).eq("id", txData.account_id);
+        }
+      }
+
+      const { error } = await supabase.from("transactions").delete().eq("id", deleteTxModal.id);
+      if (error) throw error;
+      
       setDeleteTxModal({ isOpen: false, id: "", title: "", amount: "" });
       fetchSubsAndHistory();
-    } else {
-      alert("Failed to delete payment record.");
+      window.dispatchEvent(new Event("transactionUpdated"));
+    } catch (error) {
+      alert("Failed to delete payment record or refund wallet.");
+    } finally {
+      setIsUpdatingTx(false);
     }
   };
 
   const totalMonthly = subscriptions.reduce((acc, sub) => acc + Number(sub.amount), 0);
-  // We keep totalYearly for potential future use or logic, but we won't render it in the card anymore
   const totalYearly = totalMonthly * 12; 
 
   const today = new Date().getDate();
   
-  // Checks if a sub has a corresponding payment in a SPECIFIC month
   const isPaidInMonth = (subName: string, monthStr: string) => {
     return history.some(tx => tx.title === `${subName} Subscription` && tx.date.startsWith(monthStr));
   };
 
-  // 1. Active Subs (Always looks at current month to see what is owed NOW)
   const activeSubsList = subscriptions.filter(sub => !isPaidInMonth(sub.name, currentMonthStr)).sort((a, b) => {
     const aOverdue = today > a.billing_date;
     const bOverdue = today > b.billing_date;
@@ -129,19 +172,11 @@ export default function SubscriptionsPage() {
     return a.billing_date - b.billing_date;
   });
 
-  // 🚀 NEW: Calculate exactly how much is left to pay this month
   const remainingThisMonth = activeSubsList.reduce((acc, sub) => acc + Number(sub.amount), 0);
-
-  // 2. Completed Subs (Time Machine! Looks at whatever month is selected in the picker)
   const completedSubsList = subscriptions.filter(sub => isPaidInMonth(sub.name, selectedMonth));
-  
-  // 3. Next Bill (First unpaid sub for this month)
   const nextBill = activeSubsList.length > 0 ? activeSubsList[0] : null; 
-  
-  // 4. History Filter
   const filteredHistory = history.filter(tx => tx.date.startsWith(selectedMonth));
 
-  // Shared Month Picker Component to keep JSX clean
   const MonthPickerOverlay = () => (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 border-b border-slate-200/80 dark:border-white/5 pb-4 relative">
       <div className="flex items-center gap-3">
@@ -222,7 +257,6 @@ export default function SubscriptionsPage() {
           </h2>
         </div>
         
-        {/* 🚀 UPGRADED: Remaining This Month Card */}
         <div className="glass-card p-6 rounded-[2rem] flex flex-col justify-center relative overflow-hidden transition-colors border border-indigo-100/50 dark:border-indigo-500/10">
           <div className="absolute -inset-4 bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-indigo-500/5 dark:to-purple-500/5 pointer-events-none rounded-[2rem]"></div>
           <div className="relative z-10">
@@ -283,9 +317,6 @@ export default function SubscriptionsPage() {
           <p className="text-slate-500">Loading your vault data...</p>
         ) : activeTab === 'active' ? (
           
-          /* ============================================== */
-          /* ACTIVE SUBSCRIPTIONS VIEW (Due & Overdue) */
-          /* ============================================== */
           activeSubsList.length === 0 ? (
             <div className="glass-card p-12 rounded-[2rem] text-center flex flex-col items-center justify-center transition-colors">
               <ShieldCheck size={48} className="mx-auto text-slate-400 dark:text-slate-600 mb-4 transition-colors" />
@@ -345,9 +376,6 @@ export default function SubscriptionsPage() {
 
         ) : activeTab === 'completed' ? (
 
-          /* ============================================== */
-          /* 🚀 COMPLETED SUBSCRIPTIONS VIEW (Time Machine) */
-          /* ============================================== */
           <div className="glass-card p-6 md:p-8 rounded-[2rem] transition-colors relative z-10 animate-in fade-in duration-300 slide-in-from-bottom-4">
             
             <MonthPickerOverlay />
@@ -386,9 +414,6 @@ export default function SubscriptionsPage() {
           </div>
 
         ) : (
-          /* ============================================== */
-          /* 🚀 PAYMENT HISTORY VIEW (Delete Only) */
-          /* ============================================== */
           <div className="glass-card p-6 md:p-8 rounded-[2rem] transition-colors relative z-10 animate-in fade-in duration-300 slide-in-from-bottom-4">
             
             <MonthPickerOverlay />
@@ -417,7 +442,6 @@ export default function SubscriptionsPage() {
                         {currencySymbol}{Number(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                       
-                      {/* 🚀 UPDATED: Only Delete Action remains */}
                       <div className="flex gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
                           onClick={() => setDeleteTxModal({ isOpen: true, id: tx.id, title: tx.title, amount: tx.amount.toString() })}
@@ -437,7 +461,7 @@ export default function SubscriptionsPage() {
       </div>
 
       {/* ============================================== */}
-      {/* CONFIRM PAYMENT MODAL */}
+      {/* 🚀 UPGRADED: CONFIRM PAYMENT MODAL WITH WALLETS */}
       {/* ============================================== */}
       {confirmPayment.isOpen && confirmPayment.sub && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6">
@@ -447,17 +471,49 @@ export default function SubscriptionsPage() {
               <div className="w-16 h-16 rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-500 dark:text-indigo-400 flex items-center justify-center mx-auto mb-4 border border-indigo-200 dark:border-indigo-500/30">
                 <CheckCircle size={28} />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">Confirm Payment</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">
-                Are you sure you want to log a payment of <span className="font-bold text-slate-700 dark:text-slate-300">{currencySymbol}{confirmPayment.sub.amount.toLocaleString()}</span> for your <span className="font-bold text-slate-700 dark:text-slate-300">{confirmPayment.sub.name}</span> subscription? This will update your cash flow.
+              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">Log Payment</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
+                Paying <span className="font-bold text-slate-700 dark:text-slate-300">{currencySymbol}{confirmPayment.sub.amount.toLocaleString()}</span> for <span className="font-bold text-slate-700 dark:text-slate-300">{confirmPayment.sub.name}</span>.
               </p>
+
+              {/* WALLET SELECTION UI */}
+              <div className="text-left mt-6 mb-8 text-slate-900 dark:text-slate-100">
+                <label className="text-[10px] uppercase tracking-widest font-black text-slate-500 mb-3 block">
+                  Select Payment Wallet
+                </label>
+                <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar pr-1">
+                  {wallets.map((wallet) => (
+                    <button
+                      key={wallet.id}
+                      onClick={() => setSelectedWalletId(wallet.id)}
+                      className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${
+                        selectedWalletId === wallet.id 
+                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' 
+                        : 'border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={selectedWalletId === wallet.id ? 'text-indigo-500 dark:text-indigo-400' : 'text-slate-500'}>
+                          {getWalletIcon(wallet.type)}
+                        </div>
+                        <div className="text-left">
+                          <p className="text-xs font-bold leading-none">{wallet.name}</p>
+                          <p className="text-[10px] mt-1 opacity-80">Bal: {currencySymbol}{Number(wallet.balance).toLocaleString()}</p>
+                        </div>
+                      </div>
+                      {selectedWalletId === wallet.id && <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.8)]" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="flex gap-3">
                 <button onClick={() => setConfirmPayment({ isOpen: false, sub: null })} className="flex-1 py-3.5 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 dark:text-slate-300 dark:bg-white/5 dark:hover:bg-white/10 transition-colors active:scale-95">
                   Cancel
                 </button>
                 <button 
                   onClick={executeLogPayment} 
-                  disabled={isPaying === confirmPayment.sub.id}
+                  disabled={isPaying === confirmPayment.sub.id || !selectedWalletId}
                   className="flex-1 py-3.5 rounded-xl font-bold text-white bg-indigo-500 hover:bg-indigo-600 shadow-[0_4px_14px_rgba(99,102,241,0.4)] transition-all hover:-translate-y-0.5 active:scale-95 flex justify-center items-center gap-2 disabled:opacity-70 disabled:hover:translate-y-0"
                 >
                   {isPaying === confirmPayment.sub.id ? <Loader2 className="animate-spin" size={18} /> : "Yes, Log It"}
@@ -469,7 +525,7 @@ export default function SubscriptionsPage() {
       )}
 
       {/* ============================================== */}
-      {/* 🚀 NEW: DELETE HISTORY PAYMENT MODAL */}
+      {/* DELETE HISTORY PAYMENT MODAL */}
       {/* ============================================== */}
       {deleteTxModal.isOpen && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6">
@@ -481,7 +537,7 @@ export default function SubscriptionsPage() {
               </div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">Delete Record?</h3>
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">
-                Are you sure you want to delete this payment of <span className="font-bold text-slate-700 dark:text-slate-300">{currencySymbol}{Number(deleteTxModal.amount).toLocaleString()}</span>? Doing this will automatically mark <span className="font-bold text-slate-700 dark:text-slate-300">{deleteTxModal.title}</span> as unpaid for this month.
+                Are you sure you want to delete this payment of <span className="font-bold text-slate-700 dark:text-slate-300">{currencySymbol}{Number(deleteTxModal.amount).toLocaleString()}</span>? Doing this will automatically mark <span className="font-bold text-slate-700 dark:text-slate-300">{deleteTxModal.title}</span> as unpaid for this month and <span className="font-bold text-emerald-500">refund your wallet</span>.
               </p>
               <div className="flex gap-3">
                 <button onClick={() => setDeleteTxModal({ isOpen: false, id: "", title: "", amount: "" })} className="flex-1 py-3.5 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 dark:text-slate-300 dark:bg-white/5 dark:hover:bg-white/10 transition-colors active:scale-95">Cancel</button>

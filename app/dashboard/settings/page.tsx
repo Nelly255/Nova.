@@ -66,7 +66,7 @@ export default function SettingsPage() {
   const executeClearData = async () => {
     setIsWiping(true);
     try {
-      // 🚀 UPGRADED: Nuking absolutely everything in parallel for speed
+      // 🚀 UPGRADED: Delete child records first to prevent foreign key errors
       await Promise.all([
         supabase.from("transactions").delete().not('id', 'is', null),
         supabase.from("assets").delete().not('id', 'is', null),
@@ -75,6 +75,9 @@ export default function SettingsPage() {
         supabase.from("savings_goals").delete().not('id', 'is', null),
         supabase.from("debts").delete().not('id', 'is', null)
       ]);
+
+      // 🚀 NEW: Now that transactions are gone, safely delete all wallets!
+      await supabase.from("accounts").delete().not('id', 'is', null);
 
       // Fire events so all pages know the data is gone
       window.dispatchEvent(new Event("transactionUpdated"));

@@ -10,6 +10,7 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 export default function SavingsPage() {
   const [goals, setGoals] = useState<any[]>([]);
   const [history, setHistory] = useState<any[]>([]);
+  const [wallets, setWallets] = useState<any[]>([]); 
   const [loading, setLoading] = useState(true);
   const [currencySymbol, setCurrencySymbol] = useState("TSh ");
 
@@ -18,36 +19,43 @@ export default function SavingsPage() {
 
   const [activeTab, setActiveTab] = useState<"goals" | "history" | "completed">("goals");
 
-  // Custom Deposit Modal State
   const [depositModal, setDepositModal] = useState({ isOpen: false, goalId: "", goalName: "", currentAmount: 0, targetAmount: 0 });
   const [depositInput, setDepositInput] = useState("");
   const [depositDate, setDepositDate] = useState(today);
+  
+  const [selectedWalletId, setSelectedWalletId] = useState<string | null>(null); 
+  const [destinationWalletId, setDestinationWalletId] = useState<string | null>(null); 
   const [isDepositing, setIsDepositing] = useState(false);
+  
+  // 🚀 NEW: State for Custom Dropdowns in the Deposit Modal
+  const [isSourceWalletOpen, setIsSourceWalletOpen] = useState(false);
+  const [isDestWalletOpen, setIsDestWalletOpen] = useState(false);
 
   const [goalToDelete, setGoalToDelete] = useState<any>(null);
   const [editModal, setEditModal] = useState({ isOpen: false, goalId: "", name: "", targetAmount: "", targetDate: "" });
   const [isEditing, setIsEditing] = useState(false);
 
-  const [editDepositModal, setEditDepositModal] = useState({ isOpen: false, txId: "", goalName: "", amount: "", oldAmount: 0, date: "" });
+  const [editDepositModal, setEditDepositModal] = useState({ isOpen: false, txId: "", goalName: "", amount: "", oldAmount: 0, date: "", oldDate: "" });
   const [isEditingDeposit, setIsEditingDeposit] = useState(false);
   const [deleteDepositModal, setDeleteDepositModal] = useState({ isOpen: false, txId: "", goalName: "", amount: 0 });
 
   const [warningModal, setWarningModal] = useState({ isOpen: false, title: "", message: "" });
 
-  // 🚀 NEW: Custom Filter Picker State
   const [filterMonth, setFilterMonth] = useState(currentMonthStr);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [pickerYear, setPickerYear] = useState(parseInt(currentMonthStr.split('-')[0]));
 
   const fetchData = async () => {
     try {
-      const [goalsRes, historyRes] = await Promise.all([
+      const [goalsRes, historyRes, walletsRes] = await Promise.all([
         supabase.from("savings_goals").select("*").order("created_at", { ascending: false }),
-        supabase.from("transactions").select("*").eq("category", "Savings").order("date", { ascending: false })
+        supabase.from("transactions").select("*").eq("category", "Savings").order("date", { ascending: false }),
+        supabase.from("accounts").select("*").order("name", { ascending: true }) 
       ]);
 
       if (goalsRes.data) setGoals(goalsRes.data);
       if (historyRes.data) setHistory(historyRes.data);
+      if (walletsRes.data) setWallets(walletsRes.data);
     } catch (error) {
       console.error("Failed to fetch data", error);
     } finally {
@@ -81,9 +89,7 @@ export default function SavingsPage() {
   const handleDepositInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let rawValue = e.target.value.replace(/[^0-9.]/g, "");
     const parts = rawValue.split(".");
-    if (parts.length > 2) {
-      rawValue = parts[0] + "." + parts.slice(1).join("");
-    }
+    if (parts.length > 2) rawValue = parts[0] + "." + parts.slice(1).join("");
     setDepositInput(rawValue);
   };
 
@@ -116,47 +122,81 @@ export default function SavingsPage() {
     setGoalToDelete(null);
   };
 
-  // --- DEPOSIT ACTIONS ---
   const submitDeposit = async (e: React.FormEvent) => {
     e.preventDefault();
     const depositAmount = parseFloat(depositInput);
-    if (isNaN(depositAmount) || depositAmount <= 0) {
-      return showAlert("Invalid Amount", "Please enter a valid amount to deposit!");
-    }
+    
+    if (isNaN(depositAmount) || depositAmount <= 0) return showAlert("Invalid Amount", "Please enter a valid amount.");
+    if (!selectedWalletId || !destinationWalletId) return showAlert("Select Wallets", "Please select both a Source Wallet and a Destination Wallet.");
+    if (selectedWalletId === destinationWalletId) return showAlert("Hold up!", "You cannot transfer money into the same wallet.");
 
     const remainingToTarget = depositModal.targetAmount - depositModal.currentAmount;
     if (depositAmount > remainingToTarget) {
-      return showAlert("Hold up!", `You only need ${currencySymbol}${remainingToTarget.toLocaleString(undefined, { maximumFractionDigits: 2 })} to complete this goal. You cannot deposit more than the target amount.`);
+      return showAlert("Hold up!", `You only need ${currencySymbol}${remainingToTarget.toLocaleString(undefined, { maximumFractionDigits: 2 })} to hit your target.`);
+    }
+
+    const fundingWallet = wallets.find(w => w.id === selectedWalletId);
+    
+    // Safety check just in case
+    if (fundingWallet && Number(fundingWallet.balance) < depositAmount) {
+      return showAlert("Insufficient Funds", "You do not have enough money in the selected source wallet.");
     }
 
     setIsDepositing(true);
-    const newAmount = depositModal.currentAmount + depositAmount;
+    const destWallet = wallets.find(w => w.id === destinationWalletId);
 
-    const { error: goalError } = await supabase.from("savings_goals").update({ current_amount: newAmount }).eq("id", depositModal.goalId);
-    const { error: txError } = await supabase.from("transactions").insert([{
-      title: `Transfer to ${depositModal.goalName}`,
-      amount: depositAmount,
-      type: "expense",
-      category: "Savings", 
-      date: depositDate, 
-    }]);
+    try {
+      // 1. Update Goal Amount
+      const newGoalAmount = depositModal.currentAmount + depositAmount;
+      const { error: goalError } = await supabase.from("savings_goals").update({ current_amount: newGoalAmount }).eq("id", depositModal.goalId);
+      if (goalError) throw goalError;
 
-    setIsDepositing(false);
-    if (!goalError && !txError) {
+      // 2. Log Tx 1: Expense (Money Out)
+      const { error: tx1Error } = await supabase.from("transactions").insert([{
+        title: `Transfer to ${depositModal.goalName}`,
+        amount: depositAmount,
+        type: "expense",
+        category: "Savings", 
+        date: depositDate,
+        account_id: selectedWalletId
+      }]);
+      if (tx1Error) throw tx1Error;
+
+      // 3. Log Tx 2: Income (Money In - Contra)
+      const { error: tx2Error } = await supabase.from("transactions").insert([{
+        title: `Contra: Transfer to ${depositModal.goalName}`,
+        amount: depositAmount,
+        type: "income",
+        category: "Transfer", 
+        date: depositDate,
+        account_id: destinationWalletId
+      }]);
+      if (tx2Error) throw tx2Error;
+
+      // 4. Update Wallet Balances
+      if (fundingWallet && destWallet) {
+        await supabase.from("accounts").update({ balance: Number(fundingWallet.balance) - depositAmount }).eq("id", selectedWalletId);
+        await supabase.from("accounts").update({ balance: Number(destWallet.balance) + depositAmount }).eq("id", destinationWalletId);
+      }
+
       setDepositModal({ ...depositModal, isOpen: false });
+      setSelectedWalletId(null);
+      setDestinationWalletId(null);
+      setIsSourceWalletOpen(false);
+      setIsDestWalletOpen(false);
       fetchData(); 
       window.dispatchEvent(new Event("transactionUpdated")); 
-    } else {
-      showAlert("Transaction Failed", "There was an error processing your deposit.");
+    } catch (error) {
+      showAlert("Transaction Failed", "There was an error processing your double-entry deposit.");
+    } finally {
+      setIsDepositing(false);
     }
   };
 
   const submitEditDeposit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newAmount = parseFloat(editDepositModal.amount);
-    if (isNaN(newAmount) || newAmount <= 0) {
-      return showAlert("Invalid Amount", "Please enter a valid amount.");
-    }
+    if (isNaN(newAmount) || newAmount <= 0) return showAlert("Invalid Amount", "Please enter a valid amount.");
 
     const targetGoal = goals.find(g => g.name === editDepositModal.goalName);
     const amountDifference = newAmount - editDepositModal.oldAmount;
@@ -165,50 +205,81 @@ export default function SavingsPage() {
       const prospectiveBalance = targetGoal.current_amount + amountDifference;
       if (prospectiveBalance > targetGoal.target_amount) {
         const maxAllowed = targetGoal.target_amount - targetGoal.current_amount + editDepositModal.oldAmount;
-        return showAlert("Too much!", `The maximum you can update this deposit to without exceeding the goal target is ${currencySymbol}${maxAllowed.toLocaleString(undefined, { maximumFractionDigits: 2 })}.`);
+        return showAlert("Too much!", `The maximum you can update this to is ${currencySymbol}${maxAllowed.toLocaleString(undefined, { maximumFractionDigits: 2 })}.`);
       }
     }
 
     setIsEditingDeposit(true);
 
-    const { error: txError } = await supabase.from("transactions")
-      .update({ amount: newAmount, date: editDepositModal.date })
-      .eq("id", editDepositModal.txId);
+    try {
+      const { data: tx1 } = await supabase.from("transactions").select("id, account_id").eq("id", editDepositModal.txId).single();
+      const { data: tx2 } = await supabase.from("transactions").select("id, account_id")
+        .eq("title", `Contra: Transfer to ${editDepositModal.goalName}`)
+        .eq("amount", editDepositModal.oldAmount)
+        .eq("date", editDepositModal.oldDate)
+        .single();
 
-    if (!txError && targetGoal) {
-      await supabase.from("savings_goals")
-        .update({ current_amount: targetGoal.current_amount + amountDifference })
-        .eq("id", targetGoal.id);
-    }
+      if (tx1 && tx1.account_id) {
+        const { data: w1 } = await supabase.from("accounts").select("balance").eq("id", tx1.account_id).single();
+        if (w1) await supabase.from("accounts").update({ balance: Number(w1.balance) - amountDifference }).eq("id", tx1.account_id);
+        await supabase.from("transactions").update({ amount: newAmount, date: editDepositModal.date }).eq("id", tx1.id);
+      }
 
-    setIsEditingDeposit(false);
-    if (!txError) {
+      if (tx2 && tx2.account_id) {
+        const { data: w2 } = await supabase.from("accounts").select("balance").eq("id", tx2.account_id).single();
+        if (w2) await supabase.from("accounts").update({ balance: Number(w2.balance) + amountDifference }).eq("id", tx2.account_id);
+        await supabase.from("transactions").update({ amount: newAmount, date: editDepositModal.date }).eq("id", tx2.id);
+      }
+
+      if (targetGoal) await supabase.from("savings_goals").update({ current_amount: targetGoal.current_amount + amountDifference }).eq("id", targetGoal.id);
+
       setEditDepositModal({ ...editDepositModal, isOpen: false });
       fetchData();
       window.dispatchEvent(new Event("transactionUpdated")); 
-    } else {
-      showAlert("Update Error", "Failed to update your deposit history.");
+    } catch (error) {
+      showAlert("Update Error", "Failed to balance your contra records.");
+    } finally {
+      setIsEditingDeposit(false);
     }
   };
 
   const confirmDeleteDeposit = async () => {
     const targetGoal = goals.find(g => g.name === deleteDepositModal.goalName);
 
-    const { error: txError } = await supabase.from("transactions").delete().eq("id", deleteDepositModal.txId);
+    try {
+      const { data: tx1 } = await supabase.from("transactions").select("id, account_id, amount, date").eq("id", deleteDepositModal.txId).single();
+      
+      let tx2 = null;
+      if (tx1) {
+        const { data } = await supabase.from("transactions").select("id, account_id, amount")
+          .eq("title", `Contra: Transfer to ${deleteDepositModal.goalName}`)
+          .eq("amount", tx1.amount)
+          .eq("date", tx1.date).single();
+        tx2 = data;
+      }
 
-    if (!txError && targetGoal) {
-      const adjustedAmount = Math.max(0, targetGoal.current_amount - deleteDepositModal.amount);
-      await supabase.from("savings_goals")
-        .update({ current_amount: adjustedAmount })
-        .eq("id", targetGoal.id);
-    }
+      if (tx1 && tx1.account_id) {
+        const { data: w1 } = await supabase.from("accounts").select("balance").eq("id", tx1.account_id).single();
+        if (w1) await supabase.from("accounts").update({ balance: Number(w1.balance) + Number(tx1.amount) }).eq("id", tx1.account_id);
+        await supabase.from("transactions").delete().eq("id", tx1.id);
+      }
 
-    if (!txError) {
+      if (tx2 && tx2.account_id) {
+        const { data: w2 } = await supabase.from("accounts").select("balance").eq("id", tx2.account_id).single();
+        if (w2) await supabase.from("accounts").update({ balance: Number(w2.balance) - Number(tx2.amount) }).eq("id", tx2.account_id);
+        await supabase.from("transactions").delete().eq("id", tx2.id);
+      }
+
+      if (targetGoal) {
+        const adjustedAmount = Math.max(0, targetGoal.current_amount - deleteDepositModal.amount);
+        await supabase.from("savings_goals").update({ current_amount: adjustedAmount }).eq("id", targetGoal.id);
+      }
+
       setDeleteDepositModal({ isOpen: false, txId: "", goalName: "", amount: 0 });
       fetchData();
       window.dispatchEvent(new Event("transactionUpdated")); 
-    } else {
-      showAlert("Delete Error", "Failed to delete deposit.");
+    } catch (error) {
+      showAlert("Delete Error", "Failed to reverse deposit and refund wallets.");
     }
   };
 
@@ -218,6 +289,13 @@ export default function SavingsPage() {
 
   const activeGoalsList = goals.filter(g => Number(g.current_amount) < Number(g.target_amount));
   const completedGoalsList = goals.filter(g => Number(g.current_amount) >= Number(g.target_amount));
+
+  const selectedSourceWallet = wallets.find(w => w.id === selectedWalletId);
+  const selectedDestWallet = wallets.find(w => w.id === destinationWalletId);
+
+  // Insufficient Funds Check
+  const amountValDeposit = parseFloat(depositInput) || 0;
+  const isDepositInsufficient = selectedSourceWallet && Number(selectedSourceWallet.balance) < amountValDeposit;
 
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-6 md:space-y-8 pb-32 bg-transparent min-h-screen relative">
@@ -283,9 +361,6 @@ export default function SavingsPage() {
           <p className="text-slate-500 transition-colors font-medium">Decrypting your vault...</p>
         ) : activeTab === 'goals' ? (
           
-          /* ============================================== */
-          /* ACTIVE GOALS VIEW */
-          /* ============================================== */
           activeGoalsList.length === 0 ? (
             <div className="glass-card p-12 md:p-16 text-center rounded-[2rem] flex flex-col items-center transition-colors">
               <div className="w-16 h-16 rounded-2xl bg-slate-100/80 dark:bg-white/5 flex items-center justify-center text-slate-400 mb-4 backdrop-blur-sm border border-slate-200/50 dark:border-white/5">
@@ -351,6 +426,10 @@ export default function SavingsPage() {
                         setDepositModal({ isOpen: true, goalId: goal.id, goalName: goal.name, currentAmount: Number(goal.current_amount), targetAmount: Number(goal.target_amount) }); 
                         setDepositInput(""); 
                         setDepositDate(today); 
+                        setSelectedWalletId(null);
+                        setDestinationWalletId(null);
+                        setIsSourceWalletOpen(false);
+                        setIsDestWalletOpen(false);
                       }}
                       className="w-full py-3.5 rounded-2xl font-bold flex justify-center items-center gap-2 text-sm md:text-base transition-all active:scale-95 bg-white/80 text-slate-700 hover:bg-white border-slate-200 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 dark:border-white/10 border backdrop-blur-md shadow-sm"
                     >
@@ -364,9 +443,6 @@ export default function SavingsPage() {
 
         ) : activeTab === 'completed' ? (
           
-          /* ============================================== */
-          /* COMPLETED GOALS VIEW */
-          /* ============================================== */
           completedGoalsList.length === 0 ? (
             <div className="glass-card p-12 md:p-16 text-center rounded-[2rem] flex flex-col items-center transition-colors">
               <div className="w-16 h-16 rounded-2xl bg-emerald-50/80 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-500 mb-4 backdrop-blur-sm border border-emerald-200/50 dark:border-emerald-500/20">
@@ -455,7 +531,6 @@ export default function SavingsPage() {
                 </div>
               </div>
               
-              {/* 🚀 UPGRADED: Custom Glassmorphic Month Picker */}
               <div className="relative z-50 w-full sm:w-auto">
                 <button
                   onClick={() => { setIsFilterOpen(!isFilterOpen); setPickerYear(parseInt(filterMonth.split('-')[0])); }}
@@ -472,13 +547,9 @@ export default function SavingsPage() {
 
                 {isFilterOpen && (
                   <>
-                    {/* Overlay */}
                     <div className="fixed inset-0 z-40 bg-slate-900/10 dark:bg-black/40 backdrop-blur-sm sm:bg-transparent sm:backdrop-blur-none animate-in fade-in duration-200" onClick={() => setIsFilterOpen(false)} />
                     
-                    {/* Picker Popover */}
                     <div className="fixed left-4 right-4 bottom-24 sm:absolute sm:left-auto sm:right-0 sm:bottom-auto sm:top-full sm:mt-3 z-50 sm:w-72 glass-card rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] border border-slate-200/80 dark:border-white/10 p-5 animate-in fade-in zoom-in-95 origin-bottom sm:origin-top-right duration-200">
-                      
-                      {/* Header */}
                       <div className="flex justify-between items-center mb-4 px-2">
                         <button onClick={() => setPickerYear(y => y - 1)} className="p-1.5 rounded-full hover:bg-slate-200/50 dark:hover:bg-white/10 text-slate-500 transition-colors">
                           <ChevronLeft size={18}/>
@@ -491,7 +562,6 @@ export default function SavingsPage() {
                         </button>
                       </div>
 
-                      {/* Month Grid */}
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                         {MONTHS.map((month, idx) => {
                           const isSelected = filterMonth === `${pickerYear}-${String(idx + 1).padStart(2, '0')}`;
@@ -510,7 +580,6 @@ export default function SavingsPage() {
                         })}
                       </div>
 
-                      {/* Reset Action */}
                       <div className="mt-4 pt-4 border-t border-slate-200/50 dark:border-white/10 flex justify-center">
                         <button 
                           onClick={() => { setFilterMonth(currentMonthStr); setIsFilterOpen(false); }} 
@@ -519,7 +588,6 @@ export default function SavingsPage() {
                           Back to current month
                         </button>
                       </div>
-
                     </div>
                   </>
                 )}
@@ -554,7 +622,7 @@ export default function SavingsPage() {
                          <button 
                             onClick={() => {
                               const targetGoalName = tx.title.replace("Transfer to ", "");
-                              setEditDepositModal({ isOpen: true, txId: tx.id, goalName: targetGoalName, amount: tx.amount.toString(), oldAmount: tx.amount, date: tx.date });
+                              setEditDepositModal({ isOpen: true, txId: tx.id, goalName: targetGoalName, amount: tx.amount.toString(), oldAmount: tx.amount, date: tx.date, oldDate: tx.date });
                             }}
                             className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors"
                             title="Edit Deposit"
@@ -567,7 +635,7 @@ export default function SavingsPage() {
                               setDeleteDepositModal({ isOpen: true, txId: tx.id, goalName: targetGoalName, amount: tx.amount });
                             }}
                             className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
-                            title="Delete Deposit"
+                            title="Reverse Transfer"
                          >
                            <Trash2 size={14}/>
                          </button>
@@ -608,38 +676,107 @@ export default function SavingsPage() {
       )}
 
       {/* ============================================== */}
-      {/* MODAL: ADD DEPOSIT */}
+      {/* 🚀 UPGRADED: ADD DEPOSIT W/ DUAL WALLET SELECT */}
       {/* ============================================== */}
       {depositModal.isOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/10 dark:bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setDepositModal({ ...depositModal, isOpen: false })} />
-          <div className="relative z-10 w-full max-w-sm glass-card rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="relative z-10 w-full max-w-sm glass-card rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] overflow-visible animate-in zoom-in-95 duration-200 border border-indigo-200/50 dark:border-indigo-500/20">
+            
             <div className="flex justify-between items-center p-6 border-b border-slate-200/80 dark:border-white/5 transition-colors">
               <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 transition-colors">Deposit Funds</h3>
               <button onClick={() => setDepositModal({ ...depositModal, isOpen: false })} className="text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 p-1 rounded-full"><X size={20} /></button>
             </div>
+            
             <form onSubmit={submitDeposit} className="p-6 space-y-4">
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Add money to your <span className="font-bold text-indigo-600 dark:text-indigo-400">{depositModal.goalName}</span> fund.</p>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Transferring money to <span className="font-bold text-indigo-600 dark:text-indigo-400">{depositModal.goalName}</span>.</p>
               
               <div className="grid grid-cols-1 gap-4">
-                <div>
+                
+                <div className="relative">
                   <label className="block text-sm font-semibold text-slate-700 dark:text-slate-400 mb-1">Amount ({currencySymbol})</label>
                   <input 
                     required type="text" inputMode="decimal" placeholder="e.g., 500.00" value={formatAmountForDisplay(depositInput)} onChange={handleDepositInputChange} 
-                    className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-lg font-bold" autoFocus 
+                    className={`w-full bg-slate-50 dark:bg-slate-950/50 border rounded-xl px-4 py-3 focus:outline-none focus:ring-1 text-lg font-bold transition-colors ${isDepositInsufficient ? 'border-rose-500 focus:ring-rose-500 text-rose-600 dark:text-rose-400' : 'border-slate-200/80 dark:border-white/10 focus:ring-indigo-500 text-slate-900 dark:text-slate-200'}`} autoFocus 
                   />
+                  {/* 🚀 Insufficient Funds Warning */}
+                  {isDepositInsufficient && (
+                    <p className="text-xs text-rose-500 font-semibold mt-2 animate-in slide-in-from-top-1">
+                      Insufficient funds in {selectedSourceWallet?.name}
+                    </p>
+                  )}
                 </div>
+                
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-400 mb-1">Date of Deposit</label>
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-400 mb-1">Date of Transfer</label>
                   <input 
                     required type="date" value={depositDate} onChange={(e) => setDepositDate(e.target.value)} 
                     className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 [color-scheme:light] dark:[color-scheme:dark]" 
                   />
                 </div>
+                
+                {/* 🚀 CUSTOM DUAL WALLET DROPDOWNS */}
+                <div className="grid grid-cols-2 gap-3 mt-2 relative z-50">
+                  <div>
+                    <label className="text-[10px] uppercase tracking-widest font-black text-slate-500 mb-1.5 block">From (Deduct)</label>
+                    <div className="relative">
+                      <button 
+                        type="button" 
+                        onClick={() => { setIsSourceWalletOpen(!isSourceWalletOpen); setIsDestWalletOpen(false); }}
+                        className={`w-full flex justify-between items-center bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors ${!selectedSourceWallet ? 'text-slate-400' : 'text-slate-700 dark:text-slate-300'}`}
+                      >
+                        <span className="truncate">{selectedSourceWallet ? selectedSourceWallet.name : 'Select Source'}</span>
+                        <ChevronDown size={14} className={`text-slate-400 shrink-0 transition-transform duration-200 ${isSourceWalletOpen ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {isSourceWalletOpen && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setIsSourceWalletOpen(false)} />
+                          <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-48 overflow-y-auto custom-scrollbar">
+                            {wallets.length === 0 ? <div className="px-3 py-3 text-xs text-slate-500 text-center">No wallets</div> : wallets.map((w) => (
+                              <button key={w.id} type="button" onClick={() => { setSelectedWalletId(w.id); setIsSourceWalletOpen(false); }} className={`w-full text-left px-3 py-2.5 text-xs transition-colors flex items-center justify-between ${selectedWalletId === w.id ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold' : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300'}`}>
+                                <span className="truncate pr-2">{w.name}</span>
+                                <span className="text-[10px] font-medium opacity-70 shrink-0">{currencySymbol}{Number(w.balance).toLocaleString()}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="text-[10px] uppercase tracking-widest font-black text-slate-500 mb-1.5 block">To (Store)</label>
+                    <div className="relative">
+                      <button 
+                        type="button" 
+                        onClick={() => { setIsDestWalletOpen(!isDestWalletOpen); setIsSourceWalletOpen(false); }}
+                        className={`w-full flex justify-between items-center bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors ${!selectedDestWallet ? 'text-slate-400' : 'text-slate-700 dark:text-slate-300'}`}
+                      >
+                        <span className="truncate">{selectedDestWallet ? selectedDestWallet.name : 'Select Dest.'}</span>
+                        <ChevronDown size={14} className={`text-slate-400 shrink-0 transition-transform duration-200 ${isDestWalletOpen ? 'rotate-180' : ''}`} />
+                      </button>
+
+                      {isDestWalletOpen && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setIsDestWalletOpen(false)} />
+                          <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-48 overflow-y-auto custom-scrollbar">
+                            {wallets.length === 0 ? <div className="px-3 py-3 text-xs text-slate-500 text-center">No wallets</div> : wallets.map((w) => (
+                              <button key={w.id} type="button" onClick={() => { setDestinationWalletId(w.id); setIsDestWalletOpen(false); }} className={`w-full text-left px-3 py-2.5 text-xs transition-colors flex items-center justify-between ${destinationWalletId === w.id ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold' : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300'}`}>
+                                <span className="truncate pr-2">{w.name}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
               </div>
 
-              <button type="submit" disabled={isDepositing || !depositInput} className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-70 shadow-[0_8px_20px_-6px_rgba(99,102,241,0.6)] mt-2">
-                {isDepositing ? <Loader2 className="animate-spin" size={20} /> : "Confirm Deposit"}
+              <button type="submit" disabled={isDepositing || !depositInput || !selectedWalletId || !destinationWalletId || isDepositInsufficient} className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-70 shadow-[0_8px_20px_-6px_rgba(99,102,241,0.6)] mt-2">
+                {isDepositing ? <Loader2 className="animate-spin" size={20} /> : "Confirm Transfer"}
               </button>
             </form>
           </div>
@@ -683,7 +820,7 @@ export default function SavingsPage() {
               </div>
 
               <button type="submit" disabled={isEditingDeposit || !editDepositModal.amount} className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-70 shadow-[0_8px_20px_-6px_rgba(99,102,241,0.6)] mt-2">
-                {isEditingDeposit ? <Loader2 className="animate-spin" size={20} /> : "Update Deposit"}
+                {isEditingDeposit ? <Loader2 className="animate-spin" size={20} /> : "Update Transfer"}
               </button>
             </form>
           </div>
@@ -691,7 +828,7 @@ export default function SavingsPage() {
       )}
 
       {/* ============================================== */}
-      {/* MODAL: DELETE DEPOSIT */}
+      {/* 🚀 UPGRADED: REVERSE DUAL DEPOSIT */}
       {/* ============================================== */}
       {deleteDepositModal.isOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
@@ -701,9 +838,9 @@ export default function SavingsPage() {
               <div className="w-16 h-16 rounded-full bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto mb-4 border border-rose-200 dark:border-rose-500/30">
                 <Trash2 size={24} />
               </div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">Reverse Deposit?</h3>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">Reverse Transfer?</h3>
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">
-                Are you sure you want to delete this deposit of <span className="font-bold text-slate-700 dark:text-slate-300">{currencySymbol}{deleteDepositModal.amount.toLocaleString()}</span>? This will deduct the amount from your <span className="font-bold text-slate-700 dark:text-slate-300">{deleteDepositModal.goalName}</span> balance.
+                Are you sure you want to delete this deposit of <span className="font-bold text-slate-700 dark:text-slate-300">{currencySymbol}{deleteDepositModal.amount.toLocaleString()}</span>? Doing this will balance the contra, deduct the goal balance, and <span className="font-bold text-emerald-500">refund your original wallet</span>.
               </p>
               <div className="flex gap-3">
                 <button onClick={() => setDeleteDepositModal({ isOpen: false, txId: "", goalName: "", amount: 0 })} className="flex-1 py-3.5 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 dark:text-slate-300 dark:bg-white/5 dark:hover:bg-white/10 transition-colors active:scale-95">Cancel</button>

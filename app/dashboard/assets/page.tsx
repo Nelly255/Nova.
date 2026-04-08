@@ -25,8 +25,8 @@ const formatCompactNumber = (number: number) => {
 
 export default function AssetsPage() {
   const [assets, setAssets] = useState<any[]>([]);
+  const [wallets, setWallets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  // 🚀 UPDATED: Default initial state to TSh
   const [currencySymbol, setCurrencySymbol] = useState("TSh ");
   
   const [activeTab, setActiveTab] = useState<'active' | 'sold'>('active');
@@ -49,17 +49,24 @@ export default function AssetsPage() {
 
   useEffect(() => setMounted(true), []);
 
-  const fetchAssets = async () => {
-    const { data, error } = await supabase
-      .from("assets")
-      .select("*")
-      .order("purchase_date", { ascending: false });
+  const fetchData = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const [assetsRes, walletsRes] = await Promise.all([
+      supabase.from("assets").select("*").order("purchase_date", { ascending: false }),
+      supabase.from("accounts").select("*").eq('user_id', user.id)
+    ]);
     
-    if (!error && data) {
+    if (walletsRes.data) {
+      setWallets(walletsRes.data);
+    }
+
+    if (assetsRes.data) {
       const now = new Date();
       const isViewingCurrentYear = selectedYear === now.getFullYear();
 
-      const calculatedAssets = data.map((asset) => {
+      const calculatedAssets = assetsRes.data.map((asset) => {
         const purchaseDate = new Date(asset.purchase_date);
         const rate = Number(asset.depreciation_rate) / 100;
         const purchasePrice = Number(asset.purchase_price);
@@ -114,19 +121,18 @@ export default function AssetsPage() {
 
   useEffect(() => {
     const savedCurrency = localStorage.getItem("app_currency");
-    // 🚀 UPDATED: Default to TSh unless USD is explicitly saved
     setCurrencySymbol(savedCurrency === "USD" ? "$" : "TSh ");
-    fetchAssets();
+    fetchData();
 
-    window.addEventListener("assetUpdated", fetchAssets);
-    return () => window.removeEventListener("assetUpdated", fetchAssets);
+    window.addEventListener("assetUpdated", fetchData);
+    return () => window.removeEventListener("assetUpdated", fetchData);
   }, [selectedYear]); 
 
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedYear, activeTab]); 
 
-  const handleSell = async (id: string, price: number, disposeType: 'cash' | 'credit' | 'giveaway') => {
+  const handleSell = async (id: string, price: number, disposeType: 'cash' | 'credit' | 'giveaway', walletId?: string) => {
     const assetToSell = assets.find(a => a.id === id);
 
     const { error } = await supabase
@@ -139,7 +145,8 @@ export default function AssetsPage() {
       .eq("id", id);
 
     if (!error) {
-      if (disposeType === 'cash' && assetToSell && price > 0) {
+      // 🚀 FIXED: Only attempt to deposit if the disposal type is strictly "cash"
+      if (disposeType === 'cash' && walletId && assetToSell && price > 0) {
         const { error: txError } = await supabase
           .from("transactions")
           .insert([{
@@ -147,9 +154,16 @@ export default function AssetsPage() {
             amount: price,
             date: new Date().toISOString(),
             type: 'income',
-            category: 'Asset Sale'
+            category: 'Asset Sale',
+            account_id: walletId
           }]);
           
+        const selectedWallet = wallets.find(w => w.id === walletId);
+        if (selectedWallet) {
+          const newBalance = Number(selectedWallet.balance) + price;
+          await supabase.from("accounts").update({ balance: newBalance }).eq("id", walletId);
+        }
+
         if (txError) {
           console.error("Failed to log automated income transaction:", txError);
         } else {
@@ -212,7 +226,7 @@ export default function AssetsPage() {
 
     if (!error) {
       setIsEditModalOpen(false);
-      fetchAssets(); 
+      fetchData(); 
     } else {
       console.error("Failed to update asset:", error);
     }
@@ -298,7 +312,7 @@ export default function AssetsPage() {
         </div>
       </header>
 
-      {/* 🚀 THE EDIT ASSET MODAL */}
+      {/* THE EDIT ASSET MODAL */}
       {isEditModalOpen && mounted && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-0">
           <div 
@@ -329,7 +343,6 @@ export default function AssetsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-400 mb-1">Purchase Price</label>
-                  {/* 🚀 FIXED: Flex wrapper prevents symbol overlap */}
                   <div className="flex items-center bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl px-3 py-3 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-colors">
                     <span className="text-slate-400 text-sm font-medium mr-1.5 whitespace-nowrap">{currencySymbol}</span>
                     <input 
@@ -363,7 +376,6 @@ export default function AssetsPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-400 mb-1">Salvage Value</label>
-                  {/* 🚀 FIXED: Flex wrapper prevents symbol overlap */}
                   <div className="flex items-center bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl px-3 py-3 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-colors">
                     <span className="text-slate-400 text-sm font-medium mr-1.5 whitespace-nowrap">{currencySymbol}</span>
                     <input 
@@ -523,6 +535,7 @@ export default function AssetsPage() {
                 <AssetCard 
                   key={asset.id} 
                   asset={asset} 
+                  wallets={wallets}
                   selectedYear={selectedYear} 
                   isCurrentYear={isCurrentYear}
                   currencySymbol={currencySymbol} 
@@ -583,11 +596,22 @@ export default function AssetsPage() {
 // ==========================================
 // ASSET CARD
 // ==========================================
-function AssetCard({ asset, selectedYear, isCurrentYear, currencySymbol, onDelete, onSell, onEdit }: any) {
+function AssetCard({ asset, wallets, selectedYear, isCurrentYear, currencySymbol, onDelete, onSell, onEdit }: any) {
   const [isSelling, setIsSelling] = useState(false);
   const [sellPrice, setSellPrice] = useState("");
   const [disposeType, setDisposeType] = useState<'cash' | 'credit' | 'giveaway'>('cash');
+  
+  const [selectedWalletId, setSelectedWalletId] = useState("");
+  const [isWalletOpen, setIsWalletOpen] = useState(false);
+  const selectedWallet = wallets.find((w: any) => w.id === selectedWalletId);
+  
   const isSold = asset.status === 'sold';
+
+  useEffect(() => {
+    if (isSelling && wallets.length > 0 && !selectedWalletId) {
+      setSelectedWalletId(wallets[0].id);
+    }
+  }, [isSelling, wallets]);
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value.replace(/[^0-9.]/g, '');
@@ -603,12 +627,18 @@ function AssetCard({ asset, selectedYear, isCurrentYear, currencySymbol, onDelet
   const handleConfirmSell = () => {
     if (disposeType !== 'giveaway' && !sellPrice) return;
     const numericPrice = disposeType === 'giveaway' ? 0 : Number(sellPrice.replace(/,/g, ''));
-    onSell(asset.id, numericPrice, disposeType);
+    onSell(asset.id, numericPrice, disposeType, selectedWalletId);
     setIsSelling(false);
   };
 
+  // 🚀 FIXED: Dynamic validation depending on disposal choice
+  const canSubmit = 
+    disposeType === 'giveaway' ? true : 
+    disposeType === 'credit' ? Boolean(sellPrice) :
+    Boolean(sellPrice && selectedWalletId);
+
   return (
-    <div className={`glass-card p-6 rounded-[2rem] transition duration-300 relative group flex flex-col justify-between overflow-hidden ${isSold ? 'bg-slate-50/50 dark:bg-slate-900/30 border-emerald-500/20' : 'hover:bg-white/40 dark:hover:bg-white/5'}`}>
+    <div className={`glass-card p-6 rounded-[2rem] transition duration-300 relative group flex flex-col justify-between ${isSold ? 'bg-slate-50/50 dark:bg-slate-900/30 border-emerald-500/20' : 'hover:bg-white/40 dark:hover:bg-white/5'}`}>
       
       {isSold && (
         <div className="absolute top-5 right-5 z-10">
@@ -645,9 +675,55 @@ function AssetCard({ asset, selectedYear, isCurrentYear, currencySymbol, onDelet
                 </button>
               </div>
 
+              {/* 🚀 FIXED: Only show wallet selector for Cash sales */}
+              {disposeType === 'cash' && (
+                <div className={`relative mb-3 ${isWalletOpen ? 'z-50' : 'z-40'}`}>
+                  <button 
+                    onClick={() => setIsWalletOpen(!isWalletOpen)} 
+                    className="w-full flex justify-between items-center bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-left focus:outline-none transition-colors"
+                  >
+                    <span className={`text-xs font-medium truncate pr-2 ${!selectedWallet ? 'text-slate-400' : 'text-slate-900 dark:text-slate-200'}`}>
+                      {selectedWallet ? `${selectedWallet.name} (${currencySymbol}${Number(selectedWallet.balance).toLocaleString()})` : 'Deposit into wallet...'}
+                    </span>
+                    <ChevronDown size={14} className={`text-slate-400 shrink-0 transition-transform duration-200 ${isWalletOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  {isWalletOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsWalletOpen(false)} />
+                      <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-xl shadow-lg max-h-36 overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95 duration-150">
+                        {wallets.length === 0 ? (
+                          <div className="px-3 py-2 text-xs text-slate-500 text-center">No wallets found</div>
+                        ) : wallets.map((w: any) => (
+                          <button 
+                            key={w.id} 
+                            onClick={() => { setSelectedWalletId(w.id); setIsWalletOpen(false); }} 
+                            className={`w-full text-left px-3 py-2.5 text-xs transition-colors flex justify-between items-center ${selectedWalletId === w.id ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold' : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'}`}
+                          >
+                            <span className="truncate pr-2">{w.name}</span>
+                            <span className="opacity-70 shrink-0">{currencySymbol}{Number(w.balance).toLocaleString()}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* 🚀 NEW: The Debt & Loan Pro Tip when selling on Credit */}
+              {disposeType === 'credit' && (
+                <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 p-3 rounded-xl mb-3 flex gap-2.5 items-start animate-in fade-in zoom-in duration-300">
+                  <Lightbulb className="text-indigo-500 dark:text-indigo-400 shrink-0 mt-0.5" size={16} />
+                  <p className="text-[10px] md:text-xs text-indigo-900 dark:text-indigo-300 leading-relaxed font-medium">
+                    <strong className="block mb-1 text-indigo-700 dark:text-indigo-400">Nova Pro Tip</strong>
+                    Don't forget to head over to the <strong>Debts & Loans</strong> tab later to log this as an "Owed To Me" record so you can track the collection!
+                  </p>
+                </div>
+              )}
+
               <div className="flex items-center gap-2">
                 {disposeType !== 'giveaway' && (
-                  <div className="flex items-center flex-1 bg-white dark:bg-slate-900 border-2 border-indigo-500 rounded-xl px-3 py-1.5 focus-within:ring-4 focus-within:ring-indigo-500/20 transition-all animate-in fade-in zoom-in duration-200">
+                  <div className={`flex items-center flex-1 bg-white dark:bg-slate-900 border-2 rounded-xl px-3 py-1.5 transition-all animate-in fade-in zoom-in duration-200 ${disposeType === 'credit' ? 'border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/20' : 'border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/20'}`}>
                     <span className="text-slate-400 text-sm font-medium mr-1.5 whitespace-nowrap">{currencySymbol}</span>
                     <input
                       type="text"
@@ -661,7 +737,7 @@ function AssetCard({ asset, selectedYear, isCurrentYear, currencySymbol, onDelet
                   </div>
                 )}
                 
-                <button onClick={handleConfirmSell} className={`bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl flex items-center justify-center transition-transform hover:scale-105 shrink-0 shadow-sm ${disposeType === 'giveaway' ? 'flex-1 py-2 font-bold text-sm' : 'w-9 h-9'}`} title="Confirm">
+                <button disabled={!canSubmit} onClick={handleConfirmSell} className={`${disposeType === 'credit' ? 'bg-indigo-500 hover:bg-indigo-600 disabled:bg-indigo-500/50' : 'bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-500/50'} disabled:cursor-not-allowed text-white rounded-xl flex items-center justify-center transition-transform hover:scale-105 shrink-0 shadow-sm ${disposeType === 'giveaway' ? 'flex-1 py-2 font-bold text-sm' : 'w-9 h-9'}`} title="Confirm">
                   {disposeType === 'giveaway' ? 'Confirm Gift' : <ArrowRight size={16} />}
                 </button>
                 <button onClick={() => {setIsSelling(false); setDisposeType('cash');}} className={`bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 rounded-xl flex items-center justify-center transition-transform hover:scale-105 shrink-0 shadow-sm ${disposeType === 'giveaway' ? 'w-10 py-2' : 'w-9 h-9'}`} title="Cancel">

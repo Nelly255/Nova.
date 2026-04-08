@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react"; 
 import { supabase } from "@/lib/supabase"; 
-import { LayoutDashboard, ArrowRightLeft, Target, ShieldCheck, Settings, PiggyBank, Briefcase, Menu, ChevronLeft, CreditCard, Activity, LogOut, Download, Search, Coffee } from "lucide-react"; 
+import { LayoutDashboard, ArrowRightLeft, Target, ShieldCheck, Settings, PiggyBank, Briefcase, Menu, ChevronLeft, CreditCard, Activity, LogOut, Download, Search, Coffee, Wallet } from "lucide-react"; 
 import UserProfile from "@/components/UserProfile"; 
 import AuthGuard from "@/components/AuthGuard";
 import QuickTourModal from "@/components/QuickTourModal"; 
@@ -102,6 +102,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           >
             <nav className="space-y-1.5 pt-4 pb-4">
               <NavItem href="/dashboard" icon={<LayoutDashboard size={20}/>} label="Overview" active={pathname === "/dashboard"} isCollapsed={isCollapsed} />
+              <NavItem href="/dashboard/wallets" icon={<Wallet size={20}/>} label="Wallets" active={pathname === "/dashboard/wallets"} isCollapsed={isCollapsed} />
               <NavItem href="/dashboard/transactions" icon={<ArrowRightLeft size={20}/>} label="Transactions" active={pathname === "/dashboard/transactions"} isCollapsed={isCollapsed} />
               <NavItem href="/dashboard/budgets" icon={<Target size={20}/>} label="Budgets" active={pathname === "/dashboard/budgets"} isCollapsed={isCollapsed} />
               <NavItem href="/dashboard/subscriptions" icon={<ShieldCheck size={20}/>} label="Subscriptions" active={pathname === "/dashboard/subscriptions"} isCollapsed={isCollapsed} />
@@ -204,6 +205,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <nav className="md:hidden fixed bottom-[max(env(safe-area-inset-bottom),1.5rem)] left-4 right-4 z-[9999] pointer-events-auto">
           <div className="nuke-scrollbar bg-white/40 dark:bg-[#0A0A0E]/60 backdrop-blur-[40px] saturate-[2] border border-white/40 dark:border-white/10 shadow-[0_16px_40px_-10px_rgba(0,0,0,0.5)] rounded-[2.5rem] px-2 py-2.5 flex items-center justify-between gap-1 overflow-x-auto relative">
             <MobileNavItem href="/dashboard" icon={<LayoutDashboard size={22}/>} label="Home" active={pathname === "/dashboard"} />
+            <MobileNavItem href="/dashboard/wallets" icon={<Wallet size={22}/>} label="Wallets" active={pathname === "/dashboard/wallets"} />
             <MobileNavItem href="/dashboard/transactions" icon={<ArrowRightLeft size={22}/>} label="Txns" active={pathname === "/dashboard/transactions"} />
             <MobileNavItem href="/dashboard/budgets" icon={<Target size={22}/>} label="Budgets" active={pathname === "/dashboard/budgets"} />
             {/* 🚀 ADDED: Subscriptions Tab */}

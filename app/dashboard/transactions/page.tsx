@@ -6,16 +6,17 @@ import { supabase } from "@/lib/supabase";
 import AddTransactionModal from "@/components/AddTransactionModal";
 import { 
   ArrowDownToLine, Receipt, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, 
-  Trash2, Edit2, UploadCloud, FileText, Loader2, CheckCircle2, AlertTriangle, X, Download, ListFilter, Search
+  Trash2, Edit2, UploadCloud, FileText, Loader2, CheckCircle2, AlertTriangle, X, Download, 
+  ListFilter, Search, Wallet, TrendingUp, Smartphone, Landmark, Banknote
 } from "lucide-react";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const CATEGORIES = ["Housing", "Food", "Transportation", "Utilities", "Insurance", "Healthcare", "Savings", "Personal", "Debt Repayment", "Entertainment", "Income", "Asset Sale", "Loan Received", "Loan Given", "Other"];
+const CATEGORIES = ["Housing", "Food", "Transportation", "Utilities", "Insurance", "Healthcare", "Savings", "Personal", "Debt Repayment", "Entertainment", "Income", "Asset Sale", "Loan Received", "Loan Given", "Transfer", "Other"];
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [walletBalances, setWalletBalances] = useState({ total: 0, mobile: 0, bank: 0, cash: 0 });
   const [loading, setLoading] = useState(true);
-  // 🚀 UPDATED: Default initial state to TSh
   const [currencySymbol, setCurrencySymbol] = useState("TSh ");
   
   const now = new Date();
@@ -24,11 +25,10 @@ export default function TransactionsPage() {
   const [isPeriodDropdownOpen, setIsPeriodDropdownOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // Filter & Search States
   const [activeFilter, setActiveFilter] = useState<'all' | 'income' | 'expense'>('all');
-  const [searchQuery, setSearchQuery] = useState("");
+  const [activeWalletFilter, setActiveWalletFilter] = useState<'all' | 'mobile' | 'bank' | 'cash'>('all');
   
-  // 🚀 NEW: Expandable Search State & Ref
+  const [searchQuery, setSearchQuery] = useState("");
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -46,25 +46,55 @@ export default function TransactionsPage() {
   const [isImporting, setIsImporting] = useState(false);
   const [importStatus, setImportStatus] = useState<{message: string, type: 'idle' | 'success' | 'error'}>({ message: "", type: 'idle' });
 
+  const [deletingIds, setDeletingIds] = useState<string[]>([]);
+
   useEffect(() => setMounted(true), []);
 
   const fetchTransactions = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("transactions")
-      .select("*")
-      .order("date", { ascending: false })
-      .order("created_at", { ascending: false });
-    
-    if (!error && data) {
-      setTransactions(data);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: txData, error: txError } = await supabase
+        .from("transactions")
+        .select("*")
+        .order("date", { ascending: false })
+        .order("created_at", { ascending: false });
+      
+      if (!txError && txData) {
+        setTransactions(txData);
+      }
+
+      const { data: accountsData } = await supabase
+        .from('accounts')
+        .select('balance, type')
+        .eq('user_id', user.id);
+
+      if (accountsData) {
+        let total = 0, mobile = 0, bank = 0, cash = 0;
+        
+        accountsData.forEach(acc => {
+          const bal = Number(acc.balance);
+          const accType = String(acc.type || "").toLowerCase().trim();
+          
+          total += bal;
+          if (accType.includes('digital') || accType.includes('mobile') || accType.includes('m-pesa') || accType.includes('mpesa') || accType.includes('tigo')) mobile += bal;
+          else if (accType.includes('bank') || accType.includes('crdb') || accType.includes('nmb')) bank += bal;
+          else if (accType.includes('cash')) cash += bal;
+        });
+
+        setWalletBalances({ total, mobile, bank, cash });
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
     const savedCurrency = localStorage.getItem("app_currency");
-    // 🚀 UPDATED: Default to TSh unless USD is explicitly saved
     setCurrencySymbol(savedCurrency === "USD" ? "$" : "TSh ");
     fetchTransactions();
 
@@ -74,49 +104,63 @@ export default function TransactionsPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedMonth, selectedYear, activeFilter, searchQuery]);
+  }, [selectedMonth, selectedYear, activeFilter, activeWalletFilter, searchQuery]);
 
-  const handleDelete = async (id: string) => {
-    const { error } = await supabase.from("transactions").delete().eq("id", id);
-    if (!error) {
-      window.dispatchEvent(new Event("transactionUpdated"));
+  const handleDelete = async (tx: any) => {
+    if (deletingIds.includes(tx.id)) return;
+    setDeletingIds(prev => [...prev, tx.id]);
+
+    try {
+      if (tx.account_id) {
+        const { data: accountData } = await supabase
+          .from("accounts")
+          .select("balance")
+          .eq("id", tx.account_id)
+          .single();
+
+        if (accountData) {
+          const currentBalance = Number(accountData.balance);
+          const txAmount = Number(tx.amount);
+          
+          const restoredBalance = tx.type === 'expense' 
+            ? currentBalance + txAmount 
+            : currentBalance - txAmount;
+
+          await supabase
+            .from("accounts")
+            .update({ balance: restoredBalance })
+            .eq("id", tx.account_id);
+        }
+      }
+
+      const { error } = await supabase.from("transactions").delete().eq("id", tx.id);
+      
+      if (!error) {
+        window.dispatchEvent(new Event("transactionUpdated"));
+      }
+    } catch (error) {
+      console.error("Failed to delete and refund:", error);
+    } finally {
+      setDeletingIds(prev => prev.filter(id => id !== tx.id));
     }
   };
 
   const openEditModal = (tx: any) => {
-    setEditForm({
-      id: tx.id,
-      title: tx.title,
-      amount: tx.amount.toString(),
-      date: tx.date.split('T')[0],
-      type: tx.type,
-      category: tx.category
-    });
+    setEditForm({ id: tx.id, title: tx.title, amount: tx.amount.toString(), date: tx.date.split('T')[0], type: tx.type, category: tx.category });
     setIsEditModalOpen(true);
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsEditing(true);
-
-    const { error } = await supabase
-      .from("transactions")
-      .update({
-        title: editForm.title,
-        amount: Number(editForm.amount.replace(/,/g, '')),
-        date: editForm.date,
-        type: editForm.type,
-        category: editForm.category
-      })
-      .eq("id", editForm.id);
-
+    
+    const { error } = await supabase.from("transactions").update({
+      title: editForm.title, amount: Number(editForm.amount.replace(/,/g, '')), date: editForm.date, type: editForm.type, category: editForm.category
+    }).eq("id", editForm.id);
+    
     setIsEditing(false);
-    if (!error) {
-      setIsEditModalOpen(false);
-      window.dispatchEvent(new Event("transactionUpdated"));
-    } else {
-      alert("Failed to update transaction.");
-    }
+    if (!error) { setIsEditModalOpen(false); window.dispatchEvent(new Event("transactionUpdated")); } 
+    else { alert("Failed to update transaction."); }
   };
 
   const handlePriceChange = (value: string) => {
@@ -125,93 +169,42 @@ export default function TransactionsPage() {
       const parts = rawValue.split('.');
       parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
       setEditForm({ ...editForm, amount: parts.join('.') });
-    } else {
-      setEditForm({ ...editForm, amount: "" });
-    }
+    } else { setEditForm({ ...editForm, amount: "" }); }
   };
 
-  const handleFileDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (file) processCSV(file);
-  };
-
-  const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) processCSV(file);
-  };
-
+  const handleFileDrop = async (e: React.DragEvent) => { e.preventDefault(); setIsDragging(false); const file = e.dataTransfer.files[0]; if (file) processCSV(file); };
+  const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => { const file = e.target.files?.[0]; if (file) processCSV(file); };
+  
   const processCSV = async (file: File) => {
-    if (!file.name.endsWith('.csv')) {
-      setImportStatus({ message: "Please upload a valid .csv file.", type: 'error' });
-      return;
-    }
-
-    setIsImporting(true);
-    setImportStatus({ message: "Reading file...", type: 'idle' });
-
+    if (!file.name.endsWith('.csv')) { setImportStatus({ message: "Please upload a valid .csv file.", type: 'error' }); return; }
+    setIsImporting(true); setImportStatus({ message: "Reading file...", type: 'idle' });
     const reader = new FileReader();
     reader.onload = async (event) => {
       try {
-        const text = event.target?.result as string;
-        const lines = text.split('\n').filter(line => line.trim() !== '');
-        
+        const text = event.target?.result as string; const lines = text.split('\n').filter(line => line.trim() !== '');
         if (lines.length < 2) throw new Error("File is empty or missing data.");
-
         const headers = lines[0].toLowerCase().split(',').map(h => h.trim().replace(/"/g, ''));
         const dateIdx = headers.findIndex(h => h.includes('date') || h.includes('time'));
         const titleIdx = headers.findIndex(h => h.includes('title') || h.includes('desc') || h.includes('name'));
         const amountIdx = headers.findIndex(h => h.includes('amount') || h.includes('value') || h.includes('price'));
         const typeIdx = headers.findIndex(h => h.includes('type') || h.includes('kind'));
         const catIdx = headers.findIndex(h => h.includes('category') || h.includes('cat'));
-
-        if (dateIdx === -1 || amountIdx === -1) {
-          throw new Error("Could not find 'Date' or 'Amount' columns in CSV.");
-        }
+        if (dateIdx === -1 || amountIdx === -1) throw new Error("Could not find 'Date' or 'Amount' columns in CSV.");
 
         const bulkData = [];
         for (let i = 1; i < lines.length; i++) {
           const row = lines[i].split(',').map(cell => cell.trim().replace(/"/g, ''));
-          
           if (!row[amountIdx]) continue; 
-
-          let rawAmount = row[amountIdx].replace(/[^0-9.-]/g, '');
-          let amountVal = parseFloat(rawAmount);
-          let txType = 'expense';
-
-          if (amountVal < 0) {
-            txType = 'expense';
-            amountVal = Math.abs(amountVal);
-          } else if (typeIdx !== -1 && row[typeIdx].toLowerCase().includes('income')) {
-            txType = 'income';
-          } else if (typeIdx === -1 && amountVal > 0 && row[titleIdx]?.toLowerCase().includes('deposit')) {
-             txType = 'income'; 
-          }
-
-          bulkData.push({
-            date: row[dateIdx] ? new Date(row[dateIdx]).toISOString() : new Date().toISOString(),
-            title: titleIdx !== -1 ? row[titleIdx] : "Imported Transaction",
-            amount: amountVal,
-            type: txType,
-            category: catIdx !== -1 ? row[catIdx] : "Other"
-          });
+          let rawAmount = row[amountIdx].replace(/[^0-9.-]/g, ''); let amountVal = parseFloat(rawAmount); let txType = 'expense';
+          if (amountVal < 0) { txType = 'expense'; amountVal = Math.abs(amountVal); } else if (typeIdx !== -1 && row[typeIdx].toLowerCase().includes('income')) { txType = 'income'; } else if (typeIdx === -1 && amountVal > 0 && row[titleIdx]?.toLowerCase().includes('deposit')) { txType = 'income'; }
+          bulkData.push({ date: row[dateIdx] ? new Date(row[dateIdx]).toISOString() : new Date().toISOString(), title: titleIdx !== -1 ? row[titleIdx] : "Imported Transaction", amount: amountVal, type: txType, category: catIdx !== -1 ? row[catIdx] : "Other" });
         }
-
         const { error } = await supabase.from('transactions').insert(bulkData);
         if (error) throw error;
-
         setImportStatus({ message: `Successfully imported ${bulkData.length} transactions!`, type: 'success' });
         window.dispatchEvent(new Event("transactionUpdated"));
-        
-        setTimeout(() => {
-          setIsImportModalOpen(false);
-          setImportStatus({ message: "", type: 'idle' });
-        }, 2500);
-
-      } catch (err: any) {
-        setImportStatus({ message: err.message || "Failed to parse CSV.", type: 'error' });
-      }
+        setTimeout(() => { setIsImportModalOpen(false); setImportStatus({ message: "", type: 'idle' }); }, 2500);
+      } catch (err: any) { setImportStatus({ message: err.message || "Failed to parse CSV.", type: 'error' }); }
       setIsImporting(false);
     };
     reader.readAsText(file);
@@ -221,12 +214,7 @@ export default function TransactionsPage() {
     const csvContent = "Date,Description,Amount,Type,Category\n2026-03-30,Salary Deposit,500000,income,Income\n2026-03-31,Groceries,25000,expense,Food";
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `Nova_Import_Template.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const link = document.createElement("a"); link.href = url; link.setAttribute("download", `Nova_Import_Template.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link);
   };
 
   const currentPeriodTransactions = transactions.filter(t => {
@@ -236,16 +224,46 @@ export default function TransactionsPage() {
 
   const filteredTransactions = currentPeriodTransactions.filter(t => {
     const matchTab = activeFilter === 'all' ? true : t.type === activeFilter;
+    
     const matchSearch = searchQuery === "" || 
       t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
       t.category.toLowerCase().includes(searchQuery.toLowerCase());
       
-    return matchTab && matchSearch;
+    const txAccountType = String(t.account_type || t.wallet_type || "").toLowerCase().trim();
+    let matchWallet = true;
+    
+    if (activeWalletFilter === 'mobile') {
+      matchWallet = txAccountType.includes('digital') || 
+                    txAccountType.includes('mobile') || 
+                    txAccountType.includes('m-pesa') || 
+                    txAccountType.includes('mpesa') ||
+                    txAccountType.includes('tigo');
+    } else if (activeWalletFilter === 'bank') {
+      matchWallet = txAccountType.includes('bank') || txAccountType.includes('crdb') || txAccountType.includes('nmb');
+    } else if (activeWalletFilter === 'cash') {
+      matchWallet = txAccountType.includes('cash');
+    }
+
+    return matchTab && matchSearch && matchWallet;
   });
 
-  const totalIncome = currentPeriodTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + Number(t.amount), 0);
-  const totalExpense = currentPeriodTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + Number(t.amount), 0);
-  const netCash = totalIncome - totalExpense;
+  // 🚀 FIXED: Helper to completely exclude Loan movements and Transfers from "Real Income" calculations
+  const isExcludedFromRealWealth = (category: string) => {
+    const cat = (category || "").toLowerCase();
+    return cat.includes("transfer") || 
+           cat.includes("contra") || 
+           cat.includes("loan received") || 
+           cat.includes("loan given");
+  };
+
+  const realTransactions = currentPeriodTransactions.filter(t => !isExcludedFromRealWealth(t.category));
+  const totalIncome = realTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + Number(t.amount), 0);
+  const totalExpense = realTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + Number(t.amount), 0);
+  
+  // Net cash flow still uses ALL transactions (including loans and transfers) because it's measuring raw liquidity
+  const allPeriodIncome = currentPeriodTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + Number(t.amount), 0);
+  const allPeriodExpense = currentPeriodTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + Number(t.amount), 0);
+  const netCash = allPeriodIncome - allPeriodExpense;
 
   const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE));
   const paginatedTx = filteredTransactions.slice(
@@ -254,7 +272,7 @@ export default function TransactionsPage() {
   );
 
   return (
-    <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-6 md:space-y-8 pb-32 relative bg-transparent min-h-screen transition-colors duration-300">
+    <div className="p-4 sm:p-6 md:p-10 max-w-7xl mx-auto space-y-6 md:space-y-8 pb-32 relative bg-transparent min-h-screen transition-colors duration-300">
       
       {/* HEADER */}
       <header className="relative z-[120] flex flex-col xl:flex-row justify-between items-start xl:items-end gap-4">
@@ -270,7 +288,6 @@ export default function TransactionsPage() {
             
             {/* Period Selector (Calendar) */}
             <div className="relative z-[100] shrink-0">
-              
               <button 
                 onClick={() => setIsPeriodDropdownOpen(!isPeriodDropdownOpen)}
                 className="relative z-50 flex items-center justify-center gap-2 bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/60 dark:border-white/10 hover:bg-white/60 dark:hover:bg-white/10 rounded-2xl px-4 py-2.5 shadow-sm transition-all group hover:border-indigo-500/50 h-[42px]"
@@ -314,7 +331,7 @@ export default function TransactionsPage() {
               )}
             </div>
 
-            {/* 🚀 EXPANDABLE SEARCH BAR */}
+            {/* EXPANDABLE SEARCH BAR */}
             <div
               className={`relative z-40 shrink-0 flex items-center transition-all duration-500 ease-out overflow-hidden bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white/60 dark:border-white/10 rounded-2xl shadow-sm focus-within:border-indigo-500/50 ${
                 isSearchExpanded || searchQuery ? 'w-[180px] sm:w-64 border-indigo-500/30' : 'w-[42px] cursor-pointer hover:bg-white/80 dark:hover:bg-white/10'
@@ -373,108 +390,201 @@ export default function TransactionsPage() {
         </div>
       </header>
 
-      {/* SUMMARY CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 animate-in fade-in duration-500">
-        <div className="glass-card p-6 rounded-[2rem] flex flex-col justify-center border border-emerald-500/10 transition-colors">
-          <p className="text-emerald-600 dark:text-emerald-400 font-bold mb-1 tracking-wide uppercase text-xs flex items-center gap-1.5"><ArrowDownToLine size={14} className="rotate-180" /> Income</p>
-          <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white break-words">{currencySymbol}{totalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}</h2>
+      {/* 4-CARD HERO METRICS */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 animate-in fade-in duration-500">
+        <div className="glass-card p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] flex flex-col justify-center border border-indigo-500/10 transition-colors bg-gradient-to-br from-indigo-50/50 to-transparent dark:from-indigo-500/5">
+          <p className="text-indigo-600 dark:text-indigo-400 font-bold mb-1 tracking-wide uppercase text-[10px] md:text-xs flex items-center gap-1.5">
+            <Wallet size={14} /> Total Balance
+          </p>
+          <h2 className="text-xl md:text-3xl font-extrabold text-slate-900 dark:text-white break-words">
+            {currencySymbol}{walletBalances.total.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+          </h2>
         </div>
-        <div className="glass-card p-6 rounded-[2rem] flex flex-col justify-center border border-rose-500/10 transition-colors">
-          <p className="text-rose-600 dark:text-rose-400 font-bold mb-1 tracking-wide uppercase text-xs flex items-center gap-1.5"><Receipt size={14} /> Expenses</p>
-          <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white break-words">{currencySymbol}{totalExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}</h2>
+
+        <div className="glass-card p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] flex flex-col justify-center border border-emerald-500/10 transition-colors">
+          <p className="text-emerald-600 dark:text-emerald-400 font-bold mb-1 tracking-wide uppercase text-[10px] md:text-xs flex items-center gap-1.5">
+            <ArrowDownToLine size={14} className="rotate-180" /> Real Income
+          </p>
+          <h2 className="text-xl md:text-3xl font-extrabold text-slate-900 dark:text-white break-words">
+            {currencySymbol}{totalIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+          </h2>
         </div>
-        <div className={`glass-card p-6 rounded-[2rem] flex flex-col justify-center border transition-colors ${netCash >= 0 ? 'border-indigo-500/10 bg-indigo-50/30 dark:bg-indigo-500/5' : 'border-rose-500/10 bg-rose-50/30 dark:bg-rose-500/5'}`}>
-          <p className={`font-bold mb-1 tracking-wide uppercase text-xs ${netCash >= 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-rose-600 dark:text-rose-400'}`}>Net Cash Flow</p>
-          <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white break-words">{netCash >= 0 ? '+' : ''}{currencySymbol}{netCash.toLocaleString(undefined, { maximumFractionDigits: 0 })}</h2>
+        
+        <div className="glass-card p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] flex flex-col justify-center border border-rose-500/10 transition-colors">
+          <p className="text-rose-600 dark:text-rose-400 font-bold mb-1 tracking-wide uppercase text-[10px] md:text-xs flex items-center gap-1.5">
+            <Receipt size={14} /> Real Expenses
+          </p>
+          <h2 className="text-xl md:text-3xl font-extrabold text-slate-900 dark:text-white break-words">
+            {currencySymbol}{totalExpense.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+          </h2>
+        </div>
+
+        <div className={`glass-card p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] flex flex-col justify-center border transition-colors ${netCash >= 0 ? 'border-emerald-500/10 bg-emerald-50/30 dark:bg-emerald-500/5' : 'border-rose-500/10 bg-rose-50/30 dark:bg-rose-500/5'}`}>
+          <p className={`font-bold mb-1 tracking-wide uppercase text-[10px] md:text-xs flex items-center gap-1.5 ${netCash >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+            <TrendingUp size={14} className={netCash < 0 ? "rotate-180" : ""} /> 
+            Net Cash Flow
+          </p>
+          <h2 className="text-xl md:text-3xl font-extrabold text-slate-900 dark:text-white break-words">
+            {netCash >= 0 ? '+' : ''}{currencySymbol}{netCash.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+          </h2>
         </div>
       </div>
 
-      {/* FILTER TABS */}
-      <div className="flex bg-white/60 dark:bg-white/5 p-1.5 rounded-2xl w-fit border border-slate-200/80 dark:border-white/10 backdrop-blur-md shadow-sm relative z-40">
-        <button 
-          onClick={() => setActiveFilter('all')} 
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeFilter === 'all' ? 'bg-white dark:bg-slate-800 shadow-[0_2px_10px_rgba(0,0,0,0.05)] text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-        >
-          <ListFilter size={16} /> All
-        </button>
-        <button 
-          onClick={() => setActiveFilter('income')} 
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeFilter === 'income' ? 'bg-emerald-50 dark:bg-emerald-500/10 shadow-[0_2px_10px_rgba(0,0,0,0.05)] text-emerald-600 dark:text-emerald-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-        >
-          <ArrowDownToLine size={16} className="rotate-180" /> <span className="hidden sm:inline">Income</span>
-        </button>
-        <button 
-          onClick={() => setActiveFilter('expense')} 
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeFilter === 'expense' ? 'bg-rose-50 dark:bg-rose-500/10 shadow-[0_2px_10px_rgba(0,0,0,0.05)] text-rose-600 dark:text-rose-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
-        >
-          <Receipt size={16} /> <span className="hidden sm:inline">Expenses</span>
-        </button>
+      {/* TOOLBAR: TABS & FRIENDLY WALLET PILLS */}
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 relative z-40 animate-in fade-in duration-500">
+        
+        <div className="flex bg-white/60 dark:bg-white/5 p-1.5 rounded-2xl w-fit border border-slate-200/80 dark:border-white/10 backdrop-blur-md shadow-sm">
+          <button 
+            onClick={() => setActiveFilter('all')} 
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeFilter === 'all' ? 'bg-white dark:bg-slate-800 shadow-[0_2px_10px_rgba(0,0,0,0.05)] text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+          >
+            <ListFilter size={16} /> All
+          </button>
+          <button 
+            onClick={() => setActiveFilter('income')} 
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeFilter === 'income' ? 'bg-emerald-50 dark:bg-emerald-500/10 shadow-[0_2px_10px_rgba(0,0,0,0.05)] text-emerald-600 dark:text-emerald-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+          >
+            <ArrowDownToLine size={16} className="rotate-180" /> <span className="hidden sm:inline">Income</span>
+          </button>
+          <button 
+            onClick={() => setActiveFilter('expense')} 
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeFilter === 'expense' ? 'bg-rose-50 dark:bg-rose-500/10 shadow-[0_2px_10px_rgba(0,0,0,0.05)] text-rose-600 dark:text-rose-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+          >
+            <Receipt size={16} /> <span className="hidden sm:inline">Expenses</span>
+          </button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button 
+            onClick={() => setActiveWalletFilter('all')}
+            className={`flex items-center gap-1.5 px-3 py-2 border rounded-xl text-xs font-bold transition-all shadow-sm backdrop-blur-md ${
+              activeWalletFilter === 'all' 
+              ? 'bg-indigo-50 border-indigo-200 text-indigo-700 dark:bg-indigo-500/20 dark:border-indigo-500/30 dark:text-indigo-300 scale-105' 
+              : 'bg-white/80 dark:bg-white/5 border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/10'
+            }`}
+          >
+            <Wallet size={14} className={activeWalletFilter === 'all' ? 'text-indigo-600 dark:text-indigo-400' : 'text-indigo-500'} />
+            <span className={`font-medium hidden sm:inline ${activeWalletFilter === 'all' ? 'text-indigo-600/70 dark:text-indigo-400/70' : 'text-slate-400'}`}>All Wallets</span> 
+          </button>
+
+          <button 
+            onClick={() => setActiveWalletFilter('mobile')}
+            className={`flex items-center gap-1.5 px-3 py-2 border rounded-xl text-xs font-bold transition-all shadow-sm backdrop-blur-md ${
+              activeWalletFilter === 'mobile' 
+              ? 'bg-sky-50 border-sky-200 text-sky-700 dark:bg-sky-500/20 dark:border-sky-500/30 dark:text-sky-300 scale-105' 
+              : 'bg-white/80 dark:bg-white/5 border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/10'
+            }`}
+          >
+            <Smartphone size={14} className={activeWalletFilter === 'mobile' ? 'text-sky-600 dark:text-sky-400' : 'text-sky-500'} />
+            <span className={`font-medium hidden sm:inline ${activeWalletFilter === 'mobile' ? 'text-sky-600/70 dark:text-sky-400/70' : 'text-slate-400'}`}>Mobile:</span> 
+            {currencySymbol}{walletBalances.mobile.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+          </button>
+
+          <button 
+            onClick={() => setActiveWalletFilter('bank')}
+            className={`flex items-center gap-1.5 px-3 py-2 border rounded-xl text-xs font-bold transition-all shadow-sm backdrop-blur-md ${
+              activeWalletFilter === 'bank' 
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-500/20 dark:border-emerald-500/30 dark:text-emerald-300 scale-105' 
+              : 'bg-white/80 dark:bg-white/5 border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/10'
+            }`}
+          >
+            <Landmark size={14} className={activeWalletFilter === 'bank' ? 'text-emerald-600 dark:text-emerald-400' : 'text-emerald-500'} />
+            <span className={`font-medium hidden sm:inline ${activeWalletFilter === 'bank' ? 'text-emerald-600/70 dark:text-emerald-400/70' : 'text-slate-400'}`}>Bank:</span> 
+            {currencySymbol}{walletBalances.bank.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+          </button>
+
+          <button 
+            onClick={() => setActiveWalletFilter('cash')}
+            className={`flex items-center gap-1.5 px-3 py-2 border rounded-xl text-xs font-bold transition-all shadow-sm backdrop-blur-md ${
+              activeWalletFilter === 'cash' 
+              ? 'bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-500/20 dark:border-amber-500/30 dark:text-amber-300 scale-105' 
+              : 'bg-white/80 dark:bg-white/5 border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/10'
+            }`}
+          >
+            <Banknote size={14} className={activeWalletFilter === 'cash' ? 'text-amber-600 dark:text-amber-400' : 'text-amber-500'} />
+            <span className={`font-medium hidden sm:inline ${activeWalletFilter === 'cash' ? 'text-amber-600/70 dark:text-amber-400/70' : 'text-slate-400'}`}>Cash:</span> 
+            {currencySymbol}{walletBalances.cash.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+          </button>
+        </div>
       </div>
 
-      {/* TRANSACTIONS LIST */}
+      {/* 🚀 RESPONSIVE TRANSACTIONS LIST */}
       <div className="glass-card rounded-[2rem] p-2 sm:p-4 transition-colors shadow-sm min-h-[400px] relative z-10">
         {loading ? (
           <div className="p-10 flex justify-center"><Loader2 className="animate-spin text-indigo-500" size={32} /></div>
         ) : paginatedTx.length === 0 ? (
-          <div key={`empty-${activeFilter}-${searchQuery}`} className="p-16 text-center flex flex-col items-center animate-in fade-in zoom-in-95 duration-500">
+          <div key={`empty-${activeFilter}-${searchQuery}-${activeWalletFilter}`} className="p-16 text-center flex flex-col items-center animate-in fade-in zoom-in-95 duration-500">
             <div className="w-16 h-16 rounded-2xl bg-slate-100/80 dark:bg-white/5 flex items-center justify-center text-slate-400 mb-4 backdrop-blur-sm border border-slate-200/50 dark:border-white/5">
-              {searchQuery ? <Search size={32} /> : <FileText size={32} />}
+              {searchQuery ? <Search size={32} /> : activeWalletFilter !== 'all' ? <Wallet size={32} /> : <FileText size={32} />}
             </div>
             <h3 className="text-xl font-bold text-slate-900 dark:text-slate-200">
-              {searchQuery ? "No matches found" : `No ${activeFilter !== 'all' ? activeFilter : ''} transactions found`}
+              {searchQuery ? "No matches found" : activeWalletFilter !== 'all' ? `No ${activeWalletFilter} transactions found` : `No ${activeFilter !== 'all' ? activeFilter : ''} transactions`}
             </h3>
-            <p className="text-sm text-slate-500 mt-2">
+            <p className="text-sm text-slate-500 mt-2 max-w-sm mx-auto">
               {searchQuery 
                 ? `We couldn't find any records matching "${searchQuery}".`
+                : activeWalletFilter !== 'all'
+                ? `If you added this transaction recently, check the 'account_type' spelling in your Supabase table!`
                 : `No records match your current filter for ${MONTHS[selectedMonth]} ${selectedYear}.`
               }
             </p>
           </div>
         ) : (
-          <div key={`list-${activeFilter}-${currentPage}-${searchQuery}`} className="divide-y divide-slate-100 dark:divide-white/5">
+          <div key={`list-${activeFilter}-${currentPage}-${searchQuery}-${activeWalletFilter}`} className="divide-y divide-slate-100 dark:divide-white/5">
             {paginatedTx.map((tx, index) => {
               const isExpanded = expandedTxId === tx.id;
+              const isDeleting = deletingIds.includes(tx.id);
+
               return (
                 <div 
                   key={tx.id} 
                   onClick={() => setExpandedTxId(isExpanded ? null : tx.id)}
-                  className="flex items-center justify-between p-4 hover:bg-slate-50/80 dark:hover:bg-white/5 rounded-[1.5rem] transition-all group animate-in fade-in slide-in-from-bottom-4 duration-500 cursor-pointer"
+                  className={`flex items-center justify-between p-3 sm:p-4 hover:bg-slate-50/80 dark:hover:bg-white/5 rounded-[1.5rem] transition-all group animate-in fade-in slide-in-from-bottom-4 duration-500 cursor-pointer gap-2 ${isDeleting ? 'opacity-50 pointer-events-none' : ''}`}
                   style={{ animationDelay: `${index * 50}ms`, animationFillMode: "both" }}
                 >
-                  <div className="flex items-center gap-4 min-w-0 flex-1">
-                    <div className={`w-12 h-12 shrink-0 rounded-[1.25rem] flex items-center justify-center border shadow-sm backdrop-blur-sm transition-colors ${tx.type === 'income' ? 'bg-emerald-50/80 dark:bg-emerald-500/10 border-emerald-200/50 dark:border-emerald-500/20 text-emerald-500' : 'bg-rose-50/80 dark:bg-rose-500/10 border-rose-200/50 dark:border-rose-500/20 text-rose-500'}`}>
-                      {tx.type === 'income' ? <ArrowDownToLine size={20} className="rotate-180"/> : <Receipt size={20} />}
+                  
+                  {/* Left Side: Icon and Details */}
+                  <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                    <div className={`w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-xl sm:rounded-[1.25rem] flex items-center justify-center border shadow-sm backdrop-blur-sm transition-colors ${tx.type === 'income' ? 'bg-emerald-50/80 dark:bg-emerald-500/10 border-emerald-200/50 dark:border-emerald-500/20 text-emerald-500' : 'bg-rose-50/80 dark:bg-rose-500/10 border-rose-200/50 dark:border-rose-500/20 text-rose-500'}`}>
+                      {tx.type === 'income' ? <ArrowDownToLine size={18} className="rotate-180 sm:w-5 sm:h-5"/> : <Receipt size={18} className="sm:w-5 sm:h-5" />}
                     </div>
-                    <div className="min-w-0 flex-1 pr-2">
-                      <p className={`text-base font-bold text-slate-900 dark:text-slate-100 transition-all duration-300 ${isExpanded ? 'whitespace-normal break-words' : 'truncate'}`}>
+                    
+                    <div className="min-w-0 flex-1 pr-1">
+                      <p className={`text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 transition-all duration-300 ${isExpanded ? 'whitespace-normal break-words' : 'truncate'}`}>
                         {tx.title}
                       </p>
-                      <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">{new Date(tx.date).toLocaleDateString()} • {tx.category}</p>
+                      <p className="text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                        {new Date(tx.date).toLocaleDateString()} <span className="hidden sm:inline">•</span><span className="sm:hidden">,</span> {tx.category}
+                      </p>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-3 shrink-0 pl-2">
-                    <span className={`text-lg font-bold tracking-tight transition-colors ${tx.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                  {/* 🚀 Right Side: Amount and Stacked Actions for Mobile */}
+                  <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1.5 sm:gap-3 shrink-0">
+                    <span className={`text-sm sm:text-lg font-bold tracking-tight whitespace-nowrap transition-colors ${tx.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                       {tx.type === 'expense' ? '-' : '+'}{currencySymbol}{Number(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                     
-                    <div className="flex gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                       <button 
                         onClick={(e) => { e.stopPropagation(); openEditModal(tx); }} 
-                        className="p-2 text-slate-400 hover:text-indigo-600 bg-white/50 dark:bg-black/20 hover:bg-indigo-100 dark:hover:bg-indigo-500/10 rounded-lg transition-all" 
+                        className="p-1.5 sm:p-2 text-slate-400 hover:text-indigo-600 bg-white/50 dark:bg-black/20 hover:bg-indigo-100 dark:hover:bg-indigo-500/10 rounded-lg transition-all" 
                         title="Edit"
                       >
-                        <Edit2 size={16} />
+                        <Edit2 size={14} className="sm:w-4 sm:h-4" />
                       </button>
+                      
                       <button 
-                        onClick={(e) => { e.stopPropagation(); handleDelete(tx.id); }} 
-                        className="p-2 text-slate-400 hover:text-rose-600 bg-white/50 dark:bg-black/20 hover:bg-rose-100 dark:hover:bg-rose-500/10 rounded-lg transition-all" 
+                        onClick={(e) => { e.stopPropagation(); handleDelete(tx); }} 
+                        disabled={isDeleting}
+                        className={`p-1.5 sm:p-2 rounded-lg transition-all ${isDeleting ? 'text-rose-400 cursor-not-allowed' : 'text-slate-400 hover:text-rose-600 bg-white/50 dark:bg-black/20 hover:bg-rose-100 dark:hover:bg-rose-500/10'}`} 
                         title="Delete"
                       >
-                        <Trash2 size={16} />
+                        {isDeleting ? <Loader2 size={14} className="animate-spin sm:w-4 sm:h-4" /> : <Trash2 size={14} className="sm:w-4 sm:h-4" />}
                       </button>
                     </div>
                   </div>
+
                 </div>
               );
             })}
@@ -493,7 +603,7 @@ export default function TransactionsPage() {
         </div>
       )}
 
-      {/* 🚀 CSV DRAG & DROP MODAL */}
+      {/* CSV DRAG & DROP MODAL */}
       {isImportModalOpen && mounted && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm animate-in fade-in" onClick={() => !isImporting && setIsImportModalOpen(false)} />
@@ -556,7 +666,7 @@ export default function TransactionsPage() {
         </div>
       , document.body)}
 
-      {/* 🚀 THE "OOPS" EDIT MODAL */}
+      {/* THE "OOPS" EDIT MODAL */}
       {isEditModalOpen && mounted && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm animate-in fade-in" onClick={() => !isEditing && setIsEditModalOpen(false)} />

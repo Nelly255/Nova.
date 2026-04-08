@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { Zap, ArrowUpRight, ArrowDownToLine, CalendarDays, Receipt, Sun, Moon, Scale, ChevronDown, ChevronLeft, ChevronRight, Briefcase, PiggyBank, CreditCard, TrendingUp, Target, Rocket, Loader2 } from "lucide-react"; 
+import { Zap, ArrowUpRight, ArrowDownToLine, CalendarDays, Receipt, Sun, Moon, Scale, ChevronDown, ChevronLeft, ChevronRight, Briefcase, PiggyBank, CreditCard, TrendingUp, Target, Rocket, Loader2, Wallet } from "lucide-react"; 
 import SpendingChart from "@/components/SpendingChart";
 import AddTransactionModal from "@/components/AddTransactionModal";
 import HelpModal from "@/components/HelpModal"; 
@@ -24,6 +24,8 @@ export default function DashboardPage() {
   const [savings, setSavings] = useState<any[]>([]);
   const [debts, setDebts] = useState<any[]>([]);
   
+  const [accounts, setAccounts] = useState<any[]>([]);
+  
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState("User");
   
@@ -35,7 +37,7 @@ export default function DashboardPage() {
 
   const now = new Date();
   
-  // 🚀 NEW: Range Selection State
+  // Range Selection State
   const [dateRange, setDateRange] = useState({
     from: new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0),
     to: new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
@@ -57,13 +59,14 @@ export default function DashboardPage() {
 
   const fetchDashboardData = async () => {
     try {
-      const [txRes, subRes, budgetRes, assetsRes, savingsRes, debtsRes] = await Promise.all([
+      const [txRes, subRes, budgetRes, assetsRes, savingsRes, debtsRes, accountsRes] = await Promise.all([
         supabase.from("transactions").select("*").order("date", { ascending: false }),
         supabase.from("subscriptions").select("*").order("billing_date", { ascending: true }),
         supabase.from("budgets").select("*"),
         supabase.from("assets").select("*"),
         supabase.from("savings_goals").select("*"),
-        supabase.from("debts").select("*")
+        supabase.from("debts").select("*"),
+        supabase.from("accounts").select("*") 
       ]);
 
       if (txRes.data) setTransactions(txRes.data);
@@ -72,6 +75,7 @@ export default function DashboardPage() {
       if (assetsRes.data) setAssets(assetsRes.data);
       if (savingsRes.data) setSavings(savingsRes.data);
       if (debtsRes.data) setDebts(debtsRes.data);
+      if (accountsRes.data) setAccounts(accountsRes.data); 
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error);
     } finally {
@@ -163,7 +167,6 @@ export default function DashboardPage() {
     });
   };
 
-  // 🚀 CALENDAR RANGE FORMATTER
   const formatRangeDisplay = (from: Date, to: Date) => {
     if (from.getFullYear() !== to.getFullYear()) {
       return `${MONTHS[from.getMonth()]} ${from.getDate()}, ${from.getFullYear()} - ${MONTHS[to.getMonth()]} ${to.getDate()}, ${to.getFullYear()}`;
@@ -186,12 +189,11 @@ export default function DashboardPage() {
     );
   }
 
-  // 🚀 TIME MACHINE CORE LOGIC: Uses dateRange.to as the absolute anchor
+  // 🚀 TIME MACHINE CORE LOGIC
   const endOfSelectedPeriod = dateRange.to;
   const startOfSelectedPeriod = dateRange.from;
   
   const transactionsUpToSelected = transactions.filter(t => new Date(t.date) <= endOfSelectedPeriod);
-
   const previousTransactions = transactions.filter(t => new Date(t.date) < startOfSelectedPeriod);
   
   const currentPeriodTransactions = transactions.filter(t => {
@@ -205,12 +207,33 @@ export default function DashboardPage() {
 
   const currentPeriodIncome = currentPeriodTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + Number(t.amount), 0);
   const currentPeriodExpense = currentPeriodTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + Number(t.amount), 0);
-  const safeToSpend = openingBalance + currentPeriodIncome - currentPeriodExpense;
 
-  const totalHistoricalIncome = transactionsUpToSelected.filter(t => t.type === 'income').reduce((acc, t) => acc + Number(t.amount), 0);
-  const totalHistoricalExpense = transactionsUpToSelected.filter(t => t.type === 'expense').reduce((acc, t) => acc + Number(t.amount), 0);
-  const liquidCash = totalHistoricalIncome - totalHistoricalExpense;
+  const transactionsAfterSelected = transactions.filter(t => new Date(t.date) > endOfSelectedPeriod);
 
+  // 🚀 ENGINE 1: TOTAL RAW WALLETS (Cash + Bank + Mobile Money)
+  const currentTotalAccountsBalance = accounts.reduce((sum, acc) => sum + Number(acc.balance), 0);
+  const rolledBackIncome = transactionsAfterSelected.filter(t => t.type === 'income').reduce((sum, t) => sum + Number(t.amount), 0);
+  const rolledBackExpense = transactionsAfterSelected.filter(t => t.type === 'expense').reduce((sum, t) => sum + Number(t.amount), 0);
+
+  const totalAllWalletsCash = currentTotalAccountsBalance - rolledBackIncome + rolledBackExpense;
+
+  // 🚀 ENGINE 2: STRICT PHYSICAL CASH ONLY (For the Giant Hero Card)
+  const physicalCashAccounts = accounts.filter(acc => 
+    (acc.type && acc.type.toLowerCase() === 'cash') || 
+    (acc.name && (acc.name.toLowerCase().includes('cash') || acc.name.toLowerCase().includes('hand')))
+  );
+  const physicalCashIds = physicalCashAccounts.map(acc => acc.id);
+  
+  const currentPhysicalCashBalance = physicalCashAccounts.reduce((sum, acc) => sum + Number(acc.balance), 0);
+  
+  // Only roll back transactions that specifically touched the physical cash wallet
+  const physicalTransactionsAfterSelected = transactionsAfterSelected.filter(t => physicalCashIds.includes(t.account_id));
+  const rolledBackPhysicalIncome = physicalTransactionsAfterSelected.filter(t => t.type === 'income').reduce((sum, t) => sum + Number(t.amount), 0);
+  const rolledBackPhysicalExpense = physicalTransactionsAfterSelected.filter(t => t.type === 'expense').reduce((sum, t) => sum + Number(t.amount), 0);
+  
+  const displayPhysicalCash = currentPhysicalCashBalance - rolledBackPhysicalIncome + rolledBackPhysicalExpense;
+
+  // 🚀 SAVINGS CALCULATOR
   const totalSavings = savings.reduce((acc, g) => {
     const addedDate = new Date(g.created_at || now);
     if (addedDate <= endOfSelectedPeriod) {
@@ -218,6 +241,9 @@ export default function DashboardPage() {
     }
     return acc;
   }, 0);
+
+  // 🚀 THE FIX 1: True Spendable Liquidity (Total Raw Wallets minus Locked Savings)
+  const spendableLiquidity = totalAllWalletsCash - totalSavings;
 
   const isViewingCurrentRange = now >= dateRange.from && now <= dateRange.to;
   const activeAssetsOnly = assets.filter(asset => asset.status === 'active' || !asset.status);
@@ -250,7 +276,9 @@ export default function DashboardPage() {
     return acc;
   }, 0);
   
-  const trueNetWorth = liquidCash + totalSavings + totalAssetsValue - totalDebts;
+  // 🚀 THE FIX 2: True Net Worth uses Total All Wallets Cash (which physically holds the savings).
+  // Do NOT add 'totalSavings' again, otherwise it double counts!
+  const trueNetWorth = totalAllWalletsCash + totalAssetsValue - totalDebts;
 
   // 🚀 WEALTH GRAPH: Loops exactly 6 months back from the End Date
   const generateSparklineData = () => {
@@ -307,8 +335,7 @@ export default function DashboardPage() {
     }
   }
 
-  const isEmptyState = transactions.length === 0 && budgets.length === 0 && assets.length === 0 && savings.length === 0 && debts.length === 0;
-
+  const isEmptyState = transactions.length === 0 && budgets.length === 0 && assets.length === 0 && savings.length === 0 && debts.length === 0 && accounts.length === 0;
 
   // 🚀 CALENDAR LOGIC HELPERS
   const daysInMonth = new Date(calendarView.year, calendarView.month + 1, 0).getDate();
@@ -320,19 +347,16 @@ export default function DashboardPage() {
     const clickedDate = new Date(calendarView.year, calendarView.month, day);
     
     if (!tempSelection.from || (tempSelection.from && tempSelection.to)) {
-      // Start new selection
       setTempSelection({ from: new Date(clickedDate.setHours(0, 0, 0, 0)), to: null });
     } else {
-      // Complete selection
       const newTo = new Date(clickedDate.setHours(23, 59, 59, 999));
       if (newTo < tempSelection.from) {
-        // Swap if selected backwards
         setDateRange({ from: new Date(newTo.setHours(0,0,0,0)), to: new Date(tempSelection.from.setHours(23,59,59,999)) });
       } else {
         setDateRange({ from: tempSelection.from, to: newTo });
       }
       setIsPeriodDropdownOpen(false);
-      setTempSelection({ from: null, to: null }); // Reset temp
+      setTempSelection({ from: null, to: null }); 
     }
   };
 
@@ -538,8 +562,9 @@ export default function DashboardPage() {
 
             <div className="relative z-10 grid grid-cols-2 md:flex md:flex-wrap gap-4 md:gap-8 mt-2 md:mt-0 w-full md:w-auto">
               <div>
-                <p className="text-[10px] md:text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1"><Scale size={12}/> Liquid Cash</p>
-                <p className="text-sm md:text-lg font-bold text-slate-700 dark:text-slate-200 break-words">{currencySymbol}{liquidCash.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                {/* 🚀 THE FIX: Now using strictly spendableLiquidity */}
+                <p className="text-[10px] md:text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1"><Wallet size={12}/> Total Liquidity</p>
+                <p className="text-sm md:text-lg font-bold text-slate-700 dark:text-slate-200 break-words">{currencySymbol}{spendableLiquidity.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
               </div>
               <div>
                 <p className="text-[10px] md:text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1"><PiggyBank size={12}/> Savings</p>
@@ -590,10 +615,11 @@ export default function DashboardPage() {
               
               <div className="relative z-10">
                 <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm font-semibold tracking-wider uppercase transition-colors">
-                  {isViewingCurrentRange ? "Safe to Spend" : `End of Period Balance`}
+                  {isViewingCurrentRange ? "Physical Cash In Hand" : `Period End Physical Cash`}
                 </p>
+                
                 <h2 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tighter mt-2 md:mt-3 text-slate-900 dark:text-white transition-colors break-words leading-tight">
-                  {currencySymbol}{safeToSpend.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  {currencySymbol}{displayPhysicalCash.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                 </h2>
                 
                 <div className="mt-6 md:mt-8 flex flex-col sm:flex-row gap-3">
@@ -706,7 +732,6 @@ export default function DashboardPage() {
               <h3 className="text-base md:text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100 transition-colors">Where it went</h3>
               <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-1 transition-colors font-medium">Spending by category</p>
               <div className="flex-1 w-full">
-                {/* Notice: You may need to adapt CategoryChart to accept dateRange instead of selectedMonth */}
                 <CategoryChart selectedMonth={dateRange.to.getMonth()} selectedYear={dateRange.to.getFullYear()} currencySymbol={currencySymbol} />
               </div>
             </div>
@@ -753,7 +778,6 @@ export default function DashboardPage() {
               <h3 className="text-base md:text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100 transition-colors">Monthly Trends</h3>
               <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mb-4 transition-colors font-medium">Spending analysis</p>
               <div className="flex-1 flex items-end">
-                {/* Notice: You may need to adapt SpendingChart to accept dateRange instead of selectedMonth */}
                 <SpendingChart selectedMonth={dateRange.to.getMonth()} selectedYear={dateRange.to.getFullYear()} currencySymbol={currencySymbol} />
               </div>
             </div>
@@ -949,6 +973,7 @@ function NetWorthSparkline({ data, labels, currencySymbol }: { data: number[], l
   );
 }
 
+// 🚀 PRESERVED: Your exact Empty State cards
 function EmptyDashboardState() {
   return (
     <div className="glass-card p-8 md:p-12 rounded-[2.5rem] relative text-center border border-indigo-200/50 dark:border-indigo-500/20 shadow-2xl mt-8">
