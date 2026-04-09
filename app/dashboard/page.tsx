@@ -242,8 +242,8 @@ export default function DashboardPage() {
     return acc;
   }, 0);
 
-  // 🚀 THE FIX 1: True Spendable Liquidity (Total Raw Wallets minus Locked Savings)
-  const spendableLiquidity = totalAllWalletsCash - totalSavings;
+  // 🚀 THE FIX 1: We no longer subtract savings from totalAllWalletsCash for the "Total Liquidity" UI.
+  // This ensures the Total Liquidity encompasses all money, preventing the "Physical Cash is larger than Total Liquidity" paradox.
 
   const isViewingCurrentRange = now >= dateRange.from && now <= dateRange.to;
   const activeAssetsOnly = assets.filter(asset => asset.status === 'active' || !asset.status);
@@ -277,7 +277,6 @@ export default function DashboardPage() {
   }, 0);
   
   // 🚀 THE FIX 2: True Net Worth uses Total All Wallets Cash (which physically holds the savings).
-  // Do NOT add 'totalSavings' again, otherwise it double counts!
   const trueNetWorth = totalAllWalletsCash + totalAssetsValue - totalDebts;
 
   // 🚀 WEALTH GRAPH: Loops exactly 6 months back from the End Date
@@ -562,9 +561,9 @@ export default function DashboardPage() {
 
             <div className="relative z-10 grid grid-cols-2 md:flex md:flex-wrap gap-4 md:gap-8 mt-2 md:mt-0 w-full md:w-auto">
               <div>
-                {/* 🚀 THE FIX: Now using strictly spendableLiquidity */}
+                {/* 🚀 THE FIX: Render totalAllWalletsCash directly to match the true sum of all accounts */}
                 <p className="text-[10px] md:text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1"><Wallet size={12}/> Total Liquidity</p>
-                <p className="text-sm md:text-lg font-bold text-slate-700 dark:text-slate-200 break-words">{currencySymbol}{spendableLiquidity.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                <p className="text-sm md:text-lg font-bold text-slate-700 dark:text-slate-200 break-words">{currencySymbol}{totalAllWalletsCash.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
               </div>
               <div>
                 <p className="text-[10px] md:text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1"><PiggyBank size={12}/> Savings</p>

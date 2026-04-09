@@ -39,7 +39,8 @@ export default function TransactionsPage() {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState({ id: "", title: "", amount: "", date: "", type: "expense", category: "" });
+  // Added account_id to the editForm state to ensure we know which wallet to update
+  const [editForm, setEditForm] = useState({ id: "", title: "", amount: "", date: "", type: "expense", category: "", account_id: "" });
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -146,21 +147,90 @@ export default function TransactionsPage() {
   };
 
   const openEditModal = (tx: any) => {
-    setEditForm({ id: tx.id, title: tx.title, amount: tx.amount.toString(), date: tx.date.split('T')[0], type: tx.type, category: tx.category });
+    setEditForm({ 
+      id: tx.id, 
+      title: tx.title, 
+      amount: tx.amount.toString(), 
+      date: tx.date.split('T')[0], 
+      type: tx.type, 
+      category: tx.category,
+      account_id: tx.account_id // Capture this for the wallet update logic
+    });
     setIsEditModalOpen(true);
   };
 
+  // 🚀 FIXED: handleEditSubmit now handles the Wallet Balance logic
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsEditing(true);
     
-    const { error } = await supabase.from("transactions").update({
-      title: editForm.title, amount: Number(editForm.amount.replace(/,/g, '')), date: editForm.date, type: editForm.type, category: editForm.category
-    }).eq("id", editForm.id);
-    
-    setIsEditing(false);
-    if (!error) { setIsEditModalOpen(false); window.dispatchEvent(new Event("transactionUpdated")); } 
-    else { alert("Failed to update transaction."); }
+    try {
+      const newAmount = Number(editForm.amount.replace(/,/g, ''));
+      const { id, account_id, type: newType } = editForm;
+
+      // 1. Get the original transaction state first to compare
+      const { data: oldTx, error: fetchError } = await supabase
+        .from("transactions")
+        .select("amount, type, account_id")
+        .eq("id", id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // 2. Update the transaction itself
+      const { error: updateTxError } = await supabase.from("transactions").update({
+        title: editForm.title, 
+        amount: newAmount, 
+        date: editForm.date, 
+        type: newType, 
+        category: editForm.category
+      }).eq("id", id);
+
+      if (updateTxError) throw updateTxError;
+
+      // 3. Handle Wallet Balance adjustment if an account is linked
+      if (account_id) {
+        const { data: accountData } = await supabase
+          .from("accounts")
+          .select("balance")
+          .eq("id", account_id)
+          .single();
+
+        if (accountData) {
+          let currentBalance = Number(accountData.balance);
+          const oldAmount = Number(oldTx.amount);
+          const oldType = oldTx.type;
+
+          // Step A: Undo the old transaction effect on the wallet
+          if (oldType === 'expense') {
+            currentBalance += oldAmount;
+          } else {
+            currentBalance -= oldAmount;
+          }
+
+          // Step B: Apply the new transaction effect to the wallet
+          if (newType === 'expense') {
+            currentBalance -= newAmount;
+          } else {
+            currentBalance += newAmount;
+          }
+
+          // Step C: Save the adjusted balance back to Supabase
+          await supabase
+            .from("accounts")
+            .update({ balance: currentBalance })
+            .eq("id", account_id);
+        }
+      }
+
+      setIsEditModalOpen(false);
+      window.dispatchEvent(new Event("transactionUpdated"));
+    } catch (error) {
+      console.error("Update failed:", error);
+      alert("Failed to update transaction and wallet.");
+    } finally {
+      setIsEditing(false);
+    }
   };
 
   const handlePriceChange = (value: string) => {
@@ -247,7 +317,6 @@ export default function TransactionsPage() {
     return matchTab && matchSearch && matchWallet;
   });
 
-  // 🚀 FIXED: Helper to completely exclude Loan movements and Transfers from "Real Income" calculations
   const isExcludedFromRealWealth = (category: string) => {
     const cat = (category || "").toLowerCase();
     return cat.includes("transfer") || 
@@ -260,7 +329,6 @@ export default function TransactionsPage() {
   const totalIncome = realTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + Number(t.amount), 0);
   const totalExpense = realTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + Number(t.amount), 0);
   
-  // Net cash flow still uses ALL transactions (including loans and transfers) because it's measuring raw liquidity
   const allPeriodIncome = currentPeriodTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + Number(t.amount), 0);
   const allPeriodExpense = currentPeriodTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + Number(t.amount), 0);
   const netCash = allPeriodIncome - allPeriodExpense;
