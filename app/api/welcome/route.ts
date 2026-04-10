@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     const { email, name } = await request.json();
 
     const data = await resend.emails.send({
-      from: 'Nova <onboarding@resend.dev>', 
+      from: 'Nova <info@nova.co.tz>', 
       to: email, 
       subject: 'Welcome to Nova. 🚀',
       html: `

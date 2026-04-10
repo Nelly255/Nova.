@@ -73,8 +73,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           .nuke-scrollbar { -ms-overflow-style: none !important; scrollbar-width: none !important; }
         `}} />
 
-        {/* 💻 DESKTOP SIDEBAR */}
-        <aside className={`border-r border-white/60 dark:border-white/5 bg-white/40 dark:bg-[#0A0A0E]/60 backdrop-blur-[40px] hidden md:flex flex-col h-full relative z-20 transition-all duration-500 ease-in-out shadow-[4px_0_24px_rgba(0,0,0,0.02)] dark:shadow-none ${isCollapsed ? 'w-20 px-3 py-6' : 'w-56 p-5'}`}>
+        {/* 💻 DESKTOP SIDEBAR - 🚀 PATCHED: w-56 changed to w-64 */}
+        <aside className={`border-r border-white/60 dark:border-white/5 bg-white/40 dark:bg-[#0A0A0E]/60 backdrop-blur-[40px] hidden md:flex flex-col h-full relative z-20 transition-all duration-500 ease-in-out shadow-[4px_0_24px_rgba(0,0,0,0.02)] dark:shadow-none ${isCollapsed ? 'w-20 px-3 py-6' : 'w-64 p-5'}`}>
           
           <button 
             onClick={() => setIsCollapsed(!isCollapsed)}
@@ -117,7 +117,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   target="_blank" 
                   rel="noopener noreferrer"
                   title={isCollapsed ? "Support on Ko-fi" : ""}
-                  className={`flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-start px-4 gap-3'} py-3 rounded-xl transition-all duration-300 font-bold group relative text-amber-700 dark:text-amber-400 bg-amber-500/10 backdrop-blur-md hover:bg-amber-500/20 border border-amber-500/20 shadow-[0_4px_12px_-4px_rgba(251,191,36,0.2)] dark:shadow-[0_4px_12px_-4px_rgba(251,191,36,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900`}
+                  className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-start px-4 gap-3'} py-3 rounded-xl transition-all duration-300 font-bold group relative text-amber-700 dark:text-amber-400 bg-amber-500/10 backdrop-blur-md hover:bg-amber-500/20 border border-amber-500/20 shadow-[0_4px_12px_-4px_rgba(251,191,36,0.2)] dark:shadow-[0_4px_12px_-4px_rgba(251,191,36,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900`}
                 >
                   <div className="relative z-10 shrink-0 transition-transform duration-300 ease-out group-hover:scale-110 group-hover:-translate-y-0.5 drop-shadow-[0_0_8px_rgba(251,191,36,0.4)]">
                     <Coffee size={20} />
@@ -137,7 +137,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {installPrompt && (
               <button 
                 onClick={handleInstallApp} 
-                className={`flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-start px-4 gap-3'} py-3 rounded-xl transition-all duration-300 font-bold group relative text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 backdrop-blur-md hover:bg-indigo-500/20 border border-indigo-500/20 shadow-[0_4px_12px_-4px_rgba(99,102,241,0.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500`}
+                className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-start px-4 gap-3'} py-3 rounded-xl transition-all duration-300 font-bold group relative text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 backdrop-blur-md hover:bg-indigo-500/20 border border-indigo-500/20 shadow-[0_4px_12px_-4px_rgba(99,102,241,0.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500`}
               >
                 <Download size={20} className="group-hover:scale-110 transition-transform shrink-0 drop-shadow-[0_0_8px_rgba(99,102,241,0.3)]" />
                 <span className={`whitespace-nowrap overflow-hidden transition-all duration-500 ${isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>Install App</span>
@@ -156,7 +156,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </main>
 
-        {/* 📱 MOBILE FLOATING TOP HEADER - 🚀 ADDED: env(safe-area-inset-top) */}
+        {/* 📱 MOBILE FLOATING TOP HEADER */}
         <header className="md:hidden fixed top-[max(env(safe-area-inset-top),1rem)] left-4 right-4 z-[9999] flex items-center justify-between px-5 py-3 border border-white/40 dark:border-white/10 bg-white/40 dark:bg-[#0A0A0E]/60 backdrop-blur-[40px] saturate-[2] shadow-[0_16px_40px_-10px_rgba(0,0,0,0.5)] rounded-[2rem] pointer-events-auto">
           <div className="flex items-center gap-2">
             <Activity size={24} className="text-indigo-600 dark:text-indigo-400 drop-shadow-[0_0_8px_rgba(99,102,241,0.3)]" />
@@ -201,14 +201,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </header>
 
-        {/* 📱 MOBILE FLOATING BOTTOM NAV - 🚀 ADDED: env(safe-area-inset-bottom) */}
+        {/* 📱 MOBILE FLOATING BOTTOM NAV */}
         <nav className="md:hidden fixed bottom-[max(env(safe-area-inset-bottom),1.5rem)] left-4 right-4 z-[9999] pointer-events-auto">
           <div className="nuke-scrollbar bg-white/40 dark:bg-[#0A0A0E]/60 backdrop-blur-[40px] saturate-[2] border border-white/40 dark:border-white/10 shadow-[0_16px_40px_-10px_rgba(0,0,0,0.5)] rounded-[2.5rem] px-2 py-2.5 flex items-center justify-between gap-1 overflow-x-auto relative">
             <MobileNavItem href="/dashboard" icon={<LayoutDashboard size={22}/>} label="Home" active={pathname === "/dashboard"} />
             <MobileNavItem href="/dashboard/wallets" icon={<Wallet size={22}/>} label="Wallets" active={pathname === "/dashboard/wallets"} />
             <MobileNavItem href="/dashboard/transactions" icon={<ArrowRightLeft size={22}/>} label="Txns" active={pathname === "/dashboard/transactions"} />
             <MobileNavItem href="/dashboard/budgets" icon={<Target size={22}/>} label="Budgets" active={pathname === "/dashboard/budgets"} />
-            {/* 🚀 ADDED: Subscriptions Tab */}
             <MobileNavItem href="/dashboard/subscriptions" icon={<ShieldCheck size={22}/>} label="Subs" active={pathname === "/dashboard/subscriptions"} />
             <MobileNavItem href="/dashboard/savings" icon={<PiggyBank size={22}/>} label="Save" active={pathname === "/dashboard/savings"} />
             <MobileNavItem href="/dashboard/debts" icon={<CreditCard size={22}/>} label="Debts" active={pathname === "/dashboard/debts"} />

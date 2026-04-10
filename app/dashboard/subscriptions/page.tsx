@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import AddSubscriptionModal from "@/components/AddSubscriptionModal";
 import EditSubscriptionModal from "@/components/EditSubscriptionModal"; 
-import { ShieldCheck, Play, Music, Dumbbell, Zap, CreditCard, CalendarClock, Trash2, CheckCircle2, History, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Loader2, PlusCircle, AlertCircle, CheckCircle, X, Smartphone, Landmark, Banknote, Wallet } from "lucide-react";
+import { ShieldCheck, Play, Music, Dumbbell, Zap, CreditCard, CalendarClock, Trash2, CheckCircle2, History, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Loader2, PlusCircle, AlertCircle, CheckCircle, Smartphone, Landmark, Banknote, Wallet, Receipt } from "lucide-react";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -29,14 +29,18 @@ const getWalletIcon = (type: string) => {
 export default function SubscriptionsPage() {
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [history, setHistory] = useState<any[]>([]);
-  const [wallets, setWallets] = useState<any[]>([]); // 🚀 NEW: Wallets State
+  const [wallets, setWallets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [confirmPayment, setConfirmPayment] = useState<{isOpen: boolean, sub: any | null}>({ isOpen: false, sub: null });
-  const [selectedWalletId, setSelectedWalletId] = useState<string | null>(null); // 🚀 NEW: Selected Wallet
+  const [selectedWalletId, setSelectedWalletId] = useState<string | null>(null);
+  
+  // 🚀 NEW: State for the Bank/M-Pesa Charge
+  const [transactionCharge, setTransactionCharge] = useState<string>("");
+  
   const [isPaying, setIsPaying] = useState<string | null>(null);
   
-  const [deleteTxModal, setDeleteTxModal] = useState({ isOpen: false, id: "", title: "", amount: "" });
+  const [deleteTxModal, setDeleteTxModal] = useState({ isOpen: false, id: "", title: "", amount: "", charge_id: "" });
   const [isUpdatingTx, setIsUpdatingTx] = useState(false);
 
   const [currencySymbol, setCurrencySymbol] = useState("TSh ");
@@ -53,14 +57,17 @@ export default function SubscriptionsPage() {
     const [subsRes, txRes, walletsRes] = await Promise.all([
       supabase.from("subscriptions").select("*").order("billing_date", { ascending: true }),
       supabase.from("transactions").select("*").eq("category", "Subscription").order("date", { ascending: false }),
-      supabase.from("accounts").select("*").order("name", { ascending: true }) // 🚀 Fetch Wallets
+      supabase.from("accounts").select("*").order("name", { ascending: true }) 
     ]);
 
     if (!subsRes.error && subsRes.data) setSubscriptions(subsRes.data);
+    
+    // We also fetch Bank Charges here just so history ledger can display them if needed, 
+    // but primarily we just filter for Subscriptions in the view.
     if (!txRes.error && txRes.data) setHistory(txRes.data);
+    
     if (!walletsRes.error && walletsRes.data) {
       setWallets(walletsRes.data);
-      // Auto-select first wallet if available
       if (walletsRes.data.length > 0) setSelectedWalletId(walletsRes.data[0].id);
     }
     
@@ -86,30 +93,49 @@ export default function SubscriptionsPage() {
     }
   };
 
-  // 🚀 UPGRADED: Logs payment AND deducts from Wallet
+  // 🚀 UPGRADED: Bundles both transactions into ONE clean database request
   const executeLogPayment = async () => {
     if (!confirmPayment.sub || !selectedWalletId) return;
     
     setIsPaying(confirmPayment.sub.id);
     const todayStr = new Date().toISOString().split('T')[0];
     const subAmount = Number(confirmPayment.sub.amount);
+    const chargeAmount = transactionCharge ? Number(transactionCharge) : 0;
+    const totalDeduction = subAmount + chargeAmount;
+    
     const selectedWallet = wallets.find(w => w.id === selectedWalletId);
     
     try {
-      // 1. Insert Transaction
-      const { error: txError } = await supabase.from("transactions").insert([{
-        title: `${confirmPayment.sub.name} Subscription`,
-        amount: subAmount,
-        type: "expense",
-        category: "Subscription",
-        date: todayStr,
-        account_id: selectedWalletId // Link to wallet!
-      }]);
+      // 1. Build an array of transactions to log at the exact same time
+      const transactionsToLog = [
+        {
+          title: `${confirmPayment.sub.name} Subscription`,
+          amount: subAmount,
+          type: "expense",
+          category: "Subscription",
+          date: todayStr,
+          account_id: selectedWalletId 
+        }
+      ];
 
+      // 2. If there is a fee, push it into the array payload
+      if (chargeAmount > 0) {
+        transactionsToLog.push({
+          title: `Fee: ${confirmPayment.sub.name}`,
+          amount: chargeAmount,
+          type: "expense",
+          category: "Bank Charges", 
+          date: todayStr,
+          account_id: selectedWalletId
+        });
+      }
+
+      // 3. Send BOTH to Supabase in one single hit
+      const { error: txError } = await supabase.from("transactions").insert(transactionsToLog);
       if (txError) throw txError;
 
-      // 2. Update Wallet Balance
-      const newBalance = Number(selectedWallet.balance) - subAmount;
+      // 4. Update Wallet Balance (Sub Amount + Charge Amount)
+      const newBalance = Number(selectedWallet.balance) - totalDeduction;
       const { error: accError } = await supabase
         .from("accounts")
         .update({ balance: newBalance })
@@ -118,23 +144,26 @@ export default function SubscriptionsPage() {
       if (accError) throw accError;
 
       setConfirmPayment({ isOpen: false, sub: null });
+      setTransactionCharge(""); // Reset charge state
       fetchSubsAndHistory(); 
-      window.dispatchEvent(new Event("transactionUpdated")); // Update global dashboard cards
+      window.dispatchEvent(new Event("transactionUpdated")); 
     } catch (error) {
-      alert("Failed to log payment or update wallet.");
+      console.error("SUPABASE ERROR:", error); 
+      alert("Failed to log payment or update wallet. Check the console for details.");
     } finally {
       setIsPaying(null);
     }
   };
 
-  // 🚀 UPGRADED: Deletes payment AND refunds Wallet
+  // 🚀 UPGRADED: Deletes payment AND refunds Wallet safely
   const confirmDeleteTx = async () => {
     setIsUpdatingTx(true);
     try {
-      // Find original transaction to know which account to refund
+      // Find original transaction
       const { data: txData } = await supabase.from("transactions").select("*").eq("id", deleteTxModal.id).single();
       
       if (txData && txData.account_id) {
+        // Refund the exact amount of the specific transaction
         const { data: accData } = await supabase.from("accounts").select("balance").eq("id", txData.account_id).single();
         if (accData) {
           const restoredBalance = Number(accData.balance) + Number(txData.amount);
@@ -142,13 +171,15 @@ export default function SubscriptionsPage() {
         }
       }
 
+      // Delete the transaction
       const { error } = await supabase.from("transactions").delete().eq("id", deleteTxModal.id);
       if (error) throw error;
       
-      setDeleteTxModal({ isOpen: false, id: "", title: "", amount: "" });
+      setDeleteTxModal({ isOpen: false, id: "", title: "", amount: "", charge_id: "" });
       fetchSubsAndHistory();
       window.dispatchEvent(new Event("transactionUpdated"));
     } catch (error) {
+      console.error("SUPABASE DELETE ERROR:", error);
       alert("Failed to delete payment record or refund wallet.");
     } finally {
       setIsUpdatingTx(false);
@@ -363,7 +394,10 @@ export default function SubscriptionsPage() {
                     </div>
 
                     <button 
-                      onClick={() => setConfirmPayment({ isOpen: true, sub })}
+                      onClick={() => {
+                        setConfirmPayment({ isOpen: true, sub });
+                        setTransactionCharge(""); // Reset fee field on open
+                      }}
                       className="w-full py-2.5 rounded-xl font-bold flex justify-center items-center gap-2 text-sm transition-all active:scale-95 bg-white/80 text-slate-700 hover:bg-white border-slate-200 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 dark:border-white/10 border backdrop-blur-md shadow-sm"
                     >
                       <PlusCircle size={16} /> Log Payment
@@ -444,7 +478,7 @@ export default function SubscriptionsPage() {
                       
                       <div className="flex gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
-                          onClick={() => setDeleteTxModal({ isOpen: true, id: tx.id, title: tx.title, amount: tx.amount.toString() })}
+                          onClick={() => setDeleteTxModal({ isOpen: true, id: tx.id, title: tx.title, amount: tx.amount.toString(), charge_id: "" })}
                           className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
                           title="Delete Log"
                         >
@@ -461,7 +495,7 @@ export default function SubscriptionsPage() {
       </div>
 
       {/* ============================================== */}
-      {/* 🚀 UPGRADED: CONFIRM PAYMENT MODAL WITH WALLETS */}
+      {/* 🚀 UPGRADED: CONFIRM PAYMENT MODAL (WITH BANK CHARGE) */}
       {/* ============================================== */}
       {confirmPayment.isOpen && confirmPayment.sub && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6">
@@ -472,12 +506,31 @@ export default function SubscriptionsPage() {
                 <CheckCircle size={28} />
               </div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">Log Payment</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
                 Paying <span className="font-bold text-slate-700 dark:text-slate-300">{currencySymbol}{confirmPayment.sub.amount.toLocaleString()}</span> for <span className="font-bold text-slate-700 dark:text-slate-300">{confirmPayment.sub.name}</span>.
               </p>
 
+              {/* 🚀 NEW: Bank Charge Input Field */}
+              <div className="text-left mb-6 relative">
+                <label className="text-[10px] uppercase tracking-widest font-black text-slate-500 mb-2 block">
+                  Txn / Bank Charge (Optional)
+                </label>
+                <div className="relative flex items-center">
+                  <div className="absolute left-4 text-slate-400">
+                    <Receipt size={18} />
+                  </div>
+                  <input
+                    type="number"
+                    value={transactionCharge}
+                    onChange={(e) => setTransactionCharge(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  />
+                </div>
+              </div>
+
               {/* WALLET SELECTION UI */}
-              <div className="text-left mt-6 mb-8 text-slate-900 dark:text-slate-100">
+              <div className="text-left mb-8 text-slate-900 dark:text-slate-100">
                 <label className="text-[10px] uppercase tracking-widest font-black text-slate-500 mb-3 block">
                   Select Payment Wallet
                 </label>
@@ -508,7 +561,7 @@ export default function SubscriptionsPage() {
               </div>
 
               <div className="flex gap-3">
-                <button onClick={() => setConfirmPayment({ isOpen: false, sub: null })} className="flex-1 py-3.5 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 dark:text-slate-300 dark:bg-white/5 dark:hover:bg-white/10 transition-colors active:scale-95">
+                <button onClick={() => { setConfirmPayment({ isOpen: false, sub: null }); setTransactionCharge(""); }} className="flex-1 py-3.5 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 dark:text-slate-300 dark:bg-white/5 dark:hover:bg-white/10 transition-colors active:scale-95">
                   Cancel
                 </button>
                 <button 
@@ -529,7 +582,7 @@ export default function SubscriptionsPage() {
       {/* ============================================== */}
       {deleteTxModal.isOpen && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6">
-          <div className="absolute inset-0 bg-slate-900/10 dark:bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setDeleteTxModal({ isOpen: false, id: "", title: "", amount: "" })} />
+          <div className="absolute inset-0 bg-slate-900/10 dark:bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setDeleteTxModal({ isOpen: false, id: "", title: "", amount: "", charge_id: "" })} />
           <div className="relative z-10 w-full max-w-sm glass-card rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6 text-center pt-8">
               <div className="w-16 h-16 rounded-full bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto mb-4 border border-rose-200 dark:border-rose-500/30">
@@ -540,7 +593,7 @@ export default function SubscriptionsPage() {
                 Are you sure you want to delete this payment of <span className="font-bold text-slate-700 dark:text-slate-300">{currencySymbol}{Number(deleteTxModal.amount).toLocaleString()}</span>? Doing this will automatically mark <span className="font-bold text-slate-700 dark:text-slate-300">{deleteTxModal.title}</span> as unpaid for this month and <span className="font-bold text-emerald-500">refund your wallet</span>.
               </p>
               <div className="flex gap-3">
-                <button onClick={() => setDeleteTxModal({ isOpen: false, id: "", title: "", amount: "" })} className="flex-1 py-3.5 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 dark:text-slate-300 dark:bg-white/5 dark:hover:bg-white/10 transition-colors active:scale-95">Cancel</button>
+                <button onClick={() => setDeleteTxModal({ isOpen: false, id: "", title: "", amount: "", charge_id: "" })} className="flex-1 py-3.5 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 dark:text-slate-300 dark:bg-white/5 dark:hover:bg-white/10 transition-colors active:scale-95">Cancel</button>
                 <button 
                   onClick={confirmDeleteTx} 
                   disabled={isUpdatingTx}
