@@ -24,14 +24,15 @@ export default function AddTransactionModal() {
   const [categorySearch, setCategorySearch] = useState("");
   
   const [accounts, setAccounts] = useState<any[]>([]); 
-  const [currencySymbol, setCurrencySymbol] = useState("$");
+  // 🚀 DEFAULT SET TO TSh
+  const [currencySymbol, setCurrencySymbol] = useState("TSh ");
   
   const [mounted, setMounted] = useState(false);
   
-  // 🚀 UPGRADED CURRENCY LOGIC: Maps common currencies and safely falls back
+  // 🚀 DEFAULT FALLBACK SET TO TZS
   useEffect(() => {
     setMounted(true);
-    const savedCurrency = localStorage.getItem("app_currency") || "USD";
+    const savedCurrency = localStorage.getItem("app_currency") || "TZS"; 
     
     const currencyMap: Record<string, string> = {
       "TZS": "TSh ",
@@ -46,7 +47,6 @@ export default function AddTransactionModal() {
       "USD": "$"
     };
     
-    // If it's in the map, use the symbol. If not, just use the letters (e.g., "AUD ")
     setCurrencySymbol(currencyMap[savedCurrency] || `${savedCurrency} `);
   }, []);
 

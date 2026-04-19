@@ -104,14 +104,14 @@ export default function WelcomePage() {
             "Give every dollar a purpose."
           </div>
 
-          <h1 className={`${headerFont.className} text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 leading-[1.08] text-slate-900 dark:text-white transition-colors`}>
+          {/* 🚀 FONT SCALE FIX: Changed to text-4xl sm:text-5xl lg:text-6xl */}
+          <h1 className={`${headerFont.className} text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight mb-5 leading-[1.15] text-slate-900 dark:text-white transition-colors`}>
             Your financial life, <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 pr-4">
               beautifully organized.
             </span>
           </h1>
           
-          {/* SEO FIX: H1 match seamlessly integrated here */}
           <p className="text-base md:text-lg text-slate-600 dark:text-slate-400 mb-10 max-w-lg leading-relaxed transition-colors">
             Track assets, crush debt, and monitor subscriptions from one breathtaking dashboard. Keep <strong>your financial life beautifully organized</strong>. Stop wondering where your money went, and start directing where it goes.
           </p>
@@ -177,7 +177,7 @@ export default function WelcomePage() {
         </div>
       </div>
 
-      {/* 🔥 SEO REPLACEMENT: "HOW IT WORKS" INSTEAD OF FAQ */}
+      {/* HOW IT WORKS SECTION */}
       <div className="w-full max-w-7xl mx-auto px-6 py-20 z-10">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <h2 className={`${headerFont.className} text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-4 transition-colors tracking-tight`}>How Nova Works</h2>
@@ -185,7 +185,6 @@ export default function WelcomePage() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 relative">
-          {/* Connecting Lines (Desktop only) */}
           <div className="hidden md:block absolute top-12 left-[15%] right-[15%] h-0.5 bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent z-0"></div>
 
           <div className="relative z-10 flex flex-col items-center text-center group">
@@ -266,7 +265,7 @@ export default function WelcomePage() {
         </div>
       </div>
 
-      {/* 🔥 SEO NOVA FREE TOOLS SECTION */}
+      {/* FREE TOOLS SECTION */}
       <div id="free-tools" className="w-full max-w-7xl mx-auto px-6 py-16 lg:py-24 z-10 scroll-mt-20 border-t border-slate-200/50 dark:border-white/5">
         <div className="text-center max-w-2xl mx-auto mb-12">
           <h2 className={`${headerFont.className} text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-4 transition-colors tracking-tight`}>Nova Free Tools.</h2>
@@ -315,11 +314,9 @@ export default function WelcomePage() {
         </div>
       </div>
 
-      {/* 🔥 THE NEW SEO FAT FOOTER */}
+      {/* FOOTER */}
       <footer className="w-full max-w-7xl mx-auto pt-16 pb-12 border-t border-slate-200 dark:border-white/5 z-10 px-6 relative">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12 text-left">
-          
-          {/* Brand Column */}
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <Activity size={20} className="text-indigo-600 dark:text-indigo-400" />
@@ -328,14 +325,12 @@ export default function WelcomePage() {
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-xs">
               Intelligent Wealth Management.
             </p>
-            {/* NEW CONTACT LINK HERE */}
             <Link href="/contact" className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
               <Mail size={16} />
               Contact Support
             </Link>
           </div>
           
-          {/* Features Column (SEO Links) */}
           <div>
             <h4 className="font-bold text-slate-900 dark:text-white mb-4">Features</h4>
             <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
@@ -346,7 +341,6 @@ export default function WelcomePage() {
             </ul>
           </div>
 
-          {/* Free Tools Column (SEO Links) */}
           <div>
             <h4 className="font-bold text-slate-900 dark:text-white mb-4">Free Tools</h4>
             <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
@@ -356,7 +350,6 @@ export default function WelcomePage() {
             </ul>
           </div>
 
-          {/* Company Column */}
           <div>
             <h4 className="font-bold text-slate-900 dark:text-white mb-4">Company</h4>
             <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
@@ -365,10 +358,8 @@ export default function WelcomePage() {
               <li><Link href="/terms" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Terms of Service</Link></li>
             </ul>
           </div>
-
         </div>
 
-        {/* Copyright & Security Bar */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500 pt-8 border-t border-slate-200 dark:border-white/5">
           <span>© {new Date().getFullYear()} Nova Financial. All rights reserved.</span>
           <div className="flex items-center gap-6">
@@ -376,12 +367,10 @@ export default function WelcomePage() {
           </div>
         </div>
       </footer>
-
     </main>
   );
 }
 
-// 🔥 HELPER COMPONENT FOR THE OPEN UTILITIES SECTION
 function ToolCard({ href, icon, title, description, colorClass }: { href: string, icon: React.ReactNode, title: string, description: string, colorClass: string }) {
   return (
     <Link href={href} className="group bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 p-8 rounded-[2rem] hover:shadow-xl dark:hover:bg-slate-800/50 transition-all overflow-hidden relative flex flex-col h-full">
