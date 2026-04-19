@@ -42,9 +42,11 @@ export default function NotificationBell() {
   const generateNotifications = useCallback(async () => {
     const currentMonthStr = new Date().toISOString().slice(0, 7); 
     
+    // 🚀 THE FIX: Removed the category filter! "Subscription" isn't in your master list.
+    // Now it checks ALL expenses for the month to see if the name matches!
     const [subsRes, txRes] = await Promise.all([
       supabase.from("subscriptions").select("*"),
-      supabase.from("transactions").select("*").eq("category", "Subscription").like("date", `${currentMonthStr}%`)
+      supabase.from("transactions").select("title, type").eq("type", "expense").like("date", `${currentMonthStr}%`)
     ]);
 
     const currentDate = new Date();
@@ -56,8 +58,9 @@ export default function NotificationBell() {
     const savedHistory = localStorage.getItem("nova_notif_history");
     let historyItems = savedHistory ? JSON.parse(savedHistory) : [];
 
-    // 🚀 FIXED: Made the check smarter (case-insensitive includes) to ensure it catches the payment
+    // SMART CHECK: Looks at all expenses this month to see if the description contains the sub name
     const isPaidThisMonth = (subName: string) => {
+      if (!subName) return false;
       return txs.some(tx => tx.title.toLowerCase().includes(subName.toLowerCase()));
     };
 
@@ -65,10 +68,10 @@ export default function NotificationBell() {
       subs.forEach(sub => {
         const subAlertPrefix = `sub-alert-${sub.id}-${currentMonthStr}`;
 
-        // SMART CLEANUP: If paid, remove any nagging notifications for this month
+        // 🚀 SMART CLEANUP: If they paid it under ANY category, delete the nagging notification instantly!
         if (isPaidThisMonth(sub.name)) {
           historyItems = historyItems.filter((n: any) => !n.id.startsWith(subAlertPrefix));
-          return;
+          return; // Skip generating new alerts for this sub
         }
 
         const daysUntilDue = sub.billing_date - today;
@@ -95,6 +98,7 @@ export default function NotificationBell() {
           const alreadyExists = historyItems.some((n: any) => n.id === specificId);
 
           if (!alreadyExists) {
+            // Remove older alerts for this exact sub so they don't stack up
             historyItems = historyItems.filter((n: any) => !n.id.startsWith(subAlertPrefix));
             
             historyItems = [{

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase"; 
 import { Plus_Jakarta_Sans, Inter } from "next/font/google";
-import { ArrowRight, Shield, Zap, PieChart, Activity, TrendingUp, TrendingDown, Wallet, Sun, Moon, CreditCard, Target, Lock, LineChart, Building, Calculator, Mail } from "lucide-react";
+import { ArrowRight, Shield, Zap, PieChart, Activity, TrendingUp, TrendingDown, Wallet, Sun, Moon, CreditCard, Target, Lock, LineChart, Building, Calculator, Mail, Layers, RefreshCw, CheckCircle2 } from "lucide-react";
 
 // Initialize our premium startup fonts
 const headerFont = Plus_Jakarta_Sans({ subsets: ["latin"] });
@@ -111,8 +111,9 @@ export default function WelcomePage() {
             </span>
           </h1>
           
+          {/* SEO FIX: H1 match seamlessly integrated here */}
           <p className="text-base md:text-lg text-slate-600 dark:text-slate-400 mb-10 max-w-lg leading-relaxed transition-colors">
-            Track assets, crush debt, and monitor subscriptions from one breathtaking dashboard. Stop wondering where your money went, and start directing where it goes.
+            Track assets, crush debt, and monitor subscriptions from one breathtaking dashboard. Keep <strong>your financial life beautifully organized</strong>. Stop wondering where your money went, and start directing where it goes.
           </p>
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto relative z-30 mb-8">
@@ -141,7 +142,7 @@ export default function WelcomePage() {
           <div className="relative w-full max-w-md z-10 flex items-center justify-center animate-[pulse_6s_ease-in-out_infinite]">
             <img 
               src="/hero-illustration.svg" 
-              alt="Tracking finances" 
+              alt="Tracking finances in Tanzania" 
               className="w-full h-auto drop-shadow-xl dark:drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)] relative z-10 transition-all"
               style={{ minHeight: '300px', objectFit: 'contain' }} 
             />
@@ -176,35 +177,46 @@ export default function WelcomePage() {
         </div>
       </div>
 
-      {/* 🔥 SEO NOVA FREE TOOLS SECTION */}
-      <div id="free-tools" className="w-full max-w-7xl mx-auto px-6 py-16 lg:py-24 z-10 scroll-mt-20 border-t border-slate-200/50 dark:border-white/5">
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <h2 className={`${headerFont.className} text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-4 transition-colors tracking-tight`}>Nova Free Tools.</h2>
-          <p className="text-slate-600 dark:text-slate-400 transition-colors">No account required. Generate premium PDF reports and calculate your financial standing instantly.</p>
+      {/* 🔥 SEO REPLACEMENT: "HOW IT WORKS" INSTEAD OF FAQ */}
+      <div className="w-full max-w-7xl mx-auto px-6 py-20 z-10">
+        <div className="text-center max-w-2xl mx-auto mb-16">
+          <h2 className={`${headerFont.className} text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-4 transition-colors tracking-tight`}>How Nova Works</h2>
+          <p className="text-slate-600 dark:text-slate-400 transition-colors text-lg">A powerful, zero-friction process to completely transform your personal finances.</p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          <ToolCard
-            href="/net-worth-calculator"
-            icon={<LineChart size={24} />}
-            title="Net Worth Calculator"
-            description="Calculate your gross assets against your total liabilities to find your exact wealth standing."
-            colorClass="text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 border-purple-100 dark:border-purple-500/20"
-          />
-          <ToolCard
-            href="/depreciation-calculator"
-            icon={<Building size={24} />}
-            title="TRA Asset Depreciation"
-            description="Calculate capital allowance and reducing balances according to Tanzanian tax law."
-            colorClass="text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20"
-          />
-          <ToolCard
-            href="/budget-calculator"
-            icon={<Calculator size={24} />}
-            title="Zero-Based Budget"
-            description="Input your monthly salary to generate a strict, optimized 50/30/20 spending plan."
-            colorClass="text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-500/10 border-sky-100 dark:border-sky-500/20"
-          />
+        <div className="grid md:grid-cols-3 gap-8 relative">
+          {/* Connecting Lines (Desktop only) */}
+          <div className="hidden md:block absolute top-12 left-[15%] right-[15%] h-0.5 bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent z-0"></div>
+
+          <div className="relative z-10 flex flex-col items-center text-center group">
+            <div className="w-24 h-24 rounded-[2rem] bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 shadow-xl flex items-center justify-center mb-6 text-indigo-600 dark:text-indigo-400 group-hover:-translate-y-2 transition-all">
+              <Layers size={40} />
+            </div>
+            <h3 className={`${headerFont.className} text-xl font-bold text-slate-900 dark:text-white mb-3`}>1. Unify Your Wallets</h3>
+            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+              Connect the reality of your daily spending. Whether you use physical cash, bank accounts, or mobile money like M-Pesa, Nova brings all your balances into one seamlessly organized dashboard.
+            </p>
+          </div>
+
+          <div className="relative z-10 flex flex-col items-center text-center group">
+            <div className="w-24 h-24 rounded-[2rem] bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 shadow-xl flex items-center justify-center mb-6 text-purple-600 dark:text-purple-400 group-hover:-translate-y-2 transition-all">
+              <RefreshCw size={40} />
+            </div>
+            <h3 className={`${headerFont.className} text-xl font-bold text-slate-900 dark:text-white mb-3`}>2. Track with Precision</h3>
+            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+              Utilize our blazing-fast expense tracker to log transactions and bank charges instantly. Stay ahead of your bills with the Subscription Radar and stick to your zero-based budget effortlessly.
+            </p>
+          </div>
+
+          <div className="relative z-10 flex flex-col items-center text-center group">
+            <div className="w-24 h-24 rounded-[2rem] bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 shadow-xl flex items-center justify-center mb-6 text-emerald-600 dark:text-emerald-400 group-hover:-translate-y-2 transition-all">
+              <CheckCircle2 size={40} />
+            </div>
+            <h3 className={`${headerFont.className} text-xl font-bold text-slate-900 dark:text-white mb-3`}>3. Build Lasting Wealth</h3>
+            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+              Watch your Net Worth grow over time. As you crush debt and optimize your spending habits, Nova generates beautiful visual insights to prove your financial independence is working.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -222,7 +234,7 @@ export default function WelcomePage() {
               <PieChart size={24} />
             </div>
             <h3 className={`${headerFont.className} text-2xl font-bold text-slate-900 dark:text-white mb-3 transition-colors tracking-tight`}>Intelligent Cash Flow</h3>
-            <p className="text-slate-600 dark:text-slate-400 max-w-md leading-relaxed transition-colors">Visualize your entire financial life in real-time. Know exactly what comes in, what goes out, and where you can optimize to save more every single month.</p>
+            <p className="text-slate-600 dark:text-slate-400 max-w-md leading-relaxed transition-colors">Visualize your entire financial life in real-time. Know exactly what comes in, what goes out, and where you can optimize to save more every single month across cash and mobile money wallets.</p>
           </div>
 
           <div className="group bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 p-8 rounded-[2rem] hover:shadow-xl dark:hover:bg-slate-800/50 transition-all hover:border-rose-500/30 relative overflow-hidden">
@@ -231,7 +243,7 @@ export default function WelcomePage() {
               <Zap size={22} />
             </div>
             <h3 className={`${headerFont.className} text-xl font-bold text-slate-900 dark:text-white mb-2 transition-colors tracking-tight`}>Subscription Radar</h3>
-            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed transition-colors">Spot hidden recurring charges instantly. Keep what you love, cut the rest.</p>
+            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed transition-colors">Spot hidden recurring charges instantly. Keep what you love, cut the rest, and never get caught off-guard.</p>
           </div>
 
           <div className="group bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 p-8 rounded-[2rem] hover:shadow-xl dark:hover:bg-slate-800/50 transition-all hover:border-cyan-500/30 relative overflow-hidden">
@@ -240,7 +252,7 @@ export default function WelcomePage() {
               <CreditCard size={22} />
             </div>
             <h3 className={`${headerFont.className} text-xl font-bold text-slate-900 dark:text-white mb-2 transition-colors tracking-tight`}>Debt Snowball</h3>
-            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed transition-colors">Organize your liabilities and attack them systematically until you are 100% debt-free.</p>
+            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed transition-colors">Organize your liabilities and attack them systematically using proven strategies until you are 100% debt-free.</p>
           </div>
 
           <div className="md:col-span-2 group bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 p-8 rounded-[2rem] hover:shadow-xl dark:hover:bg-slate-800/50 transition-all hover:border-amber-500/30 overflow-hidden relative">
@@ -251,6 +263,38 @@ export default function WelcomePage() {
             <h3 className={`${headerFont.className} text-2xl font-bold text-slate-900 dark:text-white mb-3 transition-colors tracking-tight`}>Goal Setting & Assets</h3>
             <p className="text-slate-600 dark:text-slate-400 max-w-md leading-relaxed transition-colors">Track depreciating assets like vehicles and equipment, while setting aside targeted funds for emergencies, vacations, or your first home.</p>
           </div>
+        </div>
+      </div>
+
+      {/* 🔥 SEO NOVA FREE TOOLS SECTION */}
+      <div id="free-tools" className="w-full max-w-7xl mx-auto px-6 py-16 lg:py-24 z-10 scroll-mt-20 border-t border-slate-200/50 dark:border-white/5">
+        <div className="text-center max-w-2xl mx-auto mb-12">
+          <h2 className={`${headerFont.className} text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-4 transition-colors tracking-tight`}>Nova Free Tools.</h2>
+          <p className="text-slate-600 dark:text-slate-400 transition-colors">No account required. Generate premium PDF reports and calculate your financial standing instantly.</p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6">
+          <ToolCard
+            href="/net-worth-calculator"
+            icon={<LineChart size={24} />}
+            title="Net Worth Calculator"
+            description="Calculate your gross assets against your total liabilities to find your exact wealth standing in Tanzania."
+            colorClass="text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 border-purple-100 dark:border-purple-500/20"
+          />
+          <ToolCard
+            href="/depreciation-calculator"
+            icon={<Building size={24} />}
+            title="TRA Asset Depreciation"
+            description="Calculate capital allowance and reducing balances according to Tanzanian tax law to understand true asset values."
+            colorClass="text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20"
+          />
+          <ToolCard
+            href="/budget-calculator"
+            icon={<Calculator size={24} />}
+            title="Zero-Based Budget"
+            description="Input your monthly salary to generate a strict, optimized 50/30/20 spending plan for ultimate financial independence."
+            colorClass="text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-500/10 border-sky-100 dark:border-sky-500/20"
+          />
         </div>
       </div>
 

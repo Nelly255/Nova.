@@ -1,18 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Loader2, ChevronDown, Wallet } from "lucide-react";
+import { X, Loader2, ChevronDown, Wallet, Search, PlusCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
-const CATEGORIES = [
-  { label: "Groceries", value: "Groceries" },
-  { label: "Dining Out", value: "Dining Out" },
-  { label: "Transport", value: "Transport" },
-  { label: "Entertainment", value: "Entertainment" },
-  { label: "Bills & Utilities", value: "Bills" },
-  { label: "Income / Salary", value: "Income" },
-  { label: "Savings", value: "Savings" },
-  { label: "Other", value: "Other" }
+// 🚀 FIXED: These are exactly the categories you want!
+const DEFAULT_CATEGORIES = [
+  "Groceries",
+  "Dining Out",
+  "Transport",
+  "Entertainment",
+  "Bills & Utilities",
+  "Income / Salary",
+  "Bank Charges",
+  "Other"
 ];
 
 export default function EditTransactionModal({ transaction, onClose }: { transaction: any, onClose: () => void }) {
@@ -20,17 +21,31 @@ export default function EditTransactionModal({ transaction, onClose }: { transac
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isWalletOpen, setIsWalletOpen] = useState(false);
   const [wallets, setWallets] = useState<any[]>([]);
+  const [categorySearch, setCategorySearch] = useState("");
 
   const [formData, setFormData] = useState({
-    title: transaction.title,
-    amount: transaction.amount.toString(), 
-    type: transaction.type,
-    category: transaction.category,
-    date: new Date(transaction.date).toISOString().split("T")[0],
-    account_id: transaction.account_id || "", 
+    title: "",
+    amount: "", 
+    type: "expense",
+    category: "Other",
+    date: new Date().toISOString().split("T")[0],
+    account_id: "", 
   });
 
-  // 🚀 Fetch wallets so the user can actually assign or change the wallet!
+  // 🚀 Ensures it perfectly picks up the ORIGINAL data (including category) every time you open it
+  useEffect(() => {
+    if (transaction) {
+      setFormData({
+        title: transaction.title || "",
+        amount: transaction.amount?.toString() || "", 
+        type: transaction.type || "expense",
+        category: transaction.category || "Other",
+        date: transaction.date ? new Date(transaction.date).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+        account_id: transaction.account_id || "", 
+      });
+    }
+  }, [transaction]);
+
   useEffect(() => {
     const fetchWallets = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -69,15 +84,13 @@ export default function EditTransactionModal({ transaction, onClose }: { transac
       const oldType = transaction.type;
       const newType = formData.type;
 
-      // 🚀 BULLETPROOF LEDGER MATH
-
       // SCENARIO 1: The wallet was changed OR removed. We must fully revert the old transaction.
       if (oldAccountId && oldAccountId !== newAccountId) {
         const { data: oldWallet } = await supabase.from("accounts").select("balance").eq("id", oldAccountId).single();
         if (oldWallet) {
           let oldBal = Number(oldWallet.balance);
-          if (oldType === 'income') oldBal -= oldAmount; // Take back the income
-          else oldBal += oldAmount; // Refund the expense
+          if (oldType === 'income') oldBal -= oldAmount; 
+          else oldBal += oldAmount; 
           await supabase.from("accounts").update({ balance: oldBal }).eq("id", oldAccountId);
         }
       }
@@ -88,13 +101,11 @@ export default function EditTransactionModal({ transaction, onClose }: { transac
         if (newWallet) {
           let newBal = Number(newWallet.balance);
           
-          // If it's the exact same wallet, revert the old math first before applying the new math
           if (oldAccountId === newAccountId) {
             if (oldType === 'income') newBal -= oldAmount;
             else newBal += oldAmount;
           }
 
-          // Now apply the brand new math!
           if (newType === 'income') newBal += newAmount;
           else newBal -= newAmount;
           
@@ -102,22 +113,20 @@ export default function EditTransactionModal({ transaction, onClose }: { transac
         }
       }
 
-      // 🚀 FINALLY: Update the actual transaction record
       const { error: txError } = await supabase
         .from("transactions")
         .update({
           title: formData.title,
           amount: newAmount, 
           type: newType,
-          category: formData.category,
+          category: formData.category, 
           date: formData.date,
-          account_id: newAccountId || null // Ensure it saves as null if they select "None"
+          account_id: newAccountId || null
         })
         .eq("id", transaction.id);
 
       if (txError) throw txError;
 
-      // Success! Dispatch the event to refresh the dash
       window.dispatchEvent(new Event("transactionUpdated")); 
       onClose();
 
@@ -128,6 +137,13 @@ export default function EditTransactionModal({ transaction, onClose }: { transac
       setIsLoading(false);
     }
   };
+
+  const filteredCategories = DEFAULT_CATEGORIES.filter(cat => 
+    cat.toLowerCase().includes(categorySearch.toLowerCase())
+  );
+
+  const isNewCategory = categorySearch.length > 0 && 
+    !DEFAULT_CATEGORIES.some(cat => cat.toLowerCase() === categorySearch.toLowerCase());
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
@@ -211,7 +227,7 @@ export default function EditTransactionModal({ transaction, onClose }: { transac
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            {/* 🚀 NEW: Wallet Dropdown */}
+            {/* Wallet Dropdown */}
             <div className={`relative ${isWalletOpen ? 'z-50' : 'z-40'}`}>
               <label className="block text-sm font-semibold tracking-wide text-zinc-700 dark:text-zinc-400 mb-1 transition-colors">Wallet</label>
               <button 
@@ -266,7 +282,7 @@ export default function EditTransactionModal({ transaction, onClose }: { transac
                 className="w-full flex justify-between items-center bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
               >
                 <span className="truncate pr-2 text-sm">
-                  {CATEGORIES.find(c => c.value === formData.category)?.label || formData.category}
+                  {formData.category}
                 </span>
                 <ChevronDown size={14} className={`text-zinc-400 shrink-0 transition-transform duration-200 ${isCategoryOpen ? 'rotate-180' : ''}`} />
               </button>
@@ -274,24 +290,57 @@ export default function EditTransactionModal({ transaction, onClose }: { transac
               {isCategoryOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setIsCategoryOpen(false)} />
-                  <div className="absolute left-0 right-0 bottom-full mb-2 z-50 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200/80 dark:border-white/10 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 origin-bottom duration-200 max-h-48 overflow-y-auto custom-scrollbar">
-                    {CATEGORIES.map((cat) => (
-                      <button
-                        key={cat.value}
-                        type="button"
-                        onClick={() => {
-                          setFormData({ ...formData, category: cat.value });
-                          setIsCategoryOpen(false);
-                        }}
-                        className={`w-full text-left px-4 py-3 text-sm transition-colors flex items-center justify-between ${
-                          formData.category === cat.value 
-                          ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold' 
-                          : 'hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-700 dark:text-zinc-300'
-                        }`}
-                      >
-                        {cat.label}
-                      </button>
-                    ))}
+                  <div className="absolute left-0 right-0 bottom-full mb-2 z-50 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200/80 dark:border-white/10 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 origin-bottom duration-200">
+                    
+                    <div className="p-2 border-b border-zinc-100 dark:border-white/5 bg-zinc-50/50 dark:bg-zinc-950/50">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
+                        <input 
+                          autoFocus
+                          type="text"
+                          placeholder="Search or type new..."
+                          value={categorySearch}
+                          onChange={(e) => setCategorySearch(e.target.value)}
+                          className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="max-h-48 overflow-y-auto custom-scrollbar p-1.5">
+                      {isNewCategory && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData({ ...formData, category: categorySearch });
+                            setIsCategoryOpen(false);
+                            setCategorySearch("");
+                          }}
+                          className="w-full text-left px-4 py-3 rounded-xl text-sm transition-colors flex items-center gap-2 text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-500/10 font-bold mb-1"
+                        >
+                          <PlusCircle size={16} /> Create "{categorySearch}"
+                        </button>
+                      )}
+                      
+                      {filteredCategories.map((cat) => (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => {
+                            setFormData({ ...formData, category: cat });
+                            setIsCategoryOpen(false);
+                            setCategorySearch("");
+                          }}
+                          className={`w-full text-left px-4 py-3 rounded-xl text-sm transition-colors ${
+                            formData.category === cat 
+                            ? 'bg-zinc-100 dark:bg-white/10 text-zinc-900 dark:text-zinc-100 font-bold' 
+                            : 'hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-700 dark:text-zinc-300 font-medium'
+                          }`}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+
                   </div>
                 </>
               )}

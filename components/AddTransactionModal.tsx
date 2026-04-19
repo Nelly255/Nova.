@@ -27,10 +27,27 @@ export default function AddTransactionModal() {
   const [currencySymbol, setCurrencySymbol] = useState("$");
   
   const [mounted, setMounted] = useState(false);
+  
+  // 🚀 UPGRADED CURRENCY LOGIC: Maps common currencies and safely falls back
   useEffect(() => {
     setMounted(true);
-    const savedCurrency = localStorage.getItem("app_currency");
-    setCurrencySymbol(savedCurrency === "TZS" ? "TSh " : "$");
+    const savedCurrency = localStorage.getItem("app_currency") || "USD";
+    
+    const currencyMap: Record<string, string> = {
+      "TZS": "TSh ",
+      "KES": "KSh ",
+      "UGX": "USh ",
+      "RWF": "FRw ",
+      "NGN": "₦",
+      "ZAR": "R ",
+      "EUR": "€",
+      "GBP": "£",
+      "INR": "₹",
+      "USD": "$"
+    };
+    
+    // If it's in the map, use the symbol. If not, just use the letters (e.g., "AUD ")
+    setCurrencySymbol(currencyMap[savedCurrency] || `${savedCurrency} `);
   }, []);
 
   const [formData, setFormData] = useState({
@@ -122,7 +139,6 @@ export default function AddTransactionModal() {
     const txAmount = parseFloat(formData.amount);
     const feeAmount = parseFloat(transactionFee || "0");
 
-    // 🚀 NEW: We grab the exact type of the wallet (mobile, bank, or cash)
     const walletType = selectedAccount?.type || "cash"; 
 
     const transactionsToInsert = [
@@ -132,7 +148,7 @@ export default function AddTransactionModal() {
         type: formData.type,
         category: formData.category,
         account_id: formData.account_id, 
-        account_type: walletType, // 🚀 NEW: Saving the wallet type here!
+        account_type: walletType, 
         date: formData.date,
       }
     ];
@@ -144,7 +160,7 @@ export default function AddTransactionModal() {
         type: "expense",
         category: "Bank Charges",
         account_id: formData.account_id,
-        account_type: walletType, // 🚀 NEW: Saving the wallet type for fees too!
+        account_type: walletType, 
         date: formData.date,
       });
     }
@@ -305,7 +321,7 @@ export default function AddTransactionModal() {
                     required
                     type="text" 
                     inputMode="decimal" 
-                    placeholder="0.00"
+                    placeholder={`${currencySymbol}0.00`}
                     value={formatAmountForDisplay(formData.amount)} 
                     onChange={handleAmountChange} 
                     className={`w-full bg-zinc-50 dark:bg-zinc-950/50 border rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none transition-colors ${isInsufficient ? 'border-rose-500 ring-1 ring-rose-500' : 'border-zinc-200/80 dark:border-white/10 focus:border-indigo-500'}`}
@@ -332,7 +348,7 @@ export default function AddTransactionModal() {
                   <input 
                     type="text" 
                     inputMode="decimal" 
-                    placeholder="0.00"
+                    placeholder={`${currencySymbol}0.00`}
                     value={formatAmountForDisplay(transactionFee)} 
                     onChange={handleFeeChange} 
                     className={`w-full bg-zinc-50 dark:bg-zinc-950/50 border rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none transition-colors ${isInsufficient ? 'border-rose-500 ring-1 ring-rose-500' : 'border-zinc-200/80 dark:border-white/10 focus:border-indigo-500'}`}

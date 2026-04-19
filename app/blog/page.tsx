@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Moon, Sun, ArrowRight, Calendar, User, BookOpen, Activity, Shield } from "lucide-react";
+import { ArrowLeft, Moon, Sun, ArrowRight, Calendar, Activity, Shield } from "lucide-react";
 
 export default function BlogIndexPage() {
   // THEME STATE
@@ -71,7 +71,7 @@ export default function BlogIndexPage() {
           </button>
         </nav>
 
-        {/* 🚀 HERO SECTION (Matched to Trackers UI) */}
+        {/* HERO SECTION */}
         <header className="max-w-6xl mx-auto w-full mb-20 grid lg:grid-cols-2 gap-10 items-end">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#12121A] border border-slate-200 dark:border-white/5 shadow-sm">
@@ -104,7 +104,7 @@ export default function BlogIndexPage() {
         <main className="max-w-6xl mx-auto w-full flex-grow pb-24">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             
-            {/* FEATURED / PLATFORM POST */}
+            {/* 1. FEATURED / PLATFORM POST */}
             <BlogCard 
               href="/blog/best-budgeting-app-tanzania"
               category="Platform"
@@ -115,7 +115,17 @@ export default function BlogIndexPage() {
               featured={true}
             />
 
-            {/* WEALTH BUILDING POST (Patched and Linked!) */}
+            {/* 2. 🚀 THE BRAND NEW POST! */}
+            <BlogCard 
+              href="/blog/how-to-track-expenses-tanzania"
+              category="Guide"
+              title="How to Track Expenses Effectively in Tanzania"
+              excerpt="From Daladala fares in cash to paying LUKU via M-Pesa, managing money in Tanzania can get messy. Here is the ultimate guide to keeping organized."
+              date="April 19, 2026"
+              readTime="5 min read"
+            />
+
+            {/* 3. WEALTH BUILDING POST */}
             <BlogCard 
               href="/blog/asset-depreciation-tanzania"
               category="Wealth Building"
@@ -125,7 +135,7 @@ export default function BlogIndexPage() {
               readTime="4 min read"
             />
 
-            {/* STRATEGY POST */}
+            {/* 4. STRATEGY POST */}
             <BlogCard 
               href="/blog/50-30-20-budget-tanzania"
               category="Strategy"
