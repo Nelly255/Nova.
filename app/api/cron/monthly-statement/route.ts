@@ -102,7 +102,7 @@ export async function GET(request: Request) {
                   Need this for your accountant? Download the fully itemized official PDF report directly from your vault.
                 </p>
 
-                <a href="https://nova-two-beta.vercel.app/dashboard/settings" style="display: block; width: 100%; text-align: center; background-color: #0F172A; color: #FFFFFF; padding: 16px 0; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 16px;">
+                <a href="https://nova.co.tz/dashboard/settings" style="display: block; width: 100%; text-align: center; background-color: #0F172A; color: #FFFFFF; padding: 16px 0; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 16px;">
                   Download Official PDF
                 </a>
               </div>

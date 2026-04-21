@@ -59,7 +59,7 @@ export async function GET(request: Request) {
               <p style="color: #475569; font-size: 15px; line-height: 1.6;">
                 Did you grab a coffee? Pay for transport? Keep your financial tracking perfectly accurate by taking 30 seconds to log your expenses before bed.
               </p>
-              <a href="https://nova-two-beta.vercel.app/dashboard" style="display: block; width: 100%; text-align: center; background-color: #0F172A; color: #FFFFFF; padding: 14px 0; text-decoration: none; border-radius: 10px; font-weight: bold; margin-top: 25px;">
+              <a href="https://nova.co.tz/dashboard" style="display: block; width: 100%; text-align: center; background-color: #0F172A; color: #FFFFFF; padding: 14px 0; text-decoration: none; border-radius: 10px; font-weight: bold; margin-top: 25px;">
                 Open My Vault
               </a>
             </div>
