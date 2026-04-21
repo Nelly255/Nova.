@@ -43,7 +43,7 @@ export async function GET(request: Request) {
 
       // NOTE: Until you buy a domain, Resend will only successfully deliver to YOUR email address.
       await resend.emails.send({
-        from: 'Nova <onboarding@resend.dev>',
+        from: 'Nova <info@nova.co.tz>',
         to: user.email!,
         subject: 'Did you spend anything today? 🌙',
         html: `

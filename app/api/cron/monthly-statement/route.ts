@@ -63,7 +63,7 @@ export async function GET(request: Request) {
         const name = user.user_metadata?.full_name?.split(" ")[0] || 'there';
 
         await resend.emails.send({
-          from: 'Nova <onboarding@resend.dev>', // Update this when you get your custom domain!
+          from: 'Nova <info@nova.co.tz>', // Update this when you get your custom domain!
           to: user.email!,
           subject: `Your ${monthName} Financial Statement from Nova 📄`,
           html: `
