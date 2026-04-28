@@ -4,12 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react"; 
 import { supabase } from "@/lib/supabase"; 
-import { LayoutDashboard, ArrowRightLeft, Target, ShieldCheck, Settings, PiggyBank, Briefcase, Menu, ChevronLeft, CreditCard, Activity, LogOut, Download, Search, Coffee, Wallet } from "lucide-react"; 
+import { LayoutDashboard, ArrowRightLeft, Target, ShieldCheck, Settings, PiggyBank, Briefcase, Menu, ChevronLeft, CreditCard, Activity, LogOut, Download, Search, Coffee, Wallet, Wrench } from "lucide-react"; 
 import UserProfile from "@/components/UserProfile"; 
 import AuthGuard from "@/components/AuthGuard";
 import QuickTourModal from "@/components/QuickTourModal"; 
 import SingleTabEnforcer from "@/components/SingleTabEnforcer"; 
-// 🚀 INJECTED: The Command Palette Import
 import CommandPalette from "@/components/CommandPalette";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -30,12 +29,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   // PWA Registration & Install Listener
   useEffect(() => {
-    // 1. Register the Service Worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch((err) => console.error('SW Failed', err));
     }
 
-    // 2. Listen for the native browser install prompt
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setInstallPrompt(e);
@@ -50,7 +47,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     installPrompt.prompt();
     const { outcome } = await installPrompt.userChoice;
     if (outcome === 'accepted') {
-      setInstallPrompt(null); // Hide button once installed!
+      setInstallPrompt(null);
     }
   };
 
@@ -73,7 +70,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           .nuke-scrollbar { -ms-overflow-style: none !important; scrollbar-width: none !important; }
         `}} />
 
-        {/* 💻 DESKTOP SIDEBAR - 🚀 PATCHED: w-56 changed to w-64 */}
+        {/* 💻 DESKTOP SIDEBAR */}
         <aside className={`border-r border-white/60 dark:border-white/5 bg-white/40 dark:bg-[#0A0A0E]/60 backdrop-blur-[40px] hidden md:flex flex-col h-full relative z-20 transition-all duration-500 ease-in-out shadow-[4px_0_24px_rgba(0,0,0,0.02)] dark:shadow-none ${isCollapsed ? 'w-20 px-3 py-6' : 'w-64 p-5'}`}>
           
           <button 
@@ -92,7 +89,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </div>
             
-          {/* 2. Scrollable Middle Section - Mask-Image Edge Fading */}
+          {/* 2. Scrollable Middle Section */}
           <div 
             className="flex-1 overflow-y-auto min-h-0 nuke-scrollbar -mx-2 px-2 pb-6"
             style={{ 
@@ -109,6 +106,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <NavItem href="/dashboard/savings" icon={<PiggyBank size={20}/>} label="Savings Goals" active={pathname === "/dashboard/savings"} isCollapsed={isCollapsed} />
               <NavItem href="/dashboard/assets" icon={<Briefcase size={20}/>} label="Assets" active={pathname === "/dashboard/assets"} isCollapsed={isCollapsed} />
               <NavItem href="/dashboard/debts" icon={<CreditCard size={20}/>} label="Debts & Loans" active={pathname === "/dashboard/debts"} isCollapsed={isCollapsed} />
+              
+              {/* 🚀 Tools Link - Now stays active if you are inside ANY calculator! */}
+              <NavItem href="/dashboard/tools" icon={<Wrench size={20}/>} label="Tools" active={pathname === "/dashboard/tools" || pathname.includes('-calculator')} isCollapsed={isCollapsed} />
               
               {/* ☕ Ko-fi Button (Desktop) */}
               <div className="pt-4 pb-2">
@@ -203,7 +203,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* 📱 MOBILE FLOATING BOTTOM NAV */}
         <nav className="md:hidden fixed bottom-[max(env(safe-area-inset-bottom),1.5rem)] left-4 right-4 z-[9999] pointer-events-auto">
-          <div className="nuke-scrollbar bg-white/40 dark:bg-[#0A0A0E]/60 backdrop-blur-[40px] saturate-[2] border border-white/40 dark:border-white/10 shadow-[0_16px_40px_-10px_rgba(0,0,0,0.5)] rounded-[2.5rem] px-2 py-2.5 flex items-center justify-between gap-1 overflow-x-auto relative">
+          <div className="nuke-scrollbar bg-white/40 dark:bg-[#0A0A0E]/60 backdrop-blur-[40px] saturate-[2] border border-white/40 dark:border-white/10 shadow-[0_16px_40px_-10px_rgba(0,0,0,0.5)] rounded-[2.5rem] px-1 py-2 flex items-center justify-start gap-1 overflow-x-auto relative scroll-smooth snap-x snap-mandatory">
+            
+            {/* Invis Spacer for starting scroll padding */}
+            <div className="w-1 shrink-0 snap-start"></div>
+            
             <MobileNavItem href="/dashboard" icon={<LayoutDashboard size={22}/>} label="Home" active={pathname === "/dashboard"} />
             <MobileNavItem href="/dashboard/wallets" icon={<Wallet size={22}/>} label="Wallets" active={pathname === "/dashboard/wallets"} />
             <MobileNavItem href="/dashboard/transactions" icon={<ArrowRightLeft size={22}/>} label="Txns" active={pathname === "/dashboard/transactions"} />
@@ -212,8 +216,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <MobileNavItem href="/dashboard/savings" icon={<PiggyBank size={22}/>} label="Save" active={pathname === "/dashboard/savings"} />
             <MobileNavItem href="/dashboard/debts" icon={<CreditCard size={22}/>} label="Debts" active={pathname === "/dashboard/debts"} />
             <MobileNavItem href="/dashboard/assets" icon={<Briefcase size={22}/>} label="Assets" active={pathname === "/dashboard/assets"} />
-            <div className="w-[1px] h-8 bg-slate-300/50 dark:bg-white/10 shrink-0 mx-1 rounded-full"></div>
+            
+            <div className="w-[1px] h-8 bg-slate-300/50 dark:bg-white/10 shrink-0 mx-1 rounded-full snap-center"></div>
+            
+            <MobileNavItem href="/dashboard/tools" icon={<Wrench size={22}/>} label="Tools" active={pathname === "/dashboard/tools" || pathname.includes('-calculator')} />
             <MobileNavItem href="/dashboard/settings" icon={<Settings size={22}/>} label="Settings" active={pathname === "/dashboard/settings"} />
+            
+            {/* Invis Spacer to fix the far right cutoff */}
+            <div className="w-2 shrink-0 snap-end"></div>
+
           </div>
         </nav>
 
@@ -222,7 +233,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   );
 }
 
-// --- DESKTOP NAV ITEM (🚀 UPGRADED GLASSMORPHISM + ACCESSIBILITY) ---
+// --- DESKTOP NAV ITEM ---
 function NavItem({ icon, label, href = "#", active = false, isCollapsed }: any) {
   return (
     <Link 
@@ -245,7 +256,7 @@ function NavItem({ icon, label, href = "#", active = false, isCollapsed }: any) 
   );
 }
 
-// --- MOBILE NAV ITEM (🚀 ADDED ACCESSIBILITY) ---
+// --- MOBILE NAV ITEM (Updated with Snap Scrolling) ---
 function MobileNavItem({ icon, label, href = "#", active = false }: any) {
   return (
     <Link 
@@ -256,7 +267,7 @@ function MobileNavItem({ icon, label, href = "#", active = false }: any) {
           navigator.vibrate(50);
         }
       }}
-      className={`flex flex-col items-center justify-center min-w-[60px] py-2.5 px-2 rounded-2xl transition-all duration-300 relative group shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500
+      className={`snap-center flex flex-col items-center justify-center min-w-[56px] py-2.5 px-2 rounded-2xl transition-all duration-300 relative group shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500
       ${active 
         ? 'text-indigo-600 dark:text-indigo-400 bg-white/60 dark:bg-slate-800/60 backdrop-blur-md shadow-[0_4px_12px_rgba(0,0,0,0.05)] border border-white/50 dark:border-white/5' 
         : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 border border-transparent'
