@@ -66,7 +66,7 @@ export default function SettingsPage() {
   const executeClearData = async () => {
     setIsWiping(true);
     try {
-      // 🚀 UPGRADED: Delete child records first to prevent foreign key errors
+      // Delete child records first to prevent foreign key errors
       await Promise.all([
         supabase.from("transactions").delete().not('id', 'is', null),
         supabase.from("assets").delete().not('id', 'is', null),
@@ -76,7 +76,7 @@ export default function SettingsPage() {
         supabase.from("debts").delete().not('id', 'is', null)
       ]);
 
-      // 🚀 NEW: Now that transactions are gone, safely delete all wallets!
+      // Now that transactions are gone, safely delete all wallets
       await supabase.from("accounts").delete().not('id', 'is', null);
 
       // Fire events so all pages know the data is gone
@@ -158,8 +158,15 @@ export default function SettingsPage() {
 
     let summaryHtml = '';
     if (title.includes("Transactions")) {
-      const totalIncome = data.filter(d => d.type === 'income').reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
-      const totalExpense = data.filter(d => d.type === 'expense').reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+      // 🚀 UPGRADED: Explicitly filter out "contra" category so it doesn't inflate revenue/expenses
+      const totalIncome = data
+        .filter(d => d.type === 'income' && (d.category || '').toLowerCase() !== 'contra')
+        .reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+        
+      const totalExpense = data
+        .filter(d => d.type === 'expense' && (d.category || '').toLowerCase() !== 'contra')
+        .reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+        
       const net = totalIncome - totalExpense;
       
       summaryHtml = `
@@ -242,6 +249,7 @@ export default function SettingsPage() {
             
             .align-right { text-align: right; }
             .amount-cell { font-variant-numeric: tabular-nums; font-weight: 600; }
+            .contra-label { background: #E2E8F0; color: #475569; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold; text-transform: uppercase; margin-left: 6px; }
             
             .footer { 
               text-align: center; 
@@ -279,7 +287,9 @@ export default function SettingsPage() {
               </tr>
             </thead>
             <tbody>
-              ${data.map(row => `
+              ${data.map(row => {
+                const isContra = (row.category || '').toLowerCase() === 'contra';
+                return `
                 <tr>
                   ${headers.map(h => {
                     let val = row[h];
@@ -289,7 +299,9 @@ export default function SettingsPage() {
                     
                     if (isNumber && !isNaN(val)) {
                       val = Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                      if (row.type === 'expense') {
+                      if (isContra) {
+                         return `<td class="align-right amount-cell" style="color: #94A3B8;">${sym}${val}</td>`;
+                      } else if (row.type === 'expense') {
                          return `<td class="align-right amount-cell text-rose">-${sym}${val}</td>`;
                       } else if (row.type === 'income') {
                          return `<td class="align-right amount-cell text-emerald">+${sym}${val}</td>`;
@@ -304,11 +316,15 @@ export default function SettingsPage() {
                     if (h === 'type') {
                       return `<td style="text-transform: capitalize;">${val}</td>`;
                     }
+
+                    if (h === 'title' && isContra) {
+                      return `<td>${val} <span class="contra-label">Transfer</span></td>`;
+                    }
                     
                     return `<td>${val}</td>`;
                   }).join("")}
                 </tr>
-              `).join("")}
+              `}).join("")}
             </tbody>
           </table>
           <div class="footer">

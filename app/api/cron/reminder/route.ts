@@ -45,25 +45,76 @@ export async function GET(request: Request) {
       await resend.emails.send({
         from: 'Nova <info@nova.co.tz>',
         to: user.email!,
-        subject: 'Did you spend anything today? 🌙',
+        subject: 'Did you spend anything today?',
         html: `
-          <div style="font-family: 'Inter', sans-serif; max-width: 500px; margin: 0 auto; padding: 30px; background-color: #FAFAFA; border-radius: 16px; border: 1px solid #E5E7EB;">
-            <div style="text-align: center; margin-bottom: 20px;">
-              <h1 style="color: #4F46E5; font-size: 24px; margin: 0; font-weight: 800;">Nova.</h1>
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Evening Vault Check</title>
+          </head>
+          <body style="margin: 0; padding: 0; background-color: #F4F4F5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #09090B;">
+            
+            <div style="display: none; max-height: 0px; overflow: hidden;">
+              We noticed your vault has been quiet today. Keep your financial tracking perfectly accurate...
             </div>
-            <div style="background-color: #FFFFFF; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
-              <h2 style="color: #0F172A; font-size: 18px; margin-top: 0;">Evening Vault Check</h2>
-              <p style="color: #475569; font-size: 15px; line-height: 1.6;">
-                Hey ${name}, we noticed your vault has been quiet today. 
-              </p>
-              <p style="color: #475569; font-size: 15px; line-height: 1.6;">
-                Did you grab a coffee? Pay for transport? Keep your financial tracking perfectly accurate by taking 30 seconds to log your expenses before bed.
-              </p>
-              <a href="https://nova.co.tz/dashboard" style="display: block; width: 100%; text-align: center; background-color: #0F172A; color: #FFFFFF; padding: 14px 0; text-decoration: none; border-radius: 10px; font-weight: bold; margin-top: 25px;">
-                Open My Vault
-              </a>
-            </div>
-          </div>
+
+            <table width="100%" border="0" cellspacing="0" cellpadding="0" bgcolor="#F4F4F5" style="padding: 40px 20px;">
+              <tr>
+                <td align="center">
+                  
+                  <table width="100%" max-width="600" border="0" cellspacing="0" cellpadding="0" bgcolor="#FFFFFF" style="max-width: 600px; border-radius: 24px; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,0.04); border: 1px solid #E4E4E7;">
+                    
+                    <tr>
+                      <td align="center" style="padding: 48px 40px 32px 40px; border-bottom: 1px solid #F4F4F5;">
+                        <h1 style="margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -1px; color: #09090B;">
+                          Nova<span style="color: #4F46E5;">.</span>
+                        </h1>
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td style="padding: 40px;">
+                        <p style="margin: 0 0 8px 0; font-size: 12px; font-weight: 700; letter-spacing: 1px; color: #A1A1AA; text-transform: uppercase;">Evening Check-in</p>
+                        
+                        <h2 style="margin: 0 0 20px 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px; color: #09090B;">
+                          Hey ${name}, your vault has been quiet.
+                        </h2>
+                        
+                        <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 26px; color: #52525B;">
+                          Did you grab a coffee? Pay for transport? Send a mobile money transfer?
+                        </p>
+
+                        <p style="margin: 0 0 32px 0; font-size: 16px; line-height: 26px; color: #52525B;">
+                          The secret to building lasting wealth is knowing exactly where every shilling goes. Take 30 seconds to log your daily activity before bed so your True Net Worth stays perfectly accurate.
+                        </p>
+
+                        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 16px;">
+                          <tr>
+                            <td align="center">
+                              <a href="https://nova.co.tz/dashboard" target="_blank" style="display: block; width: 100%; text-align: center; padding: 18px 0; background-color: #09090B; color: #FFFFFF; font-size: 16px; font-weight: 600; text-decoration: none; border-radius: 12px; letter-spacing: 0.5px;">Open My Vault</a>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <table width="100%" max-width="600" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; padding-top: 32px;">
+                    <tr>
+                      <td align="center">
+                        <p style="margin: 0 0 8px 0; font-size: 12px; color: #A1A1AA;">© 2026 Nova Finance. All rights reserved.</p>
+                        <p style="margin: 0; font-size: 12px; color: #A1A1AA;">Arusha, Tanzania</p>
+                      </td>
+                    </tr>
+                  </table>
+
+                </td>
+              </tr>
+            </table>
+          </body>
+          </html>
         `
       });
     }

@@ -14,17 +14,18 @@ const bodyFont = Inter({ subsets: ["latin"] });
 export default function WelcomePage() {
   const [theme, setTheme] = useState('dark');
   const router = useRouter(); 
+  const [hasActiveSession, setHasActiveSession] = useState(false);
 
-  // Auth Check - Redirect logged-in users to dashboard instantly
+  // 🚀 Auth Check - Silently check session without forcing a redirect
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        router.push('/dashboard');
+        setHasActiveSession(true);
       }
     };
     checkUser();
-  }, [router]);
+  }, []);
 
   // Auto system theme detection
   useEffect(() => {
@@ -59,6 +60,23 @@ export default function WelcomePage() {
     }
   };
 
+  // 🚀 Dynamic Handlers based on Auth State
+  const handlePrimaryAction = () => {
+    if (hasActiveSession) {
+      router.push("/dashboard");
+    } else {
+      router.push("/signup"); 
+    }
+  };
+
+  const handleLoginClick = () => {
+    if (hasActiveSession) {
+      router.push("/dashboard");
+    } else {
+      router.push("/login");
+    }
+  };
+
   return (
     <main className={`min-h-screen bg-slate-50 dark:bg-[#0A0A0E] text-slate-900 dark:text-slate-50 flex flex-col relative overflow-hidden selection:bg-indigo-500/30 transition-colors duration-500 ${bodyFont.className}`}>
       
@@ -85,12 +103,12 @@ export default function WelcomePage() {
             {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
           </button>
 
-          <Link href="/login" className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white text-sm font-semibold px-2 sm:px-4 py-2 transition-colors relative z-[100]">
-            Log In
-          </Link>
-          <Link href="/signup" className="bg-white dark:bg-white/5 backdrop-blur-md text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-700 dark:hover:text-indigo-300 dark:hover:border-indigo-500/30 px-4 sm:px-5 py-2 rounded-full text-sm font-bold transition-all active:scale-95 shadow-sm relative z-[100]">
-            Sign Up
-          </Link>
+          <button onClick={handleLoginClick} className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white text-sm font-semibold px-2 sm:px-4 py-2 transition-colors relative z-[100]">
+            {hasActiveSession ? "Dashboard" : "Log In"}
+          </button>
+          <button onClick={handlePrimaryAction} className="bg-white dark:bg-white/5 backdrop-blur-md text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-700 dark:hover:text-indigo-300 dark:hover:border-indigo-500/30 px-4 sm:px-5 py-2 rounded-full text-sm font-bold transition-all active:scale-95 shadow-sm relative z-[100]">
+            {hasActiveSession ? "Open Vault" : "Sign Up"}
+          </button>
         </div>
       </header>
 
@@ -104,7 +122,6 @@ export default function WelcomePage() {
             "Give every dollar a purpose."
           </div>
 
-          {/* 🚀 FONT SCALE FIX: Changed to text-4xl sm:text-5xl lg:text-6xl */}
           <h1 className={`${headerFont.className} text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight mb-5 leading-[1.15] text-slate-900 dark:text-white transition-colors`}>
             Your financial life, <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 pr-4">
@@ -117,9 +134,9 @@ export default function WelcomePage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto relative z-30 mb-8">
-            <Link href="/signup" className="group flex items-center justify-center gap-3 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-900 px-8 py-4 rounded-full text-base font-bold transition-all hover:-translate-y-1 hover:shadow-xl dark:hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.4)] active:scale-95 w-full sm:w-auto">
-              Start Tracking <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
+            <button onClick={handlePrimaryAction} className="group flex items-center justify-center gap-3 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-900 px-8 py-4 rounded-full text-base font-bold transition-all hover:-translate-y-1 hover:shadow-xl dark:hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.4)] active:scale-95 w-full sm:w-auto">
+              {hasActiveSession ? "Open My Vault" : "Start Tracking"} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+            </button>
             <a href="#free-tools" className="group flex items-center justify-center gap-2 bg-white dark:bg-white/5 backdrop-blur-md border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 px-8 py-4 rounded-full text-base font-bold transition-all hover:bg-slate-50 dark:hover:bg-white/10 hover:-translate-y-1 hover:shadow-md active:scale-95 w-full sm:w-auto">
               Explore Free Tools
             </a>
@@ -308,9 +325,9 @@ export default function WelcomePage() {
           
           <h2 className={`${headerFont.className} text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-4 transition-colors tracking-tight`}>Take control of your future.</h2>
           <p className="text-slate-600 dark:text-slate-400 text-base md:text-lg max-w-xl mx-auto leading-relaxed transition-colors mb-8">Your financial data is encrypted, secure, and entirely yours. Join thousands of users building wealth with Nova today.</p>
-          <Link href="/signup" className="inline-flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-full text-base font-bold transition-all hover:-translate-y-1 hover:shadow-xl active:scale-95">
-            Create Free Account
-          </Link>
+          <button onClick={handlePrimaryAction} className="inline-flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-full text-base font-bold transition-all hover:-translate-y-1 hover:shadow-xl active:scale-95">
+            {hasActiveSession ? "Go to Dashboard" : "Create Free Account"}
+          </button>
         </div>
       </div>
 
