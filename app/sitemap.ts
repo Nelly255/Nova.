@@ -64,6 +64,42 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
     // 💰 CALCULATORS / TOOLS (HIGH TRAFFIC)
     {
+      url: `${baseUrl}/tra-car-import-duty-calculator-tanzania`, // The localized SEO magnet
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/paye-calculator`, // Tax calculator
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/gross-salary-calculator`, // Salary negotiation
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/compound-interest-calculator`, // Wealth growth
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/debt-payoff-calculator`, // Debt strategy
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/emergency-fund-calculator`, // Savings goals
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/depreciation-calculator`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
@@ -90,7 +126,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
 
-    // 🔥 SAMPLE BLOG POSTS (you’ll generate these dynamically later)
+    // 🔥 SAMPLE BLOG POSTS
     {
       url: `${baseUrl}/blog/how-to-track-expenses-tanzania`,
       lastModified: new Date(),

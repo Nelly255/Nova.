@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase"; 
 import { Plus_Jakarta_Sans, Inter } from "next/font/google";
-import { ArrowRight, Shield, Zap, PieChart, Activity, TrendingUp, TrendingDown, Wallet, Sun, Moon, CreditCard, Target, Lock, LineChart, Building, Calculator, Mail, Layers, RefreshCw, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Shield, Zap, PieChart, Activity, TrendingUp, TrendingDown, Wallet, Target, Sun, Moon, CreditCard, Lock, LineChart, Building, Calculator, Mail, Layers, RefreshCw, CheckCircle2, Car, ChevronDown, ChevronUp } from "lucide-react";
 
 // Initialize our premium startup fonts
 const headerFont = Plus_Jakarta_Sans({ subsets: ["latin"] });
@@ -15,6 +15,9 @@ export default function WelcomePage() {
   const [theme, setTheme] = useState('dark');
   const router = useRouter(); 
   const [hasActiveSession, setHasActiveSession] = useState(false);
+  
+  // STATE: Control Free Tools Expansion
+  const [showAllTools, setShowAllTools] = useState(false);
 
   // 🚀 Auth Check - Silently check session without forcing a redirect
   useEffect(() => {
@@ -76,6 +79,73 @@ export default function WelcomePage() {
       router.push("/login");
     }
   };
+
+  // DATA ARRAY FOR FREE TOOLS (Now 9 Tools)
+  const freeToolsData = [
+    {
+      href: "/net-worth-calculator",
+      icon: <LineChart size={22} />,
+      title: "Net Worth",
+      description: "Calculate your exact wealth standing in Tanzania.",
+      colorClass: "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 border-purple-100 dark:border-purple-500/20"
+    },
+    {
+      href: "/tra-car-import-duty-calculator-tanzania",
+      icon: <Car size={22} />,
+      title: "TRA Import",
+      description: "Estimate taxes for vehicle imports via TRA formulas.",
+      colorClass: "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20"
+    },
+    {
+      href: "/paye-calculator",
+      icon: <Wallet size={22} />,
+      title: "PAYE Calculator",
+      description: "Calculate your exact take-home pay after TRA deductions.",
+      colorClass: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20"
+    },
+    {
+      href: "/gross-salary-calculator",
+      icon: <Target size={22} />,
+      title: "Gross Salary Calculator",
+      description: "Reverse-engineer your dream net salary for negotiations.",
+      colorClass: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border-blue-100 dark:border-blue-500/20"
+    },
+    {
+      href: "/budget-calculator",
+      icon: <Calculator size={22} />,
+      title: "Zero-Budget",
+      description: "Generate a strict, optimized 50/30/20 spending plan.",
+      colorClass: "text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-500/10 border-sky-100 dark:border-sky-500/20"
+    },
+    {
+      href: "/depreciation-calculator",
+      icon: <Building size={22} />,
+      title: "Depreciation",
+      description: "Calculate capital allowance per Tanzanian tax law.",
+      colorClass: "text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-500/10 border-teal-100 dark:border-teal-500/20"
+    },
+    {
+      href: "/compound-interest-calculator",
+      icon: <TrendingUp size={22} />,
+      title: "Compound Int.",
+      description: "Project investment growth over time with compounding.",
+      colorClass: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20"
+    },
+    {
+      href: "/debt-payoff-calculator",
+      icon: <TrendingDown size={22} />,
+      title: "Debt Payoff",
+      description: "Strategize the fastest way to become debt-free.",
+      colorClass: "text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-500/10 border-cyan-100 dark:border-cyan-500/20"
+    },
+    {
+      href: "/emergency-fund-calculator",
+      icon: <Shield size={22} />,
+      title: "Emergency Fund",
+      description: "Determine cash needed for unexpected life events.",
+      colorClass: "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20"
+    }
+  ];
 
   return (
     <main className={`min-h-screen bg-slate-50 dark:bg-[#0A0A0E] text-slate-900 dark:text-slate-50 flex flex-col relative overflow-hidden selection:bg-indigo-500/30 transition-colors duration-500 ${bodyFont.className}`}>
@@ -283,34 +353,56 @@ export default function WelcomePage() {
       </div>
 
       {/* FREE TOOLS SECTION */}
-      <div id="free-tools" className="w-full max-w-7xl mx-auto px-6 py-16 lg:py-24 z-10 scroll-mt-20 border-t border-slate-200/50 dark:border-white/5">
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <h2 className={`${headerFont.className} text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-4 transition-colors tracking-tight`}>Nova Free Tools.</h2>
-          <p className="text-slate-600 dark:text-slate-400 transition-colors">No account required. Generate premium PDF reports and calculate your financial standing instantly.</p>
+      <div id="free-tools" className="w-full max-w-7xl mx-auto px-6 py-12 lg:py-20 z-10 scroll-mt-20 border-t border-slate-200/50 dark:border-white/5">
+        <div className="text-center max-w-2xl mx-auto mb-10">
+          <h2 className={`${headerFont.className} text-3xl md:text-4xl font-extrabold mb-3 tracking-tight`}>Free Financial Tools.</h2>
+          <p className="text-slate-600 dark:text-slate-400 text-base">Professional calculators. No account needed.</p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          <ToolCard
-            href="/net-worth-calculator"
-            icon={<LineChart size={24} />}
-            title="Net Worth Calculator"
-            description="Calculate your gross assets against your total liabilities to find your exact wealth standing in Tanzania."
-            colorClass="text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 border-purple-100 dark:border-purple-500/20"
-          />
-          <ToolCard
-            href="/depreciation-calculator"
-            icon={<Building size={24} />}
-            title="TRA Asset Depreciation"
-            description="Calculate capital allowance and reducing balances according to Tanzanian tax law to understand true asset values."
-            colorClass="text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20"
-          />
-          <ToolCard
-            href="/budget-calculator"
-            icon={<Calculator size={24} />}
-            title="Zero-Based Budget"
-            description="Input your monthly salary to generate a strict, optimized 50/30/20 spending plan for ultimate financial independence."
-            colorClass="text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-500/10 border-sky-100 dark:border-sky-500/20"
-          />
+        {/* PRIMARY ROW (4 Items) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {freeToolsData.slice(0, 4).map((tool, index) => (
+            <div key={index} className="animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both" style={{ animationDelay: `${index * 100}ms` }}>
+              <ToolCard
+                href={tool.href}
+                icon={tool.icon}
+                title={tool.title}
+                description={tool.description}
+                colorClass={tool.colorClass}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* SECONDARY ROWS (5 Items) */}
+        {showAllTools && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto mt-4 animate-in fade-in slide-in-from-top-4 duration-500 fill-mode-both">
+            {freeToolsData.slice(4, 9).map((tool, index) => (
+              <div key={index + 4} className="animate-in fade-in slide-in-from-top-4 duration-500 fill-mode-both" style={{ animationDelay: `${index * 150}ms` }}>
+                <ToolCard
+                  href={tool.href}
+                  icon={tool.icon}
+                  title={tool.title}
+                  description={tool.description}
+                  colorClass={tool.colorClass}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Premium Toggle Button */}
+        <div className="mt-10 flex justify-center">
+          <button 
+            onClick={() => setShowAllTools(!showAllTools)}
+            className="group inline-flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all shadow-sm active:scale-95"
+          >
+            {showAllTools ? (
+              <>Collapse <ChevronUp size={14} className="text-slate-400 group-hover:-translate-y-0.5 transition-transform" /></>
+            ) : (
+              <>Explore More Tools <ChevronDown size={14} className="text-slate-400 group-hover:translate-y-0.5 transition-transform" /></>
+            )}
+          </button>
         </div>
       </div>
 
@@ -333,8 +425,10 @@ export default function WelcomePage() {
 
       {/* FOOTER */}
       <footer className="w-full max-w-7xl mx-auto pt-16 pb-12 border-t border-slate-200 dark:border-white/5 z-10 px-6 relative">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12 text-left">
-          <div className="col-span-2 md:col-span-1">
+        {/* Adjusted Grid: 1 col mobile, 2 col tablet, 4 col desktop */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-y-10 sm:gap-8 mb-12 text-left">
+          
+          <div className="sm:col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <Activity size={20} className="text-indigo-600 dark:text-indigo-400" />
               <span className={`${headerFont.className} font-bold text-xl text-slate-900 dark:text-white`}>Nova.</span>
@@ -350,7 +444,7 @@ export default function WelcomePage() {
           
           <div>
             <h4 className="font-bold text-slate-900 dark:text-white mb-4">Features</h4>
-            <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
+            <ul className="space-y-4 sm:space-y-3 text-sm text-slate-600 dark:text-slate-400">
               <li><Link href="/expense-tracker" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Expense Tracker</Link></li>
               <li><Link href="/net-worth-tracker" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Net Worth Tracker</Link></li>
               <li><Link href="/subscription-tracker" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Subscription Radar</Link></li>
@@ -360,16 +454,22 @@ export default function WelcomePage() {
 
           <div>
             <h4 className="font-bold text-slate-900 dark:text-white mb-4">Free Tools</h4>
-            <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
-              <li><Link href="/net-worth-calculator" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Net Worth Calculator</Link></li>
-              <li><Link href="/depreciation-calculator" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Depreciation Calculator</Link></li>
+            <ul className="space-y-4 sm:space-y-3 text-sm text-slate-600 dark:text-slate-400">
+              <li><Link href="/paye-calculator" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">PAYE Take-Home Calculator</Link></li>
+              <li><Link href="/gross-salary-calculator" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Gross Salary Calculator</Link></li>
+              <li><Link href="/tra-car-import-duty-calculator-tanzania" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">TRA Import Tool</Link></li>
               <li><Link href="/budget-calculator" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Zero-Based Budget</Link></li>
+              <li className="pt-1">
+                <a href="#free-tools" className="inline-flex items-center gap-1.5 font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors group">
+                  Explore all tools <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                </a>
+              </li>
             </ul>
           </div>
 
           <div>
             <h4 className="font-bold text-slate-900 dark:text-white mb-4">Company</h4>
-            <ul className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
+            <ul className="space-y-4 sm:space-y-3 text-sm text-slate-600 dark:text-slate-400">
               <li><Link href="/blog" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Financial Blog</Link></li>
               <li><Link href="/privacy" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Privacy Policy</Link></li>
               <li><Link href="/terms" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Terms of Service</Link></li>
@@ -377,10 +477,11 @@ export default function WelcomePage() {
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500 pt-8 border-t border-slate-200 dark:border-white/5">
+        {/* Bottom Bar: Perfect alignment on both mobile and desktop */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 md:gap-4 text-sm text-slate-500 pt-8 border-t border-slate-200 dark:border-white/5">
           <span>© {new Date().getFullYear()} Nova Financial. All rights reserved.</span>
-          <div className="flex items-center gap-6">
-            <span className="flex items-center gap-2 font-medium"><Shield size={14} className="text-emerald-500"/> Bank-Grade Security</span>
+          <div className="flex items-center gap-2 font-medium bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-full border border-emerald-100 dark:border-emerald-500/20 w-fit">
+            <Shield size={14} /> Bank-Grade Security
           </div>
         </div>
       </footer>
@@ -390,18 +491,14 @@ export default function WelcomePage() {
 
 function ToolCard({ href, icon, title, description, colorClass }: { href: string, icon: React.ReactNode, title: string, description: string, colorClass: string }) {
   return (
-    <Link href={href} className="group bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 p-8 rounded-[2rem] hover:shadow-xl dark:hover:bg-slate-800/50 transition-all overflow-hidden relative flex flex-col h-full">
-      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border mb-6 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3 ${colorClass}`}>
+    <Link href={href} className="group bg-white dark:bg-[#111118]/60 backdrop-blur-sm border border-slate-200 dark:border-white/5 p-6 rounded-[1.5rem] hover:shadow-2xl hover:border-indigo-500/40 transition-all flex flex-col h-full relative overflow-hidden">
+      <div className={`w-12 h-12 rounded-xl flex items-center justify-center border mb-4 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 ${colorClass}`}>
         {icon}
       </div>
-      <h3 className={`${headerFont.className} text-xl font-bold text-slate-900 dark:text-white mb-3 tracking-tight`}>
-        {title}
-      </h3>
-      <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed flex-grow mb-6">
-        {description}
-      </p>
-      <div className="font-bold text-sm flex items-center gap-2 text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-        Launch Tool <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+      <h3 className={`${headerFont.className} text-lg font-bold text-slate-900 dark:text-white mb-2 tracking-tight`}>{title}</h3>
+      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4 flex-grow">{description}</p>
+      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 group-hover:translate-x-1 transition-transform">
+        Open Tool <ArrowRight size={12} />
       </div>
     </Link>
   );
