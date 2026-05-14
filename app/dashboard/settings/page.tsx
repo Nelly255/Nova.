@@ -158,13 +158,12 @@ export default function SettingsPage() {
 
     let summaryHtml = '';
     if (title.includes("Transactions")) {
-      // 🚀 UPGRADED: Explicitly filter out "contra" category so it doesn't inflate revenue/expenses
       const totalIncome = data
-        .filter(d => d.type === 'income' && (d.category || '').toLowerCase() !== 'contra')
+        .filter(d => d.type === 'income')
         .reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
         
       const totalExpense = data
-        .filter(d => d.type === 'expense' && (d.category || '').toLowerCase() !== 'contra')
+        .filter(d => d.type === 'expense')
         .reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
         
       const net = totalIncome - totalExpense;
@@ -288,7 +287,7 @@ export default function SettingsPage() {
             </thead>
             <tbody>
               ${data.map(row => {
-                const isContra = (row.category || '').toLowerCase() === 'contra';
+                const isContra = (row.category || '').toLowerCase() === 'contra' || (row.type || '').toLowerCase() === 'transfer';
                 return `
                 <tr>
                   ${headers.map(h => {
@@ -300,7 +299,8 @@ export default function SettingsPage() {
                     if (isNumber && !isNaN(val)) {
                       val = Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                       if (isContra) {
-                         return `<td class="align-right amount-cell" style="color: #94A3B8;">${sym}${val}</td>`;
+                         // Formatted cleanly as money out but styled neutrally
+                         return `<td class="align-right amount-cell" style="color: #94A3B8;">-${sym}${val}</td>`;
                       } else if (row.type === 'expense') {
                          return `<td class="align-right amount-cell text-rose">-${sym}${val}</td>`;
                       } else if (row.type === 'income') {
@@ -314,7 +314,7 @@ export default function SettingsPage() {
                     }
                     
                     if (h === 'type') {
-                      return `<td style="text-transform: capitalize;">${val}</td>`;
+                      return `<td style="text-transform: capitalize; ${isContra ? 'color: #94A3B8;' : ''}">${val}</td>`;
                     }
 
                     if (h === 'title' && isContra) {
@@ -353,7 +353,8 @@ export default function SettingsPage() {
   const handleExportTx = async (type: 'csv' | 'pdf') => {
     type === 'csv' ? setExportingTx(true) : setExportingTxPdf(true);
     
-    let query = supabase.from("transactions").select("*").order("date", { ascending: false });
+    // 🚀 FIXED: Ascending: true to put the 1st of the month at the very top
+    let query = supabase.from("transactions").select("*").order("date", { ascending: true });
     
     if (exportPeriod === "custom") {
       if (startDate) query = query.gte("date", startDate);
@@ -362,14 +363,19 @@ export default function SettingsPage() {
 
     const { data, error } = await query;
     if (!error && data) {
-      // Clean and structure the Transaction Data before sending to PDF engine
-      const formattedTx = data.map(tx => ({
-        date: tx.date,
-        title: tx.title,
-        category: tx.category,
-        type: tx.type,
-        amount: tx.amount
-      }));
+      // 🚀 FIXED: Filters out "income" contras so it ONLY shows the money moving out. Also re-labels to "transfer"
+      const formattedTx = data
+        .filter(tx => !((tx.category || '').toLowerCase() === 'contra' && tx.type === 'income'))
+        .map(tx => {
+          const isContra = (tx.category || '').toLowerCase() === 'contra';
+          return {
+            date: tx.date,
+            title: tx.title,
+            category: tx.category,
+            type: isContra ? 'transfer' : tx.type, 
+            amount: tx.amount
+          };
+        });
 
       if (type === 'csv') downloadCSV(formattedTx, "Transactions_Data");
       else await downloadPDF(formattedTx, "Transactions_Report"); 
@@ -381,7 +387,8 @@ export default function SettingsPage() {
   const handleExportAssets = async (type: 'csv' | 'pdf') => {
     type === 'csv' ? setExportingAssets(true) : setExportingAssetsPdf(true);
     
-    let query = supabase.from("assets").select("*").order("purchase_date", { ascending: false });
+    // 🚀 FIXED: Ascending: true to show oldest purchases at the top
+    let query = supabase.from("assets").select("*").order("purchase_date", { ascending: true });
     
     if (exportPeriod === "custom") {
       if (startDate) query = query.gte("purchase_date", startDate);

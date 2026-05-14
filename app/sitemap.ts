@@ -76,6 +76,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
+      url: `${baseUrl}/freelance-invoice-calculator`, // Freelance tax/invoice strategy
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
       url: `${baseUrl}/gross-salary-calculator`, // Salary negotiation
       lastModified: new Date(),
       changeFrequency: 'monthly',
@@ -118,20 +124,44 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
 
-    // 📈 BLOG (VERY IMPORTANT)
+    // 📈 BLOG HUB
     {
       url: `${baseUrl}/blog`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
-      priority: 0.7,
+      priority: 0.8,
     },
 
-    // 🔥 SAMPLE BLOG POSTS
+    // 🔥 SEO BLOG POSTS (HIGH VALUE CONTENT)
     {
-      url: `${baseUrl}/blog/how-to-track-expenses-tanzania`,
+      url: `${baseUrl}/blog/how-to-calculate-tra-car-import-duty-tanzania`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
-      priority: 0.7,
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/blog/brela-vs-tra-sole-proprietorship-or-limited-company`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/blog/freelance-withholding-tax-tanzania`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/blog/value-added-tax-guide-tanzania`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/blog/understanding-paye-tanzania-guide`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
     },
     {
       url: `${baseUrl}/blog/best-budgeting-app-tanzania`,
@@ -140,7 +170,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/blog/how-to-calculate-depreciation`,
+      url: `${baseUrl}/blog/how-to-track-expenses-tanzania`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/blog/asset-depreciation-tanzania`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/blog/50-30-20-budget-tanzania`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.7,

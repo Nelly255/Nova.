@@ -104,18 +104,69 @@ export default function BlogIndexPage() {
         <main className="max-w-6xl mx-auto w-full flex-grow pb-24">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             
-            {/* 1. FEATURED / PLATFORM POST */}
+            {/* 1. TRA CAR IMPORT (SEO Magnet) */}
             <BlogCard 
-              href="/blog/best-budgeting-app-tanzania"
-              category="Platform"
-              title="The Best Budgeting App in Tanzania: Managing Your Wealth in 2026"
-              excerpt="Discover why global apps fail in the local market, and how tracking TSH and M-Pesa transactions can transform your financial life."
-              date="April 3, 2026"
-              readTime="5 min read"
+              href="/blog/how-to-calculate-tra-car-import-duty-tanzania"
+              category="Taxation"
+              title="How to Calculate TRA Car Import Duty in Tanzania"
+              excerpt="Learn exactly how TRA calculates import duty, excise duty, and VAT on cars imported from Japan. Stop guessing your CIF value."
+              date="May 15, 2026"
+              readTime="6 min read"
               featured={true}
             />
 
-            {/* 2. 🚀 THE BRAND NEW POST! */}
+            {/* 2. FREELANCE WHT */}
+            <BlogCard 
+              href="/blog/freelance-withholding-tax-tanzania"
+              category="Business"
+              title="The Freelancer’s Guide to Withholding Tax (WHT)"
+              excerpt="Why did your corporate client pay you 5% less than your invoice? Learn how to gross up your fees to protect your profit margins."
+              date="May 14, 2026"
+              readTime="5 min read"
+            />
+
+            {/* 3. BRELA VS TRA */}
+            <BlogCard 
+              href="/blog/brela-vs-tra-sole-proprietorship-or-limited-company"
+              category="Compliance"
+              title="BRELA vs TRA: Sole Proprietorship or Limited Company?"
+              excerpt="The first crossroad for any founder in Tanzania. Understand the legal liabilities, registration costs, and massive tax differences."
+              date="May 16, 2026"
+              readTime="7 min read"
+              featured={true}
+            />
+
+            {/* 4. VAT GUIDE */}
+            <BlogCard 
+              href="/blog/value-added-tax-guide-tanzania"
+              category="Corporate"
+              title="Understanding VAT: The Final Consumer Burden"
+              excerpt="Should you charge 18% VAT? Understand the 100M threshold and why charging VAT to unregistered individuals makes you uncompetitive."
+              date="May 14, 2026"
+              readTime="6 min read"
+            />
+
+            {/* 5. PAYE GUIDE */}
+            <BlogCard 
+              href="/blog/understanding-paye-tanzania-guide"
+              category="Salary"
+              title="Understanding PAYE: How Net Salary is Calculated"
+              excerpt="Between NSSF deductions and progressive tax brackets, figuring out your true net income is tricky. Here is exactly how PAYE works."
+              date="May 14, 2026"
+              readTime="4 min read"
+            />
+
+            {/* 6. BEST BUDGETING APP */}
+            <BlogCard 
+              href="/blog/best-budgeting-app-tanzania"
+              category="Platform"
+              title="The Best Budgeting App in Tanzania for 2026"
+              excerpt="Discover why global apps fail in the local market, and how tracking TSH and M-Pesa transactions can transform your financial life."
+              date="April 3, 2026"
+              readTime="5 min read"
+            />
+
+            {/* 7. TRACKING EXPENSES */}
             <BlogCard 
               href="/blog/how-to-track-expenses-tanzania"
               category="Guide"
@@ -125,21 +176,21 @@ export default function BlogIndexPage() {
               readTime="5 min read"
             />
 
-            {/* 3. WEALTH BUILDING POST */}
+            {/* 8. ASSET DEPRECIATION */}
             <BlogCard 
               href="/blog/asset-depreciation-tanzania"
               category="Wealth Building"
-              title="How to Calculate Asset Depreciation for TRA Compliance"
+              title="How to Calculate Asset Depreciation for TRA"
               excerpt="Understand TRA capital allowance classes and the reducing balance method to track your true net worth in Tanzania."
               date="April 1, 2026"
               readTime="4 min read"
             />
 
-            {/* 4. STRATEGY POST */}
+            {/* 9. 50/30/20 RULE */}
             <BlogCard 
               href="/blog/50-30-20-budget-tanzania"
               category="Strategy"
-              title="The 50/30/20 Rule: Adapting the Classic Budget for Tanzania"
+              title="The 50/30/20 Rule: Adapting the Classic Budget"
               excerpt="How to split your monthly income between essentials, lifestyle, and investments in Tanzania without feeling restricted."
               date="March 28, 2026"
               readTime="6 min read"

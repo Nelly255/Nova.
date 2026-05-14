@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase"; 
 import { Plus_Jakarta_Sans, Inter } from "next/font/google";
-import { ArrowRight, Shield, Zap, PieChart, Activity, TrendingUp, TrendingDown, Wallet, Target, Sun, Moon, CreditCard, Lock, LineChart, Building, Calculator, Mail, Layers, RefreshCw, CheckCircle2, Car, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowRight, Shield, Zap, PieChart, Activity, TrendingUp, TrendingDown, Wallet, Target, Sun, Moon, CreditCard, Lock, LineChart, Building, Calculator, Mail, Layers, RefreshCw, CheckCircle2, Car, ChevronDown, ChevronUp, Receipt } from "lucide-react";
 
 // Initialize our premium startup fonts
 const headerFont = Plus_Jakarta_Sans({ subsets: ["latin"] });
@@ -80,7 +80,7 @@ export default function WelcomePage() {
     }
   };
 
-  // DATA ARRAY FOR FREE TOOLS (Now 9 Tools)
+  // DATA ARRAY FOR FREE TOOLS (Now 10 Tools)
   const freeToolsData = [
     {
       href: "/net-worth-calculator",
@@ -104,9 +104,16 @@ export default function WelcomePage() {
       colorClass: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20"
     },
     {
+      href: "/freelance-invoice-calculator",
+      icon: <Receipt size={22} />,
+      title: "Invoice Strategy",
+      description: "Reverse-engineer your freelance invoice for VAT & WHT.",
+      colorClass: "text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 border-violet-100 dark:border-violet-500/20"
+    },
+    {
       href: "/gross-salary-calculator",
       icon: <Target size={22} />,
-      title: "Gross Salary Calculator",
+      title: "Gross Salary Target",
       description: "Reverse-engineer your dream net salary for negotiations.",
       colorClass: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border-blue-100 dark:border-blue-500/20"
     },
@@ -374,10 +381,10 @@ export default function WelcomePage() {
           ))}
         </div>
 
-        {/* SECONDARY ROWS (5 Items) */}
+        {/* SECONDARY ROWS (6 Items - perfect 3x2 grid) */}
         {showAllTools && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto mt-4 animate-in fade-in slide-in-from-top-4 duration-500 fill-mode-both">
-            {freeToolsData.slice(4, 9).map((tool, index) => (
+            {freeToolsData.slice(4, 10).map((tool, index) => (
               <div key={index + 4} className="animate-in fade-in slide-in-from-top-4 duration-500 fill-mode-both" style={{ animationDelay: `${index * 150}ms` }}>
                 <ToolCard
                   href={tool.href}
@@ -458,7 +465,7 @@ export default function WelcomePage() {
               <li><Link href="/paye-calculator" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">PAYE Take-Home Calculator</Link></li>
               <li><Link href="/gross-salary-calculator" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Gross Salary Calculator</Link></li>
               <li><Link href="/tra-car-import-duty-calculator-tanzania" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">TRA Import Tool</Link></li>
-              <li><Link href="/budget-calculator" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Zero-Based Budget</Link></li>
+              <li><Link href="/freelance-invoice-calculator" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Freelance Invoice Tool</Link></li>
               <li className="pt-1">
                 <a href="#free-tools" className="inline-flex items-center gap-1.5 font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors group">
                   Explore all tools <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LineChart, Building, Calculator, ArrowRight, Wrench, Car, TrendingUp, Shield, TrendingDown, Wallet, Target } from "lucide-react";
+import { LineChart, Building, Calculator, ArrowRight, Wrench, Car, TrendingUp, Shield, TrendingDown, Wallet, Target, Receipt } from "lucide-react";
 
 export default function ToolsHubPage() {
   return (
@@ -224,6 +224,29 @@ export default function ToolsHubPage() {
           </p>
           
           <div className="font-bold text-sm flex items-center gap-2 text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mt-auto">
+            Launch Tool <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+          </div>
+        </Link>
+
+        {/* 🚀 Tool 10: Freelance Invoice Calculator */}
+        <Link 
+          href="/dashboard/freelance-invoice-calculator" 
+          className="group bg-white/60 dark:bg-slate-900/40 backdrop-blur-2xl border border-white/50 dark:border-white/5 p-8 rounded-[2rem] hover:shadow-2xl dark:hover:bg-slate-800/50 transition-all duration-300 hover:border-violet-500/30 overflow-hidden relative flex flex-col h-full shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-black/50"
+        >
+          <div className="absolute -right-10 -top-10 w-40 h-40 bg-violet-500/5 dark:bg-violet-500/10 blur-3xl rounded-full pointer-events-none group-hover:bg-violet-500/15 transition-colors"></div>
+          
+          <div className="w-14 h-14 bg-violet-50 dark:bg-violet-500/10 rounded-2xl flex items-center justify-center border border-violet-100 dark:border-violet-500/20 mb-6 text-violet-600 dark:text-violet-400 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3 shadow-sm">
+            <Receipt size={24} />
+          </div>
+          
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3 tracking-tight">
+            Invoice Strategy
+          </h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed flex-grow mb-6">
+            Reverse-engineer your freelance invoice. Calculate exact Gross amounts to cover WHT and VAT.
+          </p>
+          
+          <div className="font-bold text-sm flex items-center gap-2 text-slate-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors mt-auto">
             Launch Tool <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
           </div>
         </Link>
