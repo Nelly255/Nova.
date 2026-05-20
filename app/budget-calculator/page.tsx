@@ -148,9 +148,9 @@ export default function BudgetCalculatorPage() {
 
       {/* TOP NAV */}
       <nav className="max-w-6xl mx-auto mb-10 md:mb-16 flex items-center justify-between relative z-10">
-        <Link href="/" className="inline-flex items-center gap-2 sm:gap-3 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all font-semibold bg-white dark:bg-[#12121A] px-4 py-2 md:px-5 md:py-2.5 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm active:scale-95 group text-sm sm:text-base">
+        <Link href="/tools" className="inline-flex items-center gap-2 sm:gap-3 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all font-semibold bg-white dark:bg-[#12121A] px-4 py-2 md:px-5 md:py-2.5 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm active:scale-95 group text-sm sm:text-base">
           <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> 
-          <span className="hidden sm:inline">Back to Home</span>
+          <span className="hidden sm:inline">Back to Tools</span>
           <span className="sm:hidden">Back</span>
         </Link>
         <button onClick={toggleTheme} className="p-2 sm:p-3 rounded-2xl bg-white dark:bg-[#12121A] border border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-300 shadow-sm hover:bg-slate-50 dark:hover:bg-[#1A1A24] transition-all active:scale-90">

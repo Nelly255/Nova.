@@ -104,7 +104,18 @@ export default function BlogIndexPage() {
         <main className="max-w-6xl mx-auto w-full flex-grow pb-24">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             
-            {/* 1. TRA CAR IMPORT (SEO Magnet) */}
+            {/* 🚀 NEW: PROPERTY TAX */}
+            <BlogCard 
+              href="/blog/buying-land-property-taxes-tanzania"
+              category="Real Estate"
+              title="Buying Land in Tanzania: Hidden Taxes & Stamp Duty"
+              excerpt="You've agreed on a price for that plot of land. But before the Ministry of Lands transfers the Title Deed, TRA will demand their cut. Here is exactly who pays what."
+              date="May 20, 2026"
+              readTime="6 min read"
+              featured={true}
+            />
+
+            {/* 1. TRA CAR IMPORT */}
             <BlogCard 
               href="/blog/how-to-calculate-tra-car-import-duty-tanzania"
               category="Taxation"
@@ -112,7 +123,6 @@ export default function BlogIndexPage() {
               excerpt="Learn exactly how TRA calculates import duty, excise duty, and VAT on cars imported from Japan. Stop guessing your CIF value."
               date="May 15, 2026"
               readTime="6 min read"
-              featured={true}
             />
 
             {/* 2. FREELANCE WHT */}

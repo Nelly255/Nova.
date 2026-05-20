@@ -81,13 +81,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {isCollapsed ? <Menu size={16} className="text-slate-600 dark:text-slate-300 group-hover:text-indigo-500" /> : <ChevronLeft size={16} className="text-slate-600 dark:text-slate-300 group-hover:text-indigo-500" />}
           </button>
 
-          {/* 1. Fixed Top Section (Logo) */}
-          <div className={`shrink-0 flex items-center mb-6 mt-2 transition-all duration-500 ${isCollapsed ? 'justify-center' : 'gap-2 px-2 justify-start'}`}>
+          {/* 1. Fixed Top Section (Logo) - 🚀 NOW WRAPPED IN A LINK */}
+          <Link href="/" className={`group shrink-0 flex items-center mb-6 mt-2 transition-all duration-500 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${isCollapsed ? 'justify-center' : 'gap-2 px-2 justify-start'}`}>
             <Activity size={28} className="text-indigo-600 dark:text-indigo-400 shrink-0 group-hover:scale-110 transition-transform drop-shadow-[0_0_8px_rgba(99,102,241,0.3)]" />
             <div className={`overflow-hidden transition-all duration-500 flex items-center ${isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
-              <span className="font-extrabold text-2xl tracking-tight text-slate-900 dark:text-white whitespace-nowrap" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Nova.</span>
+              <span className="font-extrabold text-2xl tracking-tight text-slate-900 dark:text-white whitespace-nowrap group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Nova.</span>
             </div>
-          </div>
+          </Link>
             
           {/* 2. Scrollable Middle Section */}
           <div 
@@ -158,10 +158,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* 📱 MOBILE FLOATING TOP HEADER */}
         <header className="md:hidden fixed top-[max(env(safe-area-inset-top),1rem)] left-4 right-4 z-[9999] flex items-center justify-between px-5 py-3 border border-white/40 dark:border-white/10 bg-white/40 dark:bg-[#0A0A0E]/60 backdrop-blur-[40px] saturate-[2] shadow-[0_16px_40px_-10px_rgba(0,0,0,0.5)] rounded-[2rem] pointer-events-auto">
-          <div className="flex items-center gap-2">
-            <Activity size={24} className="text-indigo-600 dark:text-indigo-400 drop-shadow-[0_0_8px_rgba(99,102,241,0.3)]" />
-            <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Nova.</span>
-          </div>
+          {/* 🚀 NOW WRAPPED IN A LINK */}
+          <Link href="/" className="group flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-lg">
+            <Activity size={24} className="text-indigo-600 dark:text-indigo-400 drop-shadow-[0_0_8px_rgba(99,102,241,0.3)] group-hover:scale-110 transition-transform" />
+            <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Nova.</span>
+          </Link>
           
           <div className="flex items-center gap-1 sm:gap-2">
             <a 

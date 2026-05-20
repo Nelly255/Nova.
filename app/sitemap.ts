@@ -12,6 +12,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1.0,
     },
     {
+      url: `${baseUrl}/tools`, // 🚀 Added Tools Hub
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
+    {
       url: `${baseUrl}/about`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
@@ -63,6 +69,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
 
     // 💰 CALCULATORS / TOOLS (HIGH TRAFFIC)
+    {
+      url: `${baseUrl}/property-tax-calculator-tanzania`, // 🚀 Added Property Tax Tool
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
     {
       url: `${baseUrl}/tra-car-import-duty-calculator-tanzania`, // The localized SEO magnet
       lastModified: new Date(),
@@ -133,6 +145,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
 
     // 🔥 SEO BLOG POSTS (HIGH VALUE CONTENT)
+    {
+      url: `${baseUrl}/blog/buying-land-property-taxes-tanzania`, // 🚀 Added Property Tax Blog
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
     {
       url: `${baseUrl}/blog/how-to-calculate-tra-car-import-duty-tanzania`,
       lastModified: new Date(),

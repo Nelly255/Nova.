@@ -126,9 +126,9 @@ export default function DebtPayoffCalculator() {
         
         {/* TOP NAV */}
         <nav className="max-w-6xl mx-auto mb-12 md:mb-16 flex items-center justify-between">
-          <Link href="/" className="inline-flex items-center gap-2 sm:gap-3 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all font-semibold bg-white dark:bg-[#12121A] px-4 py-2 md:px-5 md:py-2.5 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm active:scale-95 group text-sm md:text-base">
+          <Link href="/tools" className="inline-flex items-center gap-2 sm:gap-3 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all font-semibold bg-white dark:bg-[#12121A] px-4 py-2 md:px-5 md:py-2.5 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm active:scale-95 group text-sm md:text-base">
             <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> 
-            <span className="hidden sm:inline">Back to Home</span>
+            <span className="hidden sm:inline">Back to Tools</span>
             <span className="sm:hidden">Back</span>
           </Link>
           
