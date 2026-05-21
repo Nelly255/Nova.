@@ -12,7 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1.0,
     },
     {
-      url: `${baseUrl}/tools`, // 🚀 Added Tools Hub
+      url: `${baseUrl}/tools`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.9,
@@ -70,49 +70,55 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
     // 💰 CALCULATORS / TOOLS (HIGH TRAFFIC)
     {
-      url: `${baseUrl}/property-tax-calculator-tanzania`, // 🚀 Added Property Tax Tool
+      url: `${baseUrl}/payslip-generator`, // 🚀 Added Payslip Generator
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/property-tax-calculator-tanzania`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/tra-car-import-duty-calculator-tanzania`, // The localized SEO magnet
+      url: `${baseUrl}/tra-car-import-duty-calculator-tanzania`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/paye-calculator`, // Tax calculator
+      url: `${baseUrl}/paye-calculator`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/freelance-invoice-calculator`, // Freelance tax/invoice strategy
+      url: `${baseUrl}/freelance-invoice-calculator`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/gross-salary-calculator`, // Salary negotiation
+      url: `${baseUrl}/gross-salary-calculator`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/compound-interest-calculator`, // Wealth growth
+      url: `${baseUrl}/compound-interest-calculator`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/debt-payoff-calculator`, // Debt strategy
+      url: `${baseUrl}/debt-payoff-calculator`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/emergency-fund-calculator`, // Savings goals
+      url: `${baseUrl}/emergency-fund-calculator`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.8,
@@ -146,7 +152,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
     // 🔥 SEO BLOG POSTS (HIGH VALUE CONTENT)
     {
-      url: `${baseUrl}/blog/buying-land-property-taxes-tanzania`, // 🚀 Added Property Tax Blog
+      url: `${baseUrl}/blog/buying-land-property-taxes-tanzania`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.9,

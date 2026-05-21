@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Plus_Jakarta_Sans, Inter } from "next/font/google";
-import { ArrowLeft, Search, ArrowRight, Sun, Moon, LineChart, Car, Home, Wallet, Receipt, Target, Calculator, Building, TrendingUp, TrendingDown, Shield, Activity, Mail, Plus } from "lucide-react";
+import { ArrowLeft, Search, ArrowRight, Sun, Moon, LineChart, Car, Home, Wallet, Receipt, Target, Calculator, Building, TrendingUp, TrendingDown, Shield, Activity, Mail, Plus, FileText, Coffee } from "lucide-react"; // 🚀 Added Coffee icon
 
 const headerFont = Plus_Jakarta_Sans({ subsets: ["latin"] });
 const bodyFont = Inter({ subsets: ["latin"] });
@@ -12,7 +12,7 @@ export default function ToolsHubPage() {
   const [theme, setTheme] = useState('dark');
   const [searchTerm, setSearchTerm] = useState("");
   
-  // 🚀 PAGINATION STATE: Show 8 tools initially (perfect for 4-column desktop grids)
+  // PAGINATION STATE
   const [visibleCount, setVisibleCount] = useState(8);
 
   useEffect(() => {
@@ -43,6 +43,14 @@ export default function ToolsHubPage() {
   }, [searchTerm]);
 
   const allTools = [
+    {
+      href: "/payslip-generator",
+      icon: <FileText size={22} />,
+      title: "PDF Payslip Generator",
+      description: "Create professional, ready-to-print payslips for your employees instantly.",
+      category: "HR & Payroll",
+      colorClass: "text-[#8B5CF6] dark:text-[#8B5CF6] bg-purple-50 dark:bg-purple-500/10 border-purple-100 dark:border-purple-500/20"
+    },
     {
       href: "/net-worth-calculator",
       icon: <LineChart size={22} />,
@@ -129,7 +137,7 @@ export default function ToolsHubPage() {
       title: "Emergency Fund",
       description: "Determine cash needed for unexpected life events.",
       category: "Wealth Building",
-      colorClass: "text-[#8B5CF6] dark:text-[#8B5CF6] bg-purple-50 dark:bg-purple-500/10 border-purple-100 dark:border-purple-500/20"
+      colorClass: "text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-500/10 border-slate-100 dark:border-slate-500/20"
     }
   ];
 
@@ -157,15 +165,27 @@ export default function ToolsHubPage() {
         {/* NAV */}
         <nav className="flex items-center justify-between mb-16">
           <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors bg-white dark:bg-[#12121A] px-4 py-2 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm active:scale-95">
-            <ArrowLeft size={16} /> Back to Home
+            <ArrowLeft size={16} /> <span className="hidden sm:inline">Back to Home</span><span className="sm:hidden">Back</span>
           </Link>
 
-          <button 
-            onClick={toggleTheme} 
-            className="p-2.5 rounded-2xl bg-white dark:bg-[#12121A] border border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-300 shadow-sm hover:bg-slate-50 dark:hover:bg-[#1A1A24] transition-all active:scale-90"
-          >
-            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
+          <div className="flex items-center gap-3">
+            {/* 🚀 KO-FI TOP BUTTON */}
+            <a 
+              href="https://ko-fi.com/nellyjackson" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="inline-flex items-center gap-2 text-sm font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors px-4 py-2 md:py-2.5 rounded-2xl border border-amber-200 dark:border-amber-500/20 shadow-sm active:scale-95"
+            >
+              <Coffee size={16} /> <span className="hidden sm:inline">Buy us a Coffee</span><span className="sm:hidden">Support</span>
+            </a>
+
+            <button 
+              onClick={toggleTheme} 
+              className="p-2.5 rounded-2xl bg-white dark:bg-[#12121A] border border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-300 shadow-sm hover:bg-slate-50 dark:hover:bg-[#1A1A24] transition-all active:scale-90"
+            >
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+          </div>
         </nav>
 
         {/* HEADER */}
@@ -226,7 +246,7 @@ export default function ToolsHubPage() {
               ))}
             </div>
 
-            {/* 🚀 LOAD MORE BUTTON */}
+            {/* LOAD MORE BUTTON */}
             {hasMoreTools && (
               <div className="mt-12 flex justify-center">
                 <button 
@@ -249,6 +269,33 @@ export default function ToolsHubPage() {
             </button>
           </div>
         )}
+
+        {/* 🚀 KO-FI SUPPORT BANNER */}
+        <div className="mt-24 max-w-4xl mx-auto bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-500/5 dark:to-orange-500/10 border border-amber-200/50 dark:border-amber-500/20 rounded-[2rem] p-8 sm:p-12 text-center relative overflow-hidden shadow-sm">
+          {/* Decorative background shapes */}
+          <div className="absolute -top-10 -right-10 w-40 h-40 bg-amber-200/30 dark:bg-amber-500/10 rounded-full blur-2xl"></div>
+          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-orange-200/30 dark:bg-orange-500/10 rounded-full blur-2xl"></div>
+          
+          <div className="relative z-10 flex flex-col items-center">
+            <div className="w-16 h-16 bg-white dark:bg-[#12121A] text-amber-500 border border-amber-100 dark:border-amber-500/20 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+              <Coffee size={32} />
+            </div>
+            <h3 className={`${headerFont.className} text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white mb-4 tracking-tight`}>
+              Love these free tools?
+            </h3>
+            <p className="text-slate-600 dark:text-slate-400 max-w-xl mx-auto mb-8 text-base md:text-lg leading-relaxed">
+              We build these calculators to help Tanzanians make better financial decisions. If they saved you time or money, consider buying us a coffee to keep the servers running and the tools 100% free!
+            </p>
+            <a 
+              href="https://ko-fi.com/nellyjackson" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="inline-flex items-center gap-2 bg-[#FF5E5B] hover:bg-[#E04B48] text-white px-8 py-4 rounded-full font-bold transition-all shadow-[0_8px_20px_rgba(255,94,91,0.3)] hover:shadow-[0_12px_25px_rgba(255,94,91,0.4)] hover:-translate-y-1 active:scale-95"
+            >
+              <Coffee size={20} /> Support Nova on Ko-fi
+            </a>
+          </div>
+        </div>
 
       </div>
 

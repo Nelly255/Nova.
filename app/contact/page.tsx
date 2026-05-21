@@ -135,7 +135,7 @@ export default function ContactPage() {
                 <div>
                   <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">WhatsApp</h3>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">Direct chat with our team.</p>
-                  <a href="https://wa.me/2557874688830" target="_blank" rel="noopener noreferrer" className="text-base font-semibold text-[#25D366] hover:underline">+255 787 468 8830</a>
+                  <a href="https://wa.me/255787468830" target="_blank" rel="noopener noreferrer" className="text-base font-semibold text-[#25D366] hover:underline">+255 787 468 8830</a>
                 </div>
               </div>
 
