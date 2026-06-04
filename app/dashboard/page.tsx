@@ -143,14 +143,16 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('app_theme');
-    if (savedTheme === 'light') {
-      setIsDarkMode(false);
-      document.documentElement.classList.remove('dark');
-    } else {
-      setIsDarkMode(true);
-      document.documentElement.classList.add('dark');
-    }
+    // 🚀 DYNAMIC THEME DETECTOR
+    const applyThemeState = () => {
+      const savedTheme = localStorage.getItem('app_theme');
+      if (savedTheme === 'light' || (!savedTheme && !window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        setIsDarkMode(false);
+      } else {
+        setIsDarkMode(true);
+      }
+    };
+    applyThemeState();
   }, []);
 
   const handleThemeToggle = () => {
@@ -183,7 +185,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-[#0A0A0E] flex flex-col items-center justify-center transition-colors duration-300">
-        <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mb-4" />
+        <Loader2 className="w-10 h-10 text-brand-500 animate-spin mb-4" />
         <p className="text-slate-500 dark:text-slate-400 font-medium animate-pulse">Decrypting your vault...</p>
       </div>
     );
@@ -242,9 +244,6 @@ export default function DashboardPage() {
     return acc;
   }, 0);
 
-  // 🚀 THE FIX 1: We no longer subtract savings from totalAllWalletsCash for the "Total Liquidity" UI.
-  // This ensures the Total Liquidity encompasses all money, preventing the "Physical Cash is larger than Total Liquidity" paradox.
-
   const isViewingCurrentRange = now >= dateRange.from && now <= dateRange.to;
   const activeAssetsOnly = assets.filter(asset => asset.status === 'active' || !asset.status);
 
@@ -276,7 +275,7 @@ export default function DashboardPage() {
     return acc;
   }, 0);
   
-  // 🚀 THE FIX 2: True Net Worth uses Total All Wallets Cash (which physically holds the savings).
+  // 🚀 True Net Worth uses Total All Wallets Cash (which physically holds the savings).
   const trueNetWorth = totalAllWalletsCash + totalAssetsValue - totalDebts;
 
   // 🚀 WEALTH GRAPH: Loops exactly 6 months back from the End Date
@@ -422,7 +421,7 @@ export default function DashboardPage() {
                 }}
                 className="flex items-center gap-1.5 md:gap-2 glass-card hover:bg-white/60 dark:hover:bg-white/10 px-3 md:px-4 py-2 md:py-2.5 rounded-full text-xs md:text-sm font-bold text-slate-700 dark:text-slate-300 transition-all cursor-pointer group shadow-sm"
               >
-                <CalendarDays size={16} className="text-indigo-500 dark:text-indigo-400 group-hover:scale-110 transition-transform hidden sm:block" />
+                <CalendarDays size={16} className="text-brand-500 dark:text-brand-400 group-hover:scale-110 transition-transform hidden sm:block" />
                 <span className="whitespace-nowrap">{formatRangeDisplay(dateRange.from, dateRange.to)}</span>
                 <ChevronDown size={14} className={`text-slate-400 transition-transform duration-300 ${isPeriodDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
@@ -482,9 +481,9 @@ export default function DashboardPage() {
                         let baseClasses = "h-8 w-8 text-sm font-semibold rounded-full flex items-center justify-center transition-all duration-200 ";
                         
                         if (isFromDate || isToDate) {
-                           baseClasses += "bg-indigo-500 text-white shadow-md shadow-indigo-500/25 scale-105 z-10 relative";
+                           baseClasses += "bg-brand-500 text-white shadow-md shadow-brand-500/25 scale-105 z-10 relative";
                         } else if (inRange) {
-                           baseClasses += "bg-indigo-50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 rounded-none scale-100";
+                           baseClasses += "bg-brand-50 dark:bg-brand-500/20 text-brand-700 dark:text-brand-300 rounded-none scale-100";
                         } else {
                            baseClasses += "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10";
                         }
@@ -500,9 +499,9 @@ export default function DashboardPage() {
                         return (
                           <div key={day} className="relative flex justify-center">
                             {/* Background connector for range flow */}
-                            {inRange && <div className="absolute inset-0 bg-indigo-50 dark:bg-indigo-500/20 -z-10 w-full" />}
-                            {isFromDate && activeTo && currentIterDate < activeTo && <div className="absolute inset-y-0 right-0 w-1/2 bg-indigo-50 dark:bg-indigo-500/20 -z-10" />}
-                            {isToDate && activeFrom && currentIterDate > activeFrom && <div className="absolute inset-y-0 left-0 w-1/2 bg-indigo-50 dark:bg-indigo-500/20 -z-10" />}
+                            {inRange && <div className="absolute inset-0 bg-brand-50 dark:bg-brand-500/20 -z-10 w-full" />}
+                            {isFromDate && activeTo && currentIterDate < activeTo && <div className="absolute inset-y-0 right-0 w-1/2 bg-brand-50 dark:bg-brand-500/20 -z-10" />}
+                            {isToDate && activeFrom && currentIterDate > activeFrom && <div className="absolute inset-y-0 left-0 w-1/2 bg-brand-50 dark:bg-brand-500/20 -z-10" />}
                             
                             <button onClick={() => handleDayClick(day)} className={baseClasses}>
                               {day}
@@ -544,13 +543,13 @@ export default function DashboardPage() {
           />
 
           {/* Massive True Net Worth Banner */}
-          <div className="glass-card p-6 md:p-8 rounded-[2rem] relative overflow-hidden transition-colors border-t border-white/40 dark:border-white/10 shadow-xl shadow-brand/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="glass-card p-6 md:p-8 rounded-[2rem] relative overflow-hidden transition-colors border-t border-white/40 dark:border-white/10 shadow-xl shadow-brand-500/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             
-            {/* Indigo Glow */}
-            <div className="absolute -left-24 -top-24 w-64 h-64 bg-indigo-500/20 blur-3xl rounded-full pointer-events-none z-0"></div>
+            {/* Ambient Glow */}
+            <div className="absolute -left-24 -top-24 w-64 h-64 bg-brand-500/20 blur-3xl rounded-full pointer-events-none z-0 transition-colors duration-500"></div>
 
             <div className="relative z-10 w-full md:w-auto">
-              <p className="text-indigo-600 dark:text-indigo-400 font-bold tracking-widest uppercase text-xs flex items-center gap-2 mb-2">
+              <p className="text-brand-600 dark:text-brand-400 font-bold tracking-widest uppercase text-xs flex items-center gap-2 mb-2 transition-colors">
                 <TrendingUp size={16} /> True Net Worth
               </p>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white transition-colors break-words leading-tight">
@@ -561,7 +560,6 @@ export default function DashboardPage() {
 
             <div className="relative z-10 grid grid-cols-2 md:flex md:flex-wrap gap-4 md:gap-8 mt-2 md:mt-0 w-full md:w-auto">
               <div>
-                {/* 🚀 THE FIX: Render totalAllWalletsCash directly to match the true sum of all accounts */}
                 <p className="text-[10px] md:text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1"><Wallet size={12}/> Total Liquidity</p>
                 <p className="text-sm md:text-lg font-bold text-slate-700 dark:text-slate-200 break-words">{currencySymbol}{totalAllWalletsCash.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
               </div>
@@ -588,9 +586,9 @@ export default function DashboardPage() {
                   <h3 className="text-base md:text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100 transition-colors">Wealth Trajectory</h3>
                   <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 font-medium">6 Months up to {MONTHS[dateRange.to.getMonth()]} {dateRange.to.getFullYear()}</p>
                 </div>
-                {/* Indigo Up Badge */}
+                {/* Brand Up Badge */}
                 {sparklineData[sparklineData.length - 1] >= sparklineData[0] ? (
-                  <div className="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full text-xs font-bold border border-indigo-200 dark:border-indigo-500/20 flex items-center gap-1 shadow-sm">
+                  <div className="bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 px-3 py-1 rounded-full text-xs font-bold border border-brand-200 dark:border-brand-500/20 flex items-center gap-1 shadow-sm transition-colors">
                     <TrendingUp size={12} /> Up Trending
                   </div>
                 ) : (
@@ -609,7 +607,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 glass-card p-6 md:p-8 rounded-[2rem] relative transition-colors">
               <div className="absolute inset-0 overflow-hidden rounded-[2rem] pointer-events-none">
-                <div className="absolute -top-24 -left-24 w-64 h-64 bg-indigo-500/20 dark:bg-indigo-500/10 blur-3xl rounded-full"></div>
+                <div className="absolute -top-24 -left-24 w-64 h-64 bg-brand-500/20 dark:bg-brand-500/10 blur-3xl rounded-full transition-colors duration-500"></div>
               </div>
               
               <div className="relative z-10">
@@ -649,7 +647,7 @@ export default function DashboardPage() {
                   </>
                 )}
               </div>
-              <Link href="/dashboard/subscriptions" className="text-indigo-500 dark:text-indigo-400 flex items-center gap-1 text-sm font-semibold mt-6 hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors">
+              <Link href="/dashboard/subscriptions" className="text-brand-500 dark:text-brand-400 flex items-center gap-1 text-sm font-semibold mt-6 hover:text-brand-600 dark:hover:text-brand-300 transition-colors">
                 Manage Subscriptions <ArrowUpRight size={16} />
               </Link>
             </div>
@@ -663,7 +661,7 @@ export default function DashboardPage() {
                   <h3 className="text-base md:text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100 transition-colors">
                     Period Budget Health
                   </h3>
-                  <Link href="/dashboard/budgets" className="text-xs md:text-sm text-slate-500 hover:text-indigo-500 dark:text-slate-400 dark:hover:text-indigo-400 transition font-semibold">View Details</Link>
+                  <Link href="/dashboard/budgets" className="text-xs md:text-sm text-slate-500 hover:text-brand-500 dark:text-slate-400 dark:hover:text-brand-400 transition font-semibold">View Details</Link>
                 </div>
                 
                 {budgets.length === 0 ? (
@@ -702,9 +700,9 @@ export default function DashboardPage() {
                     }, 0);
                     const overallPct = totalLimit > 0 ? Math.min((totalSpent / totalLimit) * 100, 100) : 0;
                     
-                    let progressColor = "bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.5)]";
-                    if (overallPct > 75) progressColor = "bg-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.5)]";
-                    if (overallPct > 90) progressColor = "bg-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.5)]";
+                    let progressColor = "bg-brand-500 shadow-md";
+                    if (overallPct > 75) progressColor = "bg-amber-400 shadow-md";
+                    if (overallPct > 90) progressColor = "bg-rose-500 shadow-md";
 
                     return (
                       <div>
@@ -741,7 +739,7 @@ export default function DashboardPage() {
             <div className="lg:col-span-2 glass-card p-6 md:p-8 rounded-[2rem] transition-colors">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-base md:text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100 transition-colors">Activity in Period</h3>
-                <Link href="/dashboard/transactions" className="text-xs md:text-sm text-slate-500 hover:text-indigo-500 dark:text-slate-400 dark:hover:text-indigo-400 transition font-semibold">View all</Link>
+                <Link href="/dashboard/transactions" className="text-xs md:text-sm text-slate-500 hover:text-brand-500 dark:text-slate-400 dark:hover:text-brand-400 transition font-semibold">View all</Link>
               </div>
               <div className="space-y-3">
                 {openingBalance !== 0 && (
@@ -750,8 +748,8 @@ export default function DashboardPage() {
                     title={`Period Opening Balance`} 
                     date="Carried over" 
                     amount={`${openingBalance >= 0 ? '+' : ''}${currencySymbol}${openingBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
-                    color={openingBalance >= 0 ? "text-indigo-600 dark:text-indigo-400" : "text-rose-600 dark:text-rose-400"} 
-                    bg={openingBalance >= 0 ? "bg-indigo-50/50 dark:bg-indigo-500/10" : "bg-rose-50/50 dark:bg-rose-500/10"}
+                    color={openingBalance >= 0 ? "text-brand-600 dark:text-brand-400" : "text-rose-600 dark:text-rose-400"} 
+                    bg={openingBalance >= 0 ? "bg-brand-50/50 dark:bg-brand-500/10" : "bg-rose-50/50 dark:bg-rose-500/10"}
                   />
                 )}
 
@@ -863,6 +861,21 @@ function NetWorthSparkline({ data, labels, currencySymbol }: { data: number[], l
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Read the active brand color from CSS root, or fallback to Indigo
+  const [brandColor, setBrandColor] = useState('#6366f1');
+  
+  useEffect(() => {
+    // A little hack to get the CSS variable value since it's injected client-side
+    const colorId = localStorage.getItem('nova_color') || 'indigo';
+    const hexMap: Record<string, string> = {
+      'indigo': '#6366f1',
+      'emerald': '#10b981',
+      'rose': '#f43f5e',
+      'amber': '#f59e0b'
+    };
+    setBrandColor(hexMap[colorId] || '#6366f1');
+  }, []);
+
   if (!data || data.length < 2) return null;
 
   const min = Math.min(...data);
@@ -870,7 +883,7 @@ function NetWorthSparkline({ data, labels, currencySymbol }: { data: number[], l
   const range = max - min === 0 ? 1 : max - min;
 
   const isTrendingUp = data[data.length - 1] >= data[0];
-  const strokeColor = isTrendingUp ? '#6366f1' : '#f43f5e'; 
+  const strokeColor = isTrendingUp ? brandColor : '#f43f5e'; 
 
   const points = data.map((val, i) => {
     const x = (i / (data.length - 1)) * 100;
@@ -919,8 +932,8 @@ function NetWorthSparkline({ data, labels, currencySymbol }: { data: number[], l
       <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full overflow-visible absolute inset-0 pointer-events-none">
         <defs>
           <linearGradient id="sparkline-up-card" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#6366f1" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
+            <stop offset="0%" stopColor={brandColor} stopOpacity="0.4" />
+            <stop offset="100%" stopColor={brandColor} stopOpacity="0" />
           </linearGradient>
           <linearGradient id="sparkline-down-card" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#f43f5e" stopOpacity="0.4" />
@@ -975,13 +988,13 @@ function NetWorthSparkline({ data, labels, currencySymbol }: { data: number[], l
 // 🚀 PRESERVED: Your exact Empty State cards
 function EmptyDashboardState() {
   return (
-    <div className="glass-card p-8 md:p-12 rounded-[2.5rem] relative text-center border border-indigo-200/50 dark:border-indigo-500/20 shadow-2xl mt-8">
-      <div className="absolute -left-32 -top-32 w-96 h-96 bg-indigo-500/10 dark:bg-indigo-500/20 blur-3xl rounded-full pointer-events-none"></div>
+    <div className="glass-card p-8 md:p-12 rounded-[2.5rem] relative text-center border border-brand-200/50 dark:border-brand-500/20 shadow-2xl mt-8">
+      <div className="absolute -left-32 -top-32 w-96 h-96 bg-brand-500/10 dark:bg-brand-500/20 blur-3xl rounded-full pointer-events-none"></div>
       <div className="absolute -right-32 -bottom-32 w-96 h-96 bg-purple-500/10 dark:bg-purple-500/20 blur-3xl rounded-full pointer-events-none"></div>
       
       <div className="relative z-10 flex flex-col items-center max-w-2xl mx-auto">
         
-        <div className="w-20 h-20 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-[1.5rem] flex items-center justify-center text-white shadow-xl shadow-indigo-500/25 mb-8 rotate-3 hover:rotate-0 transition-all duration-300">
+        <div className="w-20 h-20 bg-gradient-to-tr from-brand-500 to-purple-500 rounded-[1.5rem] flex items-center justify-center text-white shadow-xl shadow-brand-500/25 mb-8 rotate-3 hover:rotate-0 transition-all duration-300">
           <Rocket size={36} />
         </div>
         
@@ -994,8 +1007,8 @@ function EmptyDashboardState() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full relative z-20">
           
-          <Link href="/dashboard/budgets" className="group bg-white/60 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 hover:border-indigo-500/30 p-6 rounded-3xl text-left hover:-translate-y-1 transition-all duration-300 shadow-sm hover:shadow-xl">
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-4 border border-indigo-100 dark:border-indigo-500/20">
+          <Link href="/dashboard/budgets" className="group bg-white/60 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 hover:border-brand-500/30 p-6 rounded-3xl text-left hover:-translate-y-1 transition-all duration-300 shadow-sm hover:shadow-xl">
+            <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 flex items-center justify-center mb-4 border border-brand-100 dark:border-brand-500/20">
               <Target size={20} />
             </div>
             <h3 className="font-bold text-slate-900 dark:text-white mb-1">1. Set a Budget</h3>

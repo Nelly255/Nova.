@@ -12,7 +12,7 @@ const headerFont = Plus_Jakarta_Sans({ subsets: ["latin"] });
 const bodyFont = Inter({ subsets: ["latin"] });
 
 export default function WelcomePage() {
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const router = useRouter(); 
   const [hasActiveSession, setHasActiveSession] = useState(false);
 
@@ -27,29 +27,48 @@ export default function WelcomePage() {
     checkUser();
   }, []);
 
-  // Auto system theme detection
+  // 🚀 Auto System Theme Detection (Patched for 3-way support)
   useEffect(() => {
-    const savedTheme = localStorage.getItem('app_theme');
-    
-    if (savedTheme) {
-      setTheme(savedTheme);
-      if (savedTheme === 'light') {
-        document.documentElement.classList.remove('dark');
+    const applyTheme = () => {
+      const savedTheme = localStorage.getItem('app_theme');
+      let isDark = false;
+
+      if (savedTheme === 'dark') {
+        isDark = true;
+      } else if (savedTheme === 'light') {
+        isDark = false;
       } else {
-        document.documentElement.classList.add('dark');
+        // 'system' or not set yet
+        isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       }
-    } else {
-      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setTheme(systemPrefersDark ? 'dark' : 'light');
-      if (systemPrefersDark) {
+
+      setTheme(isDark ? 'dark' : 'light');
+
+      if (isDark) {
         document.documentElement.classList.add('dark');
       } else {
         document.documentElement.classList.remove('dark');
       }
-    }
+    };
+
+    // Apply on mount
+    applyTheme();
+
+    // Listen for live OS changes (e.g., sunset triggers dark mode)
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemChange = () => {
+      const savedTheme = localStorage.getItem('app_theme');
+      if (!savedTheme || savedTheme === 'system') {
+        applyTheme();
+      }
+    };
+
+    mediaQuery.addEventListener('change', handleSystemChange);
+    return () => mediaQuery.removeEventListener('change', handleSystemChange);
   }, []);
 
   const toggleTheme = () => {
+    // This acts as a manual override on the landing page
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
     localStorage.setItem('app_theme', newTheme);
@@ -76,7 +95,7 @@ export default function WelcomePage() {
     }
   };
 
-  // FEATURED TOOLS (We only need the top 4 here now, the rest go to the Tools Hub)
+  // FEATURED TOOLS 
   const featuredTools = [
     {
       href: "/net-worth-calculator",
@@ -109,16 +128,16 @@ export default function WelcomePage() {
   ];
 
   return (
-    <main className={`min-h-screen bg-slate-50 dark:bg-[#0A0A0E] text-slate-900 dark:text-slate-50 flex flex-col relative overflow-hidden selection:bg-indigo-500/30 transition-colors duration-500 ${bodyFont.className}`}>
+    <main className={`min-h-screen bg-slate-50 dark:bg-[#0A0A0E] text-slate-900 dark:text-slate-50 flex flex-col relative overflow-hidden selection:bg-brand-500/30 transition-colors duration-500 ${bodyFont.className}`}>
       
       {/* Background Glow Effects */}
-      <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-indigo-600/10 dark:bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none opacity-60 animate-pulse duration-1000 z-0"></div>
+      <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-brand-600/10 dark:bg-brand-600/20 rounded-full blur-[120px] pointer-events-none opacity-60 animate-pulse duration-1000 z-0"></div>
       <div className="absolute top-[20%] right-[-5%] w-[500px] h-[500px] bg-purple-500/10 dark:bg-purple-500/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
 
       {/* Top Navigation Bar */}
       <header className="w-full max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-4 flex justify-between items-center z-[100] relative pointer-events-auto">
         <div className="flex items-center gap-2">
-          <Activity size={28} className="text-indigo-600 dark:text-indigo-400" />
+          <Activity size={28} className="text-brand-600 dark:text-brand-400" />
           <span className={`${headerFont.className} font-extrabold text-2xl tracking-tight text-slate-900 dark:text-white transition-colors`}>
             Nova.
           </span>
@@ -137,7 +156,7 @@ export default function WelcomePage() {
           <button onClick={handleLoginClick} className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white text-sm font-semibold px-2 sm:px-4 py-2 transition-colors relative z-[100]">
             {hasActiveSession ? "Dashboard" : "Log In"}
           </button>
-          <button onClick={handlePrimaryAction} className="bg-white dark:bg-white/5 backdrop-blur-md text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-700 dark:hover:text-indigo-300 dark:hover:border-indigo-500/30 px-4 sm:px-5 py-2 rounded-full text-sm font-bold transition-all active:scale-95 shadow-sm relative z-[100]">
+          <button onClick={handlePrimaryAction} className="bg-white dark:bg-white/5 backdrop-blur-md text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-500/20 hover:bg-brand-50 dark:hover:bg-brand-500/10 hover:text-brand-700 dark:hover:text-brand-300 dark:hover:border-brand-500/30 px-4 sm:px-5 py-2 rounded-full text-sm font-bold transition-all active:scale-95 shadow-sm relative z-[100]">
             {hasActiveSession ? "Open Vault" : "Sign Up"}
           </button>
         </div>
@@ -149,13 +168,13 @@ export default function WelcomePage() {
         {/* Left Column: Typography & CTA */}
         <div className="text-left flex flex-col items-start order-2 lg:order-1 relative z-20">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-slate-900/80 backdrop-blur-sm border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold mb-6 shadow-sm dark:shadow-2xl transition-colors">
-            <span className="flex h-2 w-2 rounded-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.8)] animate-pulse"></span>
+            <span className="flex h-2 w-2 rounded-full bg-brand-500 shadow-[0_0_10px_rgb(var(--brand-500)/0.8)] animate-pulse"></span>
             "Give every dollar a purpose."
           </div>
 
           <h1 className={`${headerFont.className} text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight mb-5 leading-[1.15] text-slate-900 dark:text-white transition-colors`}>
             Your financial life, <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 pr-4">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-purple-600 dark:from-brand-400 dark:to-purple-400 pr-4">
               beautifully organized.
             </span>
           </h1>
@@ -199,10 +218,10 @@ export default function WelcomePage() {
           <div className="absolute top-[40%] lg:top-[45%] -right-4 lg:right-2 z-20 animate-[bounce_4s_ease-in-out_infinite] delay-100">
             <div className="bg-white/90 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-white/10 p-4 rounded-2xl shadow-xl dark:shadow-2xl flex flex-col gap-1 w-48 transition-colors">
               <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-semibold mb-1 transition-colors">
-                <Wallet size={14} className="text-indigo-600 dark:text-indigo-400" /> Total Balance
+                <Wallet size={14} className="text-brand-600 dark:text-brand-400" /> Total Balance
               </div>
               <h4 className={`${headerFont.className} text-2xl font-extrabold text-slate-900 dark:text-white transition-colors tracking-tight`}>24.5M TSH</h4>
-              <div className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold mt-1 bg-indigo-100 dark:bg-indigo-400/10 px-2 py-0.5 rounded-full w-fit transition-colors border border-indigo-200 dark:border-transparent">
+              <div className="flex items-center gap-1 text-brand-600 dark:text-brand-400 text-[10px] font-bold mt-1 bg-brand-100 dark:bg-brand-400/10 px-2 py-0.5 rounded-full w-fit transition-colors border border-brand-200 dark:border-transparent">
                 <TrendingUp size={10} /> +12% this month
               </div>
             </div>
@@ -221,7 +240,7 @@ export default function WelcomePage() {
             </div>
           </div>
 
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-indigo-500/10 dark:bg-indigo-500/20 blur-[80px] rounded-full pointer-events-none z-0 transition-colors"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-brand-500/10 dark:bg-brand-500/20 blur-[80px] rounded-full pointer-events-none z-0 transition-colors"></div>
         </div>
       </div>
 
@@ -233,10 +252,10 @@ export default function WelcomePage() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 relative">
-          <div className="hidden md:block absolute top-12 left-[15%] right-[15%] h-0.5 bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent z-0"></div>
+          <div className="hidden md:block absolute top-12 left-[15%] right-[15%] h-0.5 bg-gradient-to-r from-transparent via-brand-500/30 to-transparent z-0"></div>
 
           <div className="relative z-10 flex flex-col items-center text-center group">
-            <div className="w-24 h-24 rounded-[2rem] bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 shadow-xl flex items-center justify-center mb-6 text-indigo-600 dark:text-indigo-400 group-hover:-translate-y-2 transition-all">
+            <div className="w-24 h-24 rounded-[2rem] bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 shadow-xl flex items-center justify-center mb-6 text-brand-600 dark:text-brand-400 group-hover:-translate-y-2 transition-all">
               <Layers size={40} />
             </div>
             <h3 className={`${headerFont.className} text-xl font-bold text-slate-900 dark:text-white mb-3`}>1. Unify Your Wallets</h3>
@@ -275,9 +294,9 @@ export default function WelcomePage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 group bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 p-8 rounded-[2rem] hover:shadow-xl dark:hover:bg-slate-800/50 transition-all hover:border-indigo-500/30 overflow-hidden relative">
-            <div className="absolute -right-20 -top-20 w-64 h-64 bg-indigo-500/5 dark:bg-indigo-500/10 blur-3xl rounded-full pointer-events-none group-hover:bg-indigo-500/10 transition-colors"></div>
-            <div className="w-14 h-14 bg-indigo-50 dark:bg-indigo-500/20 rounded-2xl flex items-center justify-center border border-indigo-100 dark:border-indigo-500/30 mb-6 text-indigo-600 dark:text-indigo-400">
+          <div className="md:col-span-2 group bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 p-8 rounded-[2rem] hover:shadow-xl dark:hover:bg-slate-800/50 transition-all hover:border-brand-500/30 overflow-hidden relative">
+            <div className="absolute -right-20 -top-20 w-64 h-64 bg-brand-500/5 dark:bg-brand-500/10 blur-3xl rounded-full pointer-events-none group-hover:bg-brand-500/10 transition-colors"></div>
+            <div className="w-14 h-14 bg-brand-50 dark:bg-brand-500/20 rounded-2xl flex items-center justify-center border border-brand-100 dark:border-brand-500/30 mb-6 text-brand-600 dark:text-brand-400">
               <PieChart size={24} />
             </div>
             <h3 className={`${headerFont.className} text-2xl font-bold text-slate-900 dark:text-white mb-3 transition-colors tracking-tight`}>Intelligent Cash Flow</h3>
@@ -335,29 +354,28 @@ export default function WelcomePage() {
           ))}
         </div>
 
-        {/* 🚀 NEW PREMIUM BUTTON TO THE TOOLS HUB */}
         <div className="mt-10 flex justify-center">
           <Link 
             href="/tools"
-            className="group inline-flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-slate-800 px-8 py-3.5 rounded-full text-xs font-black uppercase tracking-widest transition-all shadow-sm hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-500/30 active:scale-95"
+            className="group inline-flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-slate-800 px-8 py-3.5 rounded-full text-xs font-black uppercase tracking-widest transition-all shadow-sm hover:shadow-md hover:border-brand-200 dark:hover:border-brand-500/30 active:scale-95"
           >
-            Explore All 11+ Free Tools <ArrowRight size={16} className="text-indigo-500 group-hover:translate-x-1 transition-transform" />
+            Explore All 11+ Free Tools <ArrowRight size={16} className="text-brand-500 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
       </div>
 
       {/* Security / Control Card */}
       <div className="w-full max-w-7xl mx-auto px-6 pb-20 pt-6 z-10">
-        <div className="group bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 p-10 md:p-16 rounded-[2rem] hover:shadow-xl dark:hover:bg-slate-800/50 transition-all hover:border-indigo-500/30 relative overflow-hidden text-center max-w-4xl mx-auto">
-          <div className="absolute left-1/2 -top-32 -translate-x-1/2 w-80 h-80 bg-indigo-500/5 dark:bg-indigo-500/10 blur-3xl rounded-full pointer-events-none group-hover:bg-indigo-500/10 transition-colors"></div>
+        <div className="group bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 p-10 md:p-16 rounded-[2rem] hover:shadow-xl dark:hover:bg-slate-800/50 transition-all hover:border-brand-500/30 relative overflow-hidden text-center max-w-4xl mx-auto">
+          <div className="absolute left-1/2 -top-32 -translate-x-1/2 w-80 h-80 bg-brand-500/5 dark:bg-brand-500/10 blur-3xl rounded-full pointer-events-none group-hover:bg-brand-500/10 transition-colors"></div>
           
-          <div className="w-14 h-14 bg-indigo-50 dark:bg-indigo-500/20 rounded-2xl flex items-center justify-center mx-auto border border-indigo-100 dark:border-indigo-500/30 mb-6 text-indigo-600 dark:text-indigo-400">
+          <div className="w-14 h-14 bg-brand-50 dark:bg-brand-500/20 rounded-2xl flex items-center justify-center mx-auto border border-brand-100 dark:border-brand-500/30 mb-6 text-brand-600 dark:text-brand-400">
             <Lock size={24} />
           </div>
           
           <h2 className={`${headerFont.className} text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-4 transition-colors tracking-tight`}>Take control of your future.</h2>
           <p className="text-slate-600 dark:text-slate-400 text-base md:text-lg max-w-xl mx-auto leading-relaxed transition-colors mb-8">Your financial data is encrypted, secure, and entirely yours. Join thousands of users building wealth with Nova today.</p>
-          <button onClick={handlePrimaryAction} className="inline-flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-full text-base font-bold transition-all hover:-translate-y-1 hover:shadow-xl active:scale-95">
+          <button onClick={handlePrimaryAction} className="inline-flex items-center justify-center bg-brand-600 hover:bg-brand-700 text-white px-8 py-4 rounded-full text-base font-bold transition-all hover:-translate-y-1 hover:shadow-xl active:scale-95">
             {hasActiveSession ? "Go to Dashboard" : "Create Free Account"}
           </button>
         </div>
@@ -369,13 +387,13 @@ export default function WelcomePage() {
           
           <div className="sm:col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <Activity size={20} className="text-indigo-600 dark:text-indigo-400" />
+              <Activity size={20} className="text-brand-600 dark:text-brand-400" />
               <span className={`${headerFont.className} font-bold text-xl text-slate-900 dark:text-white`}>Nova.</span>
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-xs">
               Intelligent Wealth Management.
             </p>
-            <Link href="/contact" className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
+            <Link href="/contact" className="inline-flex items-center gap-2 text-sm font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 transition-colors">
               <Mail size={16} />
               Contact Support
             </Link>
@@ -384,22 +402,22 @@ export default function WelcomePage() {
           <div>
             <h4 className="font-bold text-slate-900 dark:text-white mb-4">Features</h4>
             <ul className="space-y-4 sm:space-y-3 text-sm text-slate-600 dark:text-slate-400">
-              <li><Link href="/expense-tracker" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Expense Tracker</Link></li>
-              <li><Link href="/net-worth-tracker" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Net Worth Tracker</Link></li>
-              <li><Link href="/subscription-tracker" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Subscription Radar</Link></li>
-              <li><Link href="/asset-tracker" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Asset Tracker</Link></li>
+              <li><Link href="/expense-tracker" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Expense Tracker</Link></li>
+              <li><Link href="/net-worth-tracker" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Net Worth Tracker</Link></li>
+              <li><Link href="/subscription-tracker" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Subscription Radar</Link></li>
+              <li><Link href="/asset-tracker" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Asset Tracker</Link></li>
             </ul>
           </div>
 
           <div>
             <h4 className="font-bold text-slate-900 dark:text-white mb-4">Free Tools</h4>
             <ul className="space-y-4 sm:space-y-3 text-sm text-slate-600 dark:text-slate-400">
-              <li><Link href="/property-tax-calculator-tanzania" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Property Tax Calculator</Link></li>
-              <li><Link href="/paye-calculator" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">PAYE Take-Home Calculator</Link></li>
-              <li><Link href="/tra-car-import-duty-calculator-tanzania" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">TRA Import Tool</Link></li>
-              <li><Link href="/freelance-invoice-calculator" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Freelance Invoice Tool</Link></li>
+              <li><Link href="/property-tax-calculator-tanzania" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Property Tax Calculator</Link></li>
+              <li><Link href="/paye-calculator" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">PAYE Take-Home Calculator</Link></li>
+              <li><Link href="/tra-car-import-duty-calculator-tanzania" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">TRA Import Tool</Link></li>
+              <li><Link href="/freelance-invoice-calculator" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Freelance Invoice Tool</Link></li>
               <li className="pt-1">
-                <Link href="/tools" className="inline-flex items-center gap-1.5 font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors group">
+                <Link href="/tools" className="inline-flex items-center gap-1.5 font-bold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 transition-colors group">
                   Explore all tools <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                 </Link>
               </li>
@@ -409,9 +427,9 @@ export default function WelcomePage() {
           <div>
             <h4 className="font-bold text-slate-900 dark:text-white mb-4">Company</h4>
             <ul className="space-y-4 sm:space-y-3 text-sm text-slate-600 dark:text-slate-400">
-              <li><Link href="/blog" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Financial Blog</Link></li>
-              <li><Link href="/privacy" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Terms of Service</Link></li>
+              <li><Link href="/blog" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Financial Blog</Link></li>
+              <li><Link href="/privacy" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Terms of Service</Link></li>
             </ul>
           </div>
         </div>
@@ -430,13 +448,13 @@ export default function WelcomePage() {
 
 function ToolCard({ href, icon, title, description, colorClass }: { href: string, icon: React.ReactNode, title: string, description: string, colorClass: string }) {
   return (
-    <Link href={href} className="group bg-white dark:bg-[#111118]/60 backdrop-blur-sm border border-slate-200 dark:border-white/5 p-6 rounded-[1.5rem] hover:shadow-2xl hover:border-indigo-500/40 transition-all flex flex-col h-full relative overflow-hidden">
+    <Link href={href} className="group bg-white dark:bg-[#111118]/60 backdrop-blur-sm border border-slate-200 dark:border-white/5 p-6 rounded-[1.5rem] hover:shadow-2xl hover:border-brand-500/40 transition-all flex flex-col h-full relative overflow-hidden">
       <div className={`w-12 h-12 rounded-xl flex items-center justify-center border mb-4 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 ${colorClass}`}>
         {icon}
       </div>
       <h3 className={`${headerFont.className} text-lg font-bold text-slate-900 dark:text-white mb-2 tracking-tight`}>{title}</h3>
       <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4 flex-grow">{description}</p>
-      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 group-hover:translate-x-1 transition-transform">
+      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-brand-600 dark:text-brand-400 group-hover:translate-x-1 transition-transform">
         Open Tool <ArrowRight size={12} />
       </div>
     </Link>

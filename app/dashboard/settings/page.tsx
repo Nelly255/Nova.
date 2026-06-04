@@ -4,12 +4,41 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { 
   Save, Globe, Wallet, Download, FileSpreadsheet, Loader2, CheckCircle2, 
-  FileText, ArrowRight, CalendarDays, Moon, Sun, Trash2, X, AlertTriangle
+  FileText, ArrowRight, CalendarDays, Moon, Sun, Laptop, Palette, Trash2, X, AlertTriangle, Check
 } from "lucide-react"; 
+
+// 🚀 PREMIUM COLOR PALETTES
+const COLOR_THEMES = [
+  { 
+    name: "Indigo (Default)", 
+    id: "indigo", 
+    hex: "#4F46E5",
+    vars: { "50": "238 242 255", "100": "224 231 255", "400": "129 140 248", "500": "99 102 241", "600": "79 70 229", "700": "67 56 202" }
+  },
+  { 
+    name: "Emerald", 
+    id: "emerald", 
+    hex: "#059669",
+    vars: { "50": "236 253 245", "100": "209 250 229", "400": "52 211 153", "500": "16 185 129", "600": "5 150 105", "700": "4 120 87" }
+  },
+  { 
+    name: "Rose", 
+    id: "rose", 
+    hex: "#E11D48",
+    vars: { "50": "255 241 242", "100": "255 228 230", "400": "251 113 133", "500": "244 63 94", "600": "225 29 72", "700": "190 18 60" }
+  },
+  { 
+    name: "Amber", 
+    id: "amber", 
+    hex: "#D97706",
+    vars: { "50": "255 251 235", "100": "254 243 199", "400": "251 191 36", "500": "245 158 11", "600": "217 119 6", "700": "180 83 9" }
+  }
+];
 
 export default function SettingsPage() {
   const [currency, setCurrency] = useState("TZS");
-  const [theme, setTheme] = useState("dark");
+  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>("system");
+  const [activeColor, setActiveColor] = useState("indigo");
   const [saved, setSaved] = useState(false);
 
   // Export States
@@ -35,20 +64,45 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const savedCurrency = localStorage.getItem("app_currency") || "TZS";
-    const savedTheme = localStorage.getItem("app_theme") || "dark";
+    // 🚀 Load saved theme & color
+    const savedTheme = (localStorage.getItem("app_theme") as 'light' | 'dark' | 'system') || "system";
+    const savedColor = localStorage.getItem("nova_color") || "indigo";
     
     setCurrency(savedCurrency);
     setTheme(savedTheme);
+    setActiveColor(savedColor);
+    
+    // Ensure CSS variables are loaded if navigating directly to settings
+    applyColorTheme(savedColor, false);
   }, []);
 
-  const handleThemeChange = (newTheme: string) => {
-    setTheme(newTheme);
-    localStorage.setItem("app_theme", newTheme);
-    if (newTheme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
+  // 🚀 HANDLERS
+  const handleThemeChange = (newMode: 'light' | 'dark' | 'system') => {
+    setTheme(newMode);
+    localStorage.setItem("app_theme", newMode);
+    
+    // Immediately apply for instant feedback
+    if (newMode === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else if (newMode === 'light') {
+      document.documentElement.classList.remove('dark');
+    } else if (newMode === 'system') {
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
     }
+  };
+
+  const applyColorTheme = (colorId: string, saveToStorage: boolean = true) => {
+    setActiveColor(colorId);
+    if (saveToStorage) localStorage.setItem('nova_color', colorId);
+    
+    const themeObj = COLOR_THEMES.find(t => t.id === colorId) || COLOR_THEMES[0];
+    Object.entries(themeObj.vars).forEach(([key, value]) => {
+      document.documentElement.style.setProperty(`--brand-${key}`, value);
+    });
   };
 
   const handleSave = () => {
@@ -66,7 +120,6 @@ export default function SettingsPage() {
   const executeClearData = async () => {
     setIsWiping(true);
     try {
-      // Delete child records first to prevent foreign key errors
       await Promise.all([
         supabase.from("transactions").delete().not('id', 'is', null),
         supabase.from("assets").delete().not('id', 'is', null),
@@ -76,10 +129,8 @@ export default function SettingsPage() {
         supabase.from("debts").delete().not('id', 'is', null)
       ]);
 
-      // Now that transactions are gone, safely delete all wallets
       await supabase.from("accounts").delete().not('id', 'is', null);
 
-      // Fire events so all pages know the data is gone
       window.dispatchEvent(new Event("transactionUpdated"));
       window.dispatchEvent(new Event("assetUpdated"));
       window.dispatchEvent(new Event("subscriptionUpdated"));
@@ -299,7 +350,6 @@ export default function SettingsPage() {
                     if (isNumber && !isNaN(val)) {
                       val = Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                       if (isContra) {
-                         // Formatted cleanly as money out but styled neutrally
                          return `<td class="align-right amount-cell" style="color: #94A3B8;">-${sym}${val}</td>`;
                       } else if (row.type === 'expense') {
                          return `<td class="align-right amount-cell text-rose">-${sym}${val}</td>`;
@@ -353,7 +403,6 @@ export default function SettingsPage() {
   const handleExportTx = async (type: 'csv' | 'pdf') => {
     type === 'csv' ? setExportingTx(true) : setExportingTxPdf(true);
     
-    // 🚀 FIXED: Ascending: true to put the 1st of the month at the very top
     let query = supabase.from("transactions").select("*").order("date", { ascending: true });
     
     if (exportPeriod === "custom") {
@@ -363,7 +412,6 @@ export default function SettingsPage() {
 
     const { data, error } = await query;
     if (!error && data) {
-      // 🚀 FIXED: Filters out "income" contras so it ONLY shows the money moving out. Also re-labels to "transfer"
       const formattedTx = data
         .filter(tx => !((tx.category || '').toLowerCase() === 'contra' && tx.type === 'income'))
         .map(tx => {
@@ -387,7 +435,6 @@ export default function SettingsPage() {
   const handleExportAssets = async (type: 'csv' | 'pdf') => {
     type === 'csv' ? setExportingAssets(true) : setExportingAssetsPdf(true);
     
-    // 🚀 FIXED: Ascending: true to show oldest purchases at the top
     let query = supabase.from("assets").select("*").order("purchase_date", { ascending: true });
     
     if (exportPeriod === "custom") {
@@ -445,29 +492,37 @@ export default function SettingsPage() {
       {/* ========================================= */}
       <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-2xl border border-white/50 dark:border-white/5 rounded-[2rem] p-6 md:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-2xl dark:shadow-black/50 transition-colors">
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-6 flex items-center gap-2">
-          <Globe size={20} className="text-indigo-500 dark:text-indigo-400" /> Preferences
+          <Globe size={20} className="text-brand-500 dark:text-brand-400" /> Preferences
         </h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Theme Selector */}
+          {/* 🚀 3-WAY THEME SELECTOR */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-400 mb-3">App Theme</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-400 mb-3">App Mode</label>
             <div className="flex p-1 bg-slate-100 dark:bg-slate-900/50 border border-slate-200/50 dark:border-white/5 rounded-xl transition-colors">
               <button 
                 onClick={() => handleThemeChange("light")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                  theme === "light" ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white" : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+                  theme === "light" ? "bg-white text-brand-600 shadow-sm dark:bg-slate-800 dark:text-brand-400" : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
                 }`}
               >
-                <Sun size={18} /> Light
+                <Sun size={16} /> Light
               </button>
               <button 
                 onClick={() => handleThemeChange("dark")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                  theme === "dark" ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white" : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+                  theme === "dark" ? "bg-white text-brand-600 shadow-sm dark:bg-slate-800 dark:text-brand-400" : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
                 }`}
               >
-                <Moon size={18} /> Dark
+                <Moon size={16} /> Dark
+              </button>
+              <button 
+                onClick={() => handleThemeChange("system")}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+                  theme === "system" ? "bg-white text-brand-600 shadow-sm dark:bg-slate-800 dark:text-brand-400" : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
+                }`}
+              >
+                <Laptop size={16} /> Auto
               </button>
             </div>
           </div>
@@ -481,7 +536,7 @@ export default function SettingsPage() {
               <button 
                 onClick={() => setCurrency("USD")}
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                  currency === "USD" ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white" : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
+                  currency === "USD" ? "bg-white text-brand-600 shadow-sm dark:bg-slate-800 dark:text-brand-400" : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
                 }`}
               >
                 USD ($)
@@ -489,11 +544,40 @@ export default function SettingsPage() {
               <button 
                 onClick={() => setCurrency("TZS")}
                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                  currency === "TZS" ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white" : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
+                  currency === "TZS" ? "bg-white text-brand-600 shadow-sm dark:bg-slate-800 dark:text-brand-400" : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
                 }`}
               >
                 <span className="font-extrabold tracking-tighter">TSh</span> TZS
               </button>
+            </div>
+          </div>
+
+          {/* 🚀 ACCENT COLOR PICKER */}
+          <div className="md:col-span-2 mt-2 pt-6 border-t border-slate-200/50 dark:border-white/5">
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-400 mb-4 flex items-center gap-2">
+              <Palette size={16} /> Accent Color
+            </label>
+            <div className="flex flex-wrap items-center gap-4">
+              {COLOR_THEMES.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => applyColorTheme(t.id)}
+                  className="relative group flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 hover:scale-110 active:scale-95 border-[3px] focus:outline-none"
+                  style={{ 
+                    backgroundColor: t.hex, 
+                    borderColor: activeColor === t.id ? (theme === 'dark' ? 'white' : '#0F172A') : 'transparent',
+                    boxShadow: activeColor === t.id ? `0 0 20px -2px ${t.hex}` : 'none'
+                  }}
+                  title={t.name}
+                >
+                  {activeColor === t.id && <Check size={20} className="text-white drop-shadow-md" />}
+                  
+                  {/* Tooltip */}
+                  <span className="absolute -top-10 scale-0 group-hover:scale-100 transition-all bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-bold px-2 py-1 rounded-md whitespace-nowrap pointer-events-none">
+                    {t.name}
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -504,7 +588,7 @@ export default function SettingsPage() {
       {/* ========================================= */}
       <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-2xl border border-white/50 dark:border-white/5 rounded-[2rem] p-6 md:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-2xl dark:shadow-black/50 transition-colors">
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-200 flex items-center gap-2 mb-4 transition-colors">
-          <FileSpreadsheet size={20} className="text-indigo-500 dark:text-indigo-400 transition-colors" /> Tax & Data Export
+          <FileSpreadsheet size={20} className="text-brand-500 dark:text-brand-400 transition-colors" /> Tax & Data Export
         </h2>
           
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 transition-colors">
@@ -521,13 +605,13 @@ export default function SettingsPage() {
           <div className="flex p-1.5 bg-slate-100 dark:bg-slate-900/50 border border-slate-200/50 dark:border-white/5 rounded-xl w-full sm:w-fit mb-4 transition-colors">
             <button
               onClick={() => setExportPeriod("all")}
-              className={`flex-1 sm:flex-none px-6 py-2 rounded-lg text-sm font-bold transition-all ${exportPeriod === 'all' ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+              className={`flex-1 sm:flex-none px-6 py-2 rounded-lg text-sm font-bold transition-all ${exportPeriod === 'all' ? 'bg-white text-brand-600 shadow-sm dark:bg-slate-800 dark:text-brand-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
             >
               All Time
             </button>
             <button
               onClick={() => setExportPeriod("custom")}
-              className={`flex-1 sm:flex-none px-6 py-2 rounded-lg text-sm font-bold transition-all ${exportPeriod === 'custom' ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+              className={`flex-1 sm:flex-none px-6 py-2 rounded-lg text-sm font-bold transition-all ${exportPeriod === 'custom' ? 'bg-white text-brand-600 shadow-sm dark:bg-slate-800 dark:text-brand-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
             >
               Custom Range
             </button>
@@ -541,7 +625,7 @@ export default function SettingsPage() {
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full bg-white/60 dark:bg-slate-900/40 border border-slate-200/50 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors [color-scheme:light] dark:[color-scheme:dark]"
+                  className="w-full bg-white/60 dark:bg-slate-900/40 border border-slate-200/50 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-slate-200 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors [color-scheme:light] dark:[color-scheme:dark]"
                 />
               </div>
               <div className="hidden sm:block mt-5 text-slate-300 dark:text-slate-600"><ArrowRight size={16} /></div>
@@ -551,7 +635,7 @@ export default function SettingsPage() {
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full bg-white/60 dark:bg-slate-900/40 border border-slate-200/50 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors [color-scheme:light] dark:[color-scheme:dark]"
+                  className="w-full bg-white/60 dark:bg-slate-900/40 border border-slate-200/50 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-slate-200 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors [color-scheme:light] dark:[color-scheme:dark]"
                 />
               </div>
             </div>
@@ -560,7 +644,7 @@ export default function SettingsPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Transactions Export Card */}
-          <div className="p-5 rounded-xl bg-white/40 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 flex flex-col justify-between gap-5 transition-colors shadow-sm hover:border-indigo-500/30 dark:hover:border-indigo-500/30">
+          <div className="p-5 rounded-xl bg-white/40 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 flex flex-col justify-between gap-5 transition-colors shadow-sm hover:border-brand-500/30 dark:hover:border-brand-500/30">
             <div>
               <h4 className="font-bold text-slate-900 dark:text-slate-100 transition-colors">Transactions Data</h4>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 transition-colors">Income, expenses, and savings.</p>
@@ -576,7 +660,7 @@ export default function SettingsPage() {
               <button 
                 onClick={() => handleExportTx('pdf')}
                 disabled={exportingTx || exportingTxPdf}
-                className="flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white py-2.5 rounded-xl text-xs font-bold shadow-[0_4px_14px_rgba(249,115,22,0.3)] transition-all active:scale-95 disabled:opacity-70"
+                className="flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 text-white py-2.5 rounded-xl text-xs font-bold shadow-md transition-all active:scale-95 disabled:opacity-70"
               >
                 {exportingTxPdf ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />} PDF
               </button>
@@ -584,7 +668,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Assets Export Card */}
-          <div className="p-5 rounded-xl bg-white/40 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 flex flex-col justify-between gap-5 transition-colors shadow-sm hover:border-indigo-500/30 dark:hover:border-indigo-500/30">
+          <div className="p-5 rounded-xl bg-white/40 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 flex flex-col justify-between gap-5 transition-colors shadow-sm hover:border-brand-500/30 dark:hover:border-brand-500/30">
             <div>
               <h4 className="font-bold text-slate-900 dark:text-slate-100 transition-colors">Asset Depreciation</h4>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 transition-colors">TRA rates and current NBV.</p>
@@ -600,7 +684,7 @@ export default function SettingsPage() {
               <button 
                 onClick={() => handleExportAssets('pdf')}
                 disabled={exportingAssets || exportingAssetsPdf}
-                className="flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white py-2.5 rounded-xl text-xs font-bold shadow-[0_4px_14px_rgba(249,115,22,0.3)] transition-all active:scale-95 disabled:opacity-70"
+                className="flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 text-white py-2.5 rounded-xl text-xs font-bold shadow-md transition-all active:scale-95 disabled:opacity-70"
               >
                 {exportingAssetsPdf ? <Loader2 size={14} className="animate-spin" /> : <FileText size={14} />} PDF
               </button>
@@ -608,7 +692,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="mt-6 flex items-start gap-2 text-xs text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 p-3 rounded-xl border border-indigo-200/50 dark:border-indigo-500/20">
+        <div className="mt-6 flex items-start gap-2 text-xs text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/10 p-3 rounded-xl border border-brand-200/50 dark:border-brand-500/20">
           <CheckCircle2 size={16} className="shrink-0 mt-0.5" />
           <p>Your exports are generated purely locally in your browser for maximum privacy. No data is sent to external report servers.</p>
         </div>
@@ -636,7 +720,7 @@ export default function SettingsPage() {
       <div className="pt-6 border-t border-slate-200 dark:border-white/5 flex justify-end transition-colors relative z-10">
         <button 
           onClick={handleSave}
-          className="bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 text-white dark:text-slate-900 transition-colors px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 text-sm shadow-lg shadow-slate-900/20 dark:shadow-white/20 w-full sm:w-auto active:scale-95"
+          className="bg-brand-600 hover:bg-brand-700 text-white transition-colors px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 text-sm shadow-lg shadow-brand-500/20 w-full sm:w-auto active:scale-95"
         >
           <Save size={18} /> {saved ? "Saved Successfully!" : "Save Settings"}
         </button>

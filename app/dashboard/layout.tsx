@@ -10,7 +10,7 @@ import AuthGuard from "@/components/AuthGuard";
 import QuickTourModal from "@/components/QuickTourModal"; 
 import SingleTabEnforcer from "@/components/SingleTabEnforcer"; 
 import CommandPalette from "@/components/CommandPalette";
-import AICopilotButton from "@/components/AICopilotButton"; // 🚀 NEW IMPORT
+import AICopilotButton from "@/components/AICopilotButton"; 
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname(); 
@@ -19,13 +19,44 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // PWA Install State
   const [installPrompt, setInstallPrompt] = useState<any>(null);
 
+  // Mobile Nav Scroll Detection States
+  const [isMobileHeaderVisible, setIsMobileHeaderVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  // 🚀 LIVE SYSTEM THEME LISTENER
   useEffect(() => {
-    const savedTheme = localStorage.getItem('app_theme');
-    if (savedTheme === 'light') {
-      document.documentElement.classList.remove('dark');
-    } else {
-      document.documentElement.classList.add('dark');
-    }
+    const applyTheme = () => {
+      const savedTheme = localStorage.getItem('app_theme');
+      
+      if (savedTheme === 'light') {
+        document.documentElement.classList.remove('dark');
+      } else if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        // System Default / Auto Mode
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      }
+    };
+
+    // Apply on initial load and navigation
+    applyTheme();
+
+    // Listen for live system changes (e.g., user toggles Dark Mode in Control Center)
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemChange = () => {
+      const savedTheme = localStorage.getItem('app_theme');
+      // Only auto-switch if the user hasn't explicitly forced light or dark in settings
+      if (!savedTheme || savedTheme === 'system') {
+        applyTheme();
+      }
+    };
+
+    mediaQuery.addEventListener('change', handleSystemChange);
+    return () => mediaQuery.removeEventListener('change', handleSystemChange);
   }, [pathname]); 
 
   // PWA Registration & Install Listener
@@ -42,6 +73,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   }, []);
+
+  // Smart Scroll Listener for Top Mobile Header
+  useEffect(() => {
+    const handleScroll = (e: any) => {
+      const currentScrollY = e.target.scrollTop || window.scrollY;
+
+      if (currentScrollY > lastScrollY && currentScrollY > 50) {
+        setIsMobileHeaderVisible(false);
+      } else if (currentScrollY < lastScrollY) {
+        setIsMobileHeaderVisible(true);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll, { capture: true, passive: true });
+    
+    return () => {
+      window.removeEventListener("scroll", handleScroll, { capture: true });
+    };
+  }, [lastScrollY]);
 
   const handleInstallApp = async () => {
     if (!installPrompt) return;
@@ -62,11 +114,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <SingleTabEnforcer />
       <QuickTourModal /> 
       <CommandPalette />
-      <AICopilotButton /> {/* 🚀 PREMIUM AI BUTTON INJECTED HERE */}
+      <AICopilotButton />
       
       <div className="flex h-[100dvh] bg-transparent text-slate-900 dark:text-slate-50 font-sans overflow-hidden transition-colors duration-300 relative">
         
-        {/* Universal Hidden Scrollbar Styling */}
         <style dangerouslySetInnerHTML={{__html: `
           .nuke-scrollbar::-webkit-scrollbar { display: none !important; }
           .nuke-scrollbar { -ms-overflow-style: none !important; scrollbar-width: none !important; }
@@ -83,7 +134,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {isCollapsed ? <Menu size={16} className="text-slate-600 dark:text-slate-300 group-hover:text-indigo-500" /> : <ChevronLeft size={16} className="text-slate-600 dark:text-slate-300 group-hover:text-indigo-500" />}
           </button>
 
-          {/* 1. Fixed Top Section (Logo) */}
           <Link href="/" className={`group shrink-0 flex items-center mb-6 mt-2 transition-all duration-500 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${isCollapsed ? 'justify-center' : 'gap-2 px-2 justify-start'}`}>
             <Activity size={28} className="text-indigo-600 dark:text-indigo-400 shrink-0 group-hover:scale-110 transition-transform drop-shadow-[0_0_8px_rgba(99,102,241,0.3)]" />
             <div className={`overflow-hidden transition-all duration-500 flex items-center ${isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
@@ -91,7 +141,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </Link>
             
-          {/* 2. Scrollable Middle Section */}
           <div 
             className="flex-1 overflow-y-auto min-h-0 nuke-scrollbar -mx-2 px-2 pb-6"
             style={{ 
@@ -108,11 +157,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <NavItem href="/dashboard/savings" icon={<PiggyBank size={20}/>} label="Savings Goals" active={pathname === "/dashboard/savings"} isCollapsed={isCollapsed} />
               <NavItem href="/dashboard/assets" icon={<Briefcase size={20}/>} label="Assets" active={pathname === "/dashboard/assets"} isCollapsed={isCollapsed} />
               <NavItem href="/dashboard/debts" icon={<CreditCard size={20}/>} label="Debts & Loans" active={pathname === "/dashboard/debts"} isCollapsed={isCollapsed} />
-              
-              {/* 🚀 Tools Link */}
               <NavItem href="/dashboard/tools" icon={<Wrench size={20}/>} label="Tools" active={pathname === "/dashboard/tools" || pathname.includes('-calculator')} isCollapsed={isCollapsed} />
               
-              {/* ☕ Ko-fi Button (Desktop) */}
               <div className="pt-4 pb-2">
                 <a 
                   href="https://ko-fi.com/nellyjackson" 
@@ -132,10 +178,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </nav>
           </div>
 
-          {/* 3. Fixed Bottom Section */}
           <div className="shrink-0 flex flex-col gap-2 pt-4 border-t border-slate-200/50 dark:border-white/5 transition-colors mt-auto z-10 bg-transparent">
-            
-            {/* IN-APP INSTALL BUTTON (DESKTOP) */}
             {installPrompt && (
               <button 
                 onClick={handleInstallApp} 
@@ -158,8 +201,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </main>
 
-        {/* 📱 MOBILE FLOATING TOP HEADER */}
-        <header className="md:hidden fixed top-[max(env(safe-area-inset-top),1rem)] left-4 right-4 z-[9999] flex items-center justify-between px-5 py-3 border border-white/40 dark:border-white/10 bg-white/40 dark:bg-[#0A0A0E]/60 backdrop-blur-[40px] saturate-[2] shadow-[0_16px_40px_-10px_rgba(0,0,0,0.5)] rounded-[2rem] pointer-events-auto">
+        {/* 🚀 DYNAMIC MOBILE FLOATING TOP HEADER */}
+        <header className={`md:hidden fixed top-[max(env(safe-area-inset-top),1rem)] left-4 right-4 z-[9999] flex items-center justify-between px-5 py-3 border border-white/40 dark:border-white/10 bg-white/40 dark:bg-[#0A0A0E]/60 backdrop-blur-[40px] saturate-[2] shadow-[0_16px_40px_-10px_rgba(0,0,0,0.5)] rounded-[2rem] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
+          isMobileHeaderVisible 
+            ? "translate-y-0 opacity-100 pointer-events-auto" 
+            : "-translate-y-32 opacity-0 pointer-events-none"
+        }`}>
           <Link href="/" className="group flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-lg">
             <Activity size={24} className="text-indigo-600 dark:text-indigo-400 drop-shadow-[0_0_8px_rgba(99,102,241,0.3)] group-hover:scale-110 transition-transform" />
             <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Nova.</span>
@@ -203,11 +250,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </header>
 
-        {/* 📱 MOBILE FLOATING BOTTOM NAV */}
+        {/* 📱 MOBILE FLOATING BOTTOM NAV (Static, no scroll-hide) */}
         <nav className="md:hidden fixed bottom-[max(env(safe-area-inset-bottom),1.5rem)] left-4 right-4 z-[9999] pointer-events-auto">
           <div className="nuke-scrollbar bg-white/40 dark:bg-[#0A0A0E]/60 backdrop-blur-[40px] saturate-[2] border border-white/40 dark:border-white/10 shadow-[0_16px_40px_-10px_rgba(0,0,0,0.5)] rounded-[2.5rem] px-1 py-2 flex items-center justify-start gap-1 overflow-x-auto relative scroll-smooth snap-x snap-mandatory">
             
-            {/* Invis Spacer for starting scroll padding */}
             <div className="w-1 shrink-0 snap-start"></div>
             
             <MobileNavItem href="/dashboard" icon={<LayoutDashboard size={22}/>} label="Home" active={pathname === "/dashboard"} />
@@ -224,7 +270,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <MobileNavItem href="/dashboard/tools" icon={<Wrench size={22}/>} label="Tools" active={pathname === "/dashboard/tools" || pathname.includes('-calculator')} />
             <MobileNavItem href="/dashboard/settings" icon={<Settings size={22}/>} label="Settings" active={pathname === "/dashboard/settings"} />
             
-            {/* Invis Spacer to fix the far right cutoff */}
             <div className="w-2 shrink-0 snap-end"></div>
 
           </div>
@@ -258,7 +303,7 @@ function NavItem({ icon, label, href = "#", active = false, isCollapsed }: any) 
   );
 }
 
-// --- MOBILE NAV ITEM (Updated with Snap Scrolling) ---
+// --- MOBILE NAV ITEM ---
 function MobileNavItem({ icon, label, href = "#", active = false }: any) {
   return (
     <Link 

@@ -1,7 +1,25 @@
 @import "tailwindcss";
 @custom-variant dark (&:is(.dark *));
 
+/* 🚀 TAILWIND V4 DYNAMIC THEME ENGINE */
+@theme {
+  --color-brand-50: rgb(var(--brand-50));
+  --color-brand-100: rgb(var(--brand-100));
+  --color-brand-400: rgb(var(--brand-400));
+  --color-brand-500: rgb(var(--brand-500));
+  --color-brand-600: rgb(var(--brand-600));
+  --color-brand-700: rgb(var(--brand-700));
+}
+
 :root {
+  /* 🚀 Default Brand Theme (Indigo RGB values) */
+  --brand-50: 238 242 255;
+  --brand-100: 224 231 255;
+  --brand-400: 129 140 248;
+  --brand-500: 99 102 241;
+  --brand-600: 79 70 229;
+  --brand-700: 67 56 202;
+
   /* Soft, clean off-white background */
   --background: #f1f5f9; 
   --foreground: #0f172a;
@@ -9,10 +27,12 @@
   /* The Hybrid Card: 60% Solid White, 40% Glass for maximum frost! */
   --card-bg: rgba(255, 255, 255, 0.60);
   --card-border: rgba(255, 255, 255, 0.8);
-  --card-shadow: 0 10px 40px -10px rgba(99, 102, 241, 0.08);
+  
+  /* 🚀 PATCHED: Modern CSS syntax for space-separated RGB variables */
+  --card-shadow: 0 10px 40px -10px rgb(var(--brand-500) / 0.08); 
 }
 
-/* PATCHED: Targeted the HTML tag because that is where our script applies the dark mode class */
+/* Targeted the HTML tag because that is where our script applies the dark mode class */
 html.dark {
   /* Deep, rich dark background */
   --background: #050507;
@@ -27,9 +47,9 @@ html.dark {
 body {
   background-color: var(--background);
   color: var(--foreground);
-  /* The Magic: A soft, colorful mesh gradient sitting behind everything */
+  /* 🚀 PATCHED: Fixed the radial gradient syntax to use rgb(var() / alpha) */
   background-image: 
-    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+    radial-gradient(at 0% 0%, rgb(var(--brand-500) / 0.12) 0px, transparent 50%),
     radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.12) 0px, transparent 50%),
     radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.12) 0px, transparent 50%);
   background-attachment: fixed;
@@ -37,14 +57,14 @@ body {
 }
 
 html.dark body {
-  /* Dimmer mesh gradient for dark mode */
+  /* 🚀 PATCHED: Dimmer mesh gradient using correct syntax */
   background-image: 
-    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.10) 0px, transparent 50%),
+    radial-gradient(at 0% 0%, rgb(var(--brand-500) / 0.10) 0px, transparent 50%),
     radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.10) 0px, transparent 50%),
     radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.10) 0px, transparent 50%);
 }
 
-/* PATCHED: Wrapped in the components layer so Tailwind respects it! */
+/* Wrapped in the components layer so Tailwind respects it! */
 @layer components {
   .glass-card {
     background-color: var(--card-bg);
@@ -62,33 +82,33 @@ html.dark body {
 
 /* For Chrome, Edge, and Safari */
 ::-webkit-scrollbar {
-  width: 6px; /* Makes the vertical scrollbar super slim */
-  height: 6px; /* For horizontal scrollbars */
+  width: 6px; 
+  height: 6px; 
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent; /* Hides the ugly gray track */
+  background: transparent; 
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(15, 23, 42, 0.2); /* Soft dark bar for Light Mode */
-  border-radius: 10px; /* Perfectly rounded edges */
+  background: rgba(15, 23, 42, 0.2); 
+  border-radius: 10px; 
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(15, 23, 42, 0.4); /* Gets slightly darker on hover */
+  background: rgba(15, 23, 42, 0.4); 
 }
 
 /* Adapt for Dark Mode! */
 html.dark ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15); /* Soft white/glassy bar for Dark Mode */
+  background: rgba(255, 255, 255, 0.15); 
 }
 
 html.dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3); /* Brighter on hover */
+  background: rgba(255, 255, 255, 0.3); 
 }
 
-/* For Firefox (they use different rules) */
+/* For Firefox */
 * {
   scrollbar-width: thin;
   scrollbar-color: rgba(15, 23, 42, 0.2) transparent;
