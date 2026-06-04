@@ -10,6 +10,7 @@ import AuthGuard from "@/components/AuthGuard";
 import QuickTourModal from "@/components/QuickTourModal"; 
 import SingleTabEnforcer from "@/components/SingleTabEnforcer"; 
 import CommandPalette from "@/components/CommandPalette";
+import AICopilotButton from "@/components/AICopilotButton"; // 🚀 NEW IMPORT
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname(); 
@@ -61,6 +62,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <SingleTabEnforcer />
       <QuickTourModal /> 
       <CommandPalette />
+      <AICopilotButton /> {/* 🚀 PREMIUM AI BUTTON INJECTED HERE */}
       
       <div className="flex h-[100dvh] bg-transparent text-slate-900 dark:text-slate-50 font-sans overflow-hidden transition-colors duration-300 relative">
         
@@ -81,7 +83,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {isCollapsed ? <Menu size={16} className="text-slate-600 dark:text-slate-300 group-hover:text-indigo-500" /> : <ChevronLeft size={16} className="text-slate-600 dark:text-slate-300 group-hover:text-indigo-500" />}
           </button>
 
-          {/* 1. Fixed Top Section (Logo) - 🚀 NOW WRAPPED IN A LINK */}
+          {/* 1. Fixed Top Section (Logo) */}
           <Link href="/" className={`group shrink-0 flex items-center mb-6 mt-2 transition-all duration-500 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${isCollapsed ? 'justify-center' : 'gap-2 px-2 justify-start'}`}>
             <Activity size={28} className="text-indigo-600 dark:text-indigo-400 shrink-0 group-hover:scale-110 transition-transform drop-shadow-[0_0_8px_rgba(99,102,241,0.3)]" />
             <div className={`overflow-hidden transition-all duration-500 flex items-center ${isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
@@ -107,7 +109,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <NavItem href="/dashboard/assets" icon={<Briefcase size={20}/>} label="Assets" active={pathname === "/dashboard/assets"} isCollapsed={isCollapsed} />
               <NavItem href="/dashboard/debts" icon={<CreditCard size={20}/>} label="Debts & Loans" active={pathname === "/dashboard/debts"} isCollapsed={isCollapsed} />
               
-              {/* 🚀 Tools Link - Now stays active if you are inside ANY calculator! */}
+              {/* 🚀 Tools Link */}
               <NavItem href="/dashboard/tools" icon={<Wrench size={20}/>} label="Tools" active={pathname === "/dashboard/tools" || pathname.includes('-calculator')} isCollapsed={isCollapsed} />
               
               {/* ☕ Ko-fi Button (Desktop) */}
@@ -158,7 +160,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* 📱 MOBILE FLOATING TOP HEADER */}
         <header className="md:hidden fixed top-[max(env(safe-area-inset-top),1rem)] left-4 right-4 z-[9999] flex items-center justify-between px-5 py-3 border border-white/40 dark:border-white/10 bg-white/40 dark:bg-[#0A0A0E]/60 backdrop-blur-[40px] saturate-[2] shadow-[0_16px_40px_-10px_rgba(0,0,0,0.5)] rounded-[2rem] pointer-events-auto">
-          {/* 🚀 NOW WRAPPED IN A LINK */}
           <Link href="/" className="group flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-lg">
             <Activity size={24} className="text-indigo-600 dark:text-indigo-400 drop-shadow-[0_0_8px_rgba(99,102,241,0.3)] group-hover:scale-110 transition-transform" />
             <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Nova.</span>
