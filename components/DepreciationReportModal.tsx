@@ -55,7 +55,7 @@ export default function DepreciationReportModal({ asset, currencySymbol }: { ass
         onClick={() => setIsOpen(true)}
         className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition py-3 rounded-xl font-medium flex justify-center items-center gap-2 text-sm border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 mt-4 transition-colors"
       >
-        <Calculator size={18} className="text-indigo-500 dark:text-indigo-400" /> Calculate Year-End
+        <Calculator size={18} className="text-brand-500 dark:text-brand-400" /> Calculate Year-End
       </button>
 
       {isOpen && mounted && createPortal(
@@ -65,9 +65,9 @@ export default function DepreciationReportModal({ asset, currencySymbol }: { ass
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 transition-colors">
             
             {/* Modal Header */}
-            <div className="flex justify-between items-center p-6 border-b border-slate-200 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-950/50 transition-colors">
+            <div className="flex justify-between items-center p-6 border-b border-slate-200 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-950/50 transition-colors shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-500 dark:text-indigo-400 transition-colors">
+                <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-500/10 flex items-center justify-center text-brand-500 dark:text-brand-400 transition-colors">
                   <TrendingDown size={20} />
                 </div>
                 <div>
@@ -97,12 +97,12 @@ export default function DepreciationReportModal({ asset, currencySymbol }: { ass
               </div>
 
               {/* Projected Summary Card */}
-              <div className="bg-indigo-50 dark:bg-gradient-to-r dark:from-indigo-500/20 dark:to-purple-500/20 border border-indigo-100 dark:border-indigo-500/30 p-5 rounded-2xl flex justify-between items-center mb-6 shadow-sm transition-colors">
+              <div className="bg-brand-50 dark:bg-brand-500/10 border border-brand-100 dark:border-brand-500/30 p-5 rounded-2xl flex justify-between items-center mb-6 shadow-sm transition-colors">
                 <div>
-                  <p className="text-xs text-indigo-600 dark:text-indigo-300 uppercase tracking-wider font-bold mb-1">Projected New NBV</p>
+                  <p className="text-xs text-brand-600 dark:text-brand-300 uppercase tracking-wider font-bold mb-1">Projected New NBV</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">After applying depreciation</p>
                 </div>
-                <h2 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
+                <h2 className="text-3xl font-bold text-brand-600 dark:text-brand-400">
                   {currencySymbol}{newProjectedNBV.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                 </h2>
               </div>
@@ -111,7 +111,7 @@ export default function DepreciationReportModal({ asset, currencySymbol }: { ass
               <button 
                 onClick={handleRecordDepreciation}
                 disabled={isFullyDepreciated || isLoading}
-                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-3 rounded-xl transition-colors flex justify-center items-center gap-2 disabled:opacity-50 shadow-lg shadow-indigo-600/20"
+                className="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-3.5 rounded-xl transition-all flex justify-center items-center gap-2 disabled:opacity-50 shadow-[0_8px_20px_-6px_rgb(var(--brand-500)/0.6)] active:scale-95 disabled:active:scale-100 disabled:hover:translate-y-0"
               >
                 {isLoading ? <Loader2 className="animate-spin" size={20} /> : (isFullyDepreciated ? "Fully Depreciated" : "Record Annual Depreciation")}
               </button>

@@ -14,7 +14,7 @@ export default function DashboardFreelanceCalculator() {
   
   // DOCUMENT CUSTOMIZATION STATE
   const [template, setTemplate] = useState<"modern" | "executive" | "minimal">("modern");
-  const [docColor, setDocColor] = useState<string>("#8B5CF6"); // Default Violet
+  const [docColor, setDocColor] = useState<string>("#8B5CF6"); // Default Violet for Invoice Export
 
   const premiumColors = [
     { name: 'Violet', hex: '#8B5CF6' },
@@ -67,8 +67,8 @@ export default function DashboardFreelanceCalculator() {
     <div className="min-h-screen w-full bg-[#F8F9FB] dark:bg-[#07070A] text-slate-900 dark:text-slate-50 transition-colors duration-500 relative overflow-hidden" style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}>
       
       {/* 🚀 FIXED AMBIENT GLOWS - Added specific class to force hide on print */}
-      <div className="ambient-glow absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#8B5CF6]/10 dark:bg-[#8B5CF6]/15 rounded-full blur-[120px] pointer-events-none opacity-80 z-0 print:hidden"></div>
-      <div className="ambient-glow absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none opacity-60 z-0 print:hidden"></div>
+      <div className="ambient-glow absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-brand-500/10 dark:bg-brand-500/15 rounded-full blur-[120px] pointer-events-none opacity-80 z-0 print:hidden"></div>
+      <div className="ambient-glow absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-[120px] pointer-events-none opacity-60 z-0 print:hidden"></div>
 
       {/* WEB UI WRAPPER */}
       <div className="web-ui-only relative z-10 pt-6 md:pt-12 px-4 sm:px-6 print:hidden">
@@ -77,7 +77,7 @@ export default function DashboardFreelanceCalculator() {
         <header className="max-w-6xl mx-auto mb-10 md:mb-12 grid lg:grid-cols-2 gap-8 md:gap-10 items-end">
           <div className="space-y-4 md:space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#12121A] border border-slate-200 dark:border-white/5 shadow-sm">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#8B5CF6] shadow-[0_0_8px_#8B5CF6] animate-pulse"></div>
+              <div className="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgb(var(--brand-500))] animate-pulse"></div>
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">FREELANCE BILLING</span>
             </div>
             
@@ -85,7 +85,7 @@ export default function DashboardFreelanceCalculator() {
               <span style={{ fontFamily: "'Dancing Script', cursive" }} className="text-[3rem] sm:text-5xl md:text-[5.5rem] font-bold text-slate-800 dark:text-slate-200 leading-[0.8] mb-2 pl-1">
                 Perfect your
               </span>
-              <span className="text-[2.5rem] sm:text-5xl md:text-[6.5rem] font-[900] tracking-[-0.04em] text-[#8B5CF6] leading-[0.85] mt-1 md:mt-0">
+              <span className="text-[2.5rem] sm:text-5xl md:text-[6.5rem] font-[900] tracking-[-0.04em] text-brand-500 leading-[0.85] mt-1 md:mt-0">
                 Invoices.
               </span>
             </h1>
@@ -123,10 +123,10 @@ export default function DashboardFreelanceCalculator() {
             </div>
           </div>
 
-          {/* Color Selector */}
+          {/* Color Selector (Intentionally kept isolated from global brand to allow custom export colors) */}
           <div className="flex flex-col gap-3">
             <span className="text-xs font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
-              <Palette size={16} /> Brand Accent Color
+              <Palette size={16} /> Export Accent Color
             </span>
             <div className="flex gap-3 md:gap-4 flex-wrap items-center h-full pb-1">
               {premiumColors.map((color) => (
@@ -164,7 +164,7 @@ export default function DashboardFreelanceCalculator() {
                       value={companyName}
                       onChange={(e) => setCompanyName(e.target.value)}
                       placeholder="e.g. Acme Studios"
-                      className="w-full bg-slate-50 dark:bg-[#14141A] border border-slate-200 dark:border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-[#8B5CF6] transition-colors"
+                      className="w-full bg-slate-50 dark:bg-[#14141A] border border-slate-200 dark:border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 transition-colors"
                     />
                   </div>
                 </div>
@@ -181,7 +181,7 @@ export default function DashboardFreelanceCalculator() {
                       value={slogan}
                       onChange={(e) => setSlogan(e.target.value)}
                       placeholder="e.g. Digital Design Experts"
-                      className="w-full bg-slate-50 dark:bg-[#14141A] border border-slate-200 dark:border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-[#8B5CF6] transition-colors"
+                      className="w-full bg-slate-50 dark:bg-[#14141A] border border-slate-200 dark:border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 transition-colors"
                     />
                   </div>
                 </div>
@@ -192,7 +192,7 @@ export default function DashboardFreelanceCalculator() {
                   Target Net Retained (TZS)
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-[#8B5CF6]">
+                  <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-brand-500">
                     <Receipt size={24} />
                   </div>
                   <input 
@@ -200,7 +200,7 @@ export default function DashboardFreelanceCalculator() {
                     value={targetNet === 0 ? '' : targetNet.toLocaleString('en-US')}
                     onChange={handleNetChange}
                     placeholder="e.g. 5,000,000"
-                    className="w-full bg-slate-50 dark:bg-[#14141A] border border-slate-200 dark:border-white/10 rounded-2xl pl-14 pr-4 py-4 md:py-5 text-xl md:text-2xl font-black text-slate-900 dark:text-white focus:outline-none focus:border-[#8B5CF6] transition-colors"
+                    className="w-full bg-slate-50 dark:bg-[#14141A] border border-slate-200 dark:border-white/10 rounded-2xl pl-14 pr-4 py-4 md:py-5 text-xl md:text-2xl font-black text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 transition-colors"
                   />
                 </div>
               </div>
@@ -211,13 +211,13 @@ export default function DashboardFreelanceCalculator() {
                 {/* WHT Toggle */}
                 <button 
                   onClick={() => setApplyWHT(!applyWHT)}
-                  className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 ${applyWHT ? 'bg-violet-50 dark:bg-[#8B5CF6]/10 border-violet-200 dark:border-[#8B5CF6]/30' : 'bg-slate-50 dark:bg-[#14141A] border-slate-200 dark:border-white/5'}`}
+                  className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 ${applyWHT ? 'bg-brand-50 dark:bg-brand-500/10 border-brand-200 dark:border-brand-500/30' : 'bg-slate-50 dark:bg-[#14141A] border-slate-200 dark:border-white/5'}`}
                 >
                   <div className="flex flex-col items-start text-left pr-4">
-                    <span className={`text-sm font-bold ${applyWHT ? 'text-violet-900 dark:text-violet-100' : 'text-slate-700 dark:text-slate-300'}`}>Withholding Tax (5%)</span>
-                    <span className={`text-xs mt-0.5 ${applyWHT ? 'text-violet-600 dark:text-violet-400' : 'text-slate-500 dark:text-slate-500'}`}>Client deducts this before paying you.</span>
+                    <span className={`text-sm font-bold ${applyWHT ? 'text-brand-900 dark:text-brand-100' : 'text-slate-700 dark:text-slate-300'}`}>Withholding Tax (5%)</span>
+                    <span className={`text-xs mt-0.5 ${applyWHT ? 'text-brand-600 dark:text-brand-400' : 'text-slate-500 dark:text-slate-500'}`}>Client deducts this before paying you.</span>
                   </div>
-                  <div className={`shrink-0 transition-transform duration-300 ${applyWHT ? 'text-[#8B5CF6] scale-110' : 'text-slate-300 dark:text-slate-600'}`}>
+                  <div className={`shrink-0 transition-transform duration-300 ${applyWHT ? 'text-brand-500 scale-110' : 'text-slate-300 dark:text-slate-600'}`}>
                     {applyWHT ? <CheckCircle2 size={24} /> : <Circle size={24} />}
                   </div>
                 </button>
@@ -225,13 +225,13 @@ export default function DashboardFreelanceCalculator() {
                 {/* VAT Toggle */}
                 <button 
                   onClick={() => setApplyVAT(!applyVAT)}
-                  className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 ${applyVAT ? 'bg-violet-50 dark:bg-[#8B5CF6]/10 border-violet-200 dark:border-[#8B5CF6]/30' : 'bg-slate-50 dark:bg-[#14141A] border-slate-200 dark:border-white/5'}`}
+                  className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 ${applyVAT ? 'bg-brand-50 dark:bg-brand-500/10 border-brand-200 dark:border-brand-500/30' : 'bg-slate-50 dark:bg-[#14141A] border-slate-200 dark:border-white/5'}`}
                 >
                   <div className="flex flex-col items-start text-left pr-4">
-                    <span className={`text-sm font-bold ${applyVAT ? 'text-violet-900 dark:text-violet-100' : 'text-slate-700 dark:text-slate-300'}`}>Value Added Tax (18%)</span>
-                    <span className={`text-xs mt-0.5 ${applyVAT ? 'text-violet-600 dark:text-violet-400' : 'text-slate-500 dark:text-slate-500'}`}>Only if you are VAT registered.</span>
+                    <span className={`text-sm font-bold ${applyVAT ? 'text-brand-900 dark:text-brand-100' : 'text-slate-700 dark:text-slate-300'}`}>Value Added Tax (18%)</span>
+                    <span className={`text-xs mt-0.5 ${applyVAT ? 'text-brand-600 dark:text-brand-400' : 'text-slate-500 dark:text-slate-500'}`}>Only if you are VAT registered.</span>
                   </div>
-                  <div className={`shrink-0 transition-transform duration-300 ${applyVAT ? 'text-[#8B5CF6] scale-110' : 'text-slate-300 dark:text-slate-600'}`}>
+                  <div className={`shrink-0 transition-transform duration-300 ${applyVAT ? 'text-brand-500 scale-110' : 'text-slate-300 dark:text-slate-600'}`}>
                     {applyVAT ? <CheckCircle2 size={24} /> : <Circle size={24} />}
                   </div>
                 </button>
@@ -241,9 +241,9 @@ export default function DashboardFreelanceCalculator() {
             </div>
 
             {/* RESULTS PANEL (Web UI Preview) */}
-            <div className="group bg-[#8B5CF6]/5 dark:bg-[#8B5CF6]/10 p-6 sm:p-8 md:p-10 rounded-3xl md:rounded-[2.5rem] border border-[#8B5CF6]/20 backdrop-blur-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col justify-center">
+            <div className="group bg-brand-500/5 dark:bg-brand-500/10 p-6 sm:p-8 md:p-10 rounded-3xl md:rounded-[2.5rem] border border-brand-500/20 backdrop-blur-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col justify-center">
               
-              <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-[#8B5CF6]/20 flex items-center justify-center text-[#8B5CF6] mb-6">
+              <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-brand-500/20 flex items-center justify-center text-brand-500 mb-6">
                 <FileText size={24} />
               </div>
               
@@ -252,7 +252,7 @@ export default function DashboardFreelanceCalculator() {
                 {formatMoney(subtotal)}
               </h3>
               
-              <div className="h-px w-full bg-[#8B5CF6]/20 mb-6"></div>
+              <div className="h-px w-full bg-brand-500/20 mb-6"></div>
 
               <div className="space-y-3 md:space-y-4 mb-8">
                 {applyVAT && (
@@ -262,7 +262,7 @@ export default function DashboardFreelanceCalculator() {
                   </div>
                 )}
                 
-                <div className="flex justify-between text-sm md:text-base font-bold pt-2 border-t border-[#8B5CF6]/10">
+                <div className="flex justify-between text-sm md:text-base font-bold pt-2 border-t border-brand-500/10">
                   <span className="text-slate-500 dark:text-slate-400">Total Invoice Amount</span>
                   <span className="text-lg md:text-xl font-black text-slate-900 dark:text-white">{formatMoney(invoiceTotal)}</span>
                 </div>
@@ -280,7 +280,7 @@ export default function DashboardFreelanceCalculator() {
 
                 <div className="flex justify-between text-xs sm:text-sm font-bold">
                   <span className="text-slate-500 dark:text-slate-400">Cash Received in Bank</span>
-                  <span className="text-[#8B5CF6]">{formatMoney(cashReceived)}</span>
+                  <span className="text-brand-500">{formatMoney(cashReceived)}</span>
                 </div>
 
                 {applyVAT && (

@@ -99,7 +99,7 @@ export default function CreateBudgetModal() {
     <div className="relative">
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-[0_8px_20px_-6px_rgba(99,102,241,0.6)] border border-white/20 transition-all duration-300 hover:-translate-y-0.5 active:scale-95 px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 text-sm"
+        className="bg-brand-600 hover:bg-brand-500 text-white shadow-[0_8px_20px_-6px_rgb(var(--brand-500)/0.6)] border border-white/20 transition-all duration-300 hover:-translate-y-0.5 active:scale-95 px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 text-sm"
       >
         <Plus size={18} /> Create Budget
       </button>
@@ -131,7 +131,7 @@ export default function CreateBudgetModal() {
                 <button 
                   type="button"
                   onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                  className="w-full flex justify-between items-center bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                  className="w-full flex justify-between items-center bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors"
                 >
                   <span className="truncate">{formData.name}</span>
                   <ChevronDown size={16} className={`text-zinc-400 shrink-0 transition-transform duration-200 ${isCategoryOpen ? 'rotate-180' : ''}`} />
@@ -152,7 +152,7 @@ export default function CreateBudgetModal() {
                             placeholder="Search or type new..."
                             value={categorySearch}
                             onChange={(e) => setCategorySearch(e.target.value)}
-                            className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
+                            className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-brand-500"
                           />
                         </div>
                       </div>
@@ -167,7 +167,7 @@ export default function CreateBudgetModal() {
                               setIsCategoryOpen(false);
                               setCategorySearch("");
                             }}
-                            className="w-full text-left px-4 py-3 rounded-xl text-sm transition-colors flex items-center gap-2 text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-500/10 font-bold mb-1"
+                            className="w-full text-left px-4 py-3 rounded-xl text-sm transition-colors flex items-center gap-2 text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-500/10 font-bold mb-1"
                           >
                             <PlusCircle size={16} />
                             Track "{categorySearch}"
@@ -207,14 +207,14 @@ export default function CreateBudgetModal() {
                   placeholder="0.00"
                   value={formatAmountForDisplay(formData.limit_amount)}
                   onChange={handleAmountChange}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-zinc-400 dark:placeholder:text-zinc-600 font-bold"
+                  className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors placeholder:text-zinc-400 dark:placeholder:text-zinc-600 font-bold"
                 />
               </div>
 
               <button 
                 type="submit" 
                 disabled={isLoading}
-                className="w-full shrink-0 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-[0_8px_20px_-6px_rgba(99,102,241,0.6)] border border-white/20 transition-all duration-300 hover:-translate-y-0.5 active:scale-95 font-bold py-3.5 rounded-xl mt-4 flex justify-center items-center gap-2 disabled:opacity-70 disabled:hover:translate-y-0"
+                className="w-full shrink-0 bg-brand-600 hover:bg-brand-500 text-white shadow-[0_8px_20px_-6px_rgb(var(--brand-500)/0.6)] border border-white/20 transition-all duration-300 hover:-translate-y-0.5 active:scale-95 font-bold py-3.5 rounded-xl mt-4 flex justify-center items-center gap-2 disabled:opacity-70 disabled:hover:translate-y-0"
               >
                 {isLoading ? <Loader2 className="animate-spin" size={20} /> : "Save Budget"}
               </button>

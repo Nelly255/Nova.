@@ -154,12 +154,11 @@ export default function TransactionsPage() {
       date: tx.date.split('T')[0], 
       type: tx.type, 
       category: tx.category,
-      account_id: tx.account_id // Capture this for the wallet update logic
+      account_id: tx.account_id 
     });
     setIsEditModalOpen(true);
   };
 
-  // 🚀 FIXED: handleEditSubmit now handles the Wallet Balance logic
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsEditing(true);
@@ -358,9 +357,9 @@ export default function TransactionsPage() {
             <div className="relative z-[100] shrink-0">
               <button 
                 onClick={() => setIsPeriodDropdownOpen(!isPeriodDropdownOpen)}
-                className="relative z-50 flex items-center justify-center gap-2 bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/60 dark:border-white/10 hover:bg-white/60 dark:hover:bg-white/10 rounded-2xl px-4 py-2.5 shadow-sm transition-all group hover:border-indigo-500/50 h-[42px]"
+                className="relative z-50 flex items-center justify-center gap-2 bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/60 dark:border-white/10 hover:bg-white/60 dark:hover:bg-white/10 rounded-2xl px-4 py-2.5 shadow-sm transition-all group hover:border-brand-500/50 h-[42px]"
               >
-                <CalendarDays size={18} className="text-indigo-500 group-hover:scale-110 transition-transform" />
+                <CalendarDays size={18} className="text-brand-500 group-hover:scale-110 transition-transform" />
                 <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
                   {MONTHS[selectedMonth]} {selectedYear}
                 </span>
@@ -388,7 +387,7 @@ export default function TransactionsPage() {
                         <button 
                           key={monthStr}
                           onClick={() => { setSelectedMonth(index); setIsPeriodDropdownOpen(false); }}
-                          className={`py-2 rounded-xl text-sm font-bold transition-all duration-200 ${isSelected ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/25 scale-105' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}
+                          className={`py-2 rounded-xl text-sm font-bold transition-all duration-200 ${isSelected ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25 scale-105' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}
                         >
                           {monthStr}
                         </button>
@@ -401,8 +400,8 @@ export default function TransactionsPage() {
 
             {/* EXPANDABLE SEARCH BAR */}
             <div
-              className={`relative z-40 shrink-0 flex items-center transition-all duration-500 ease-out overflow-hidden bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white/60 dark:border-white/10 rounded-2xl shadow-sm focus-within:border-indigo-500/50 ${
-                isSearchExpanded || searchQuery ? 'w-[180px] sm:w-64 border-indigo-500/30' : 'w-[42px] cursor-pointer hover:bg-white/80 dark:hover:bg-white/10'
+              className={`relative z-40 shrink-0 flex items-center transition-all duration-500 ease-out overflow-hidden bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white/60 dark:border-white/10 rounded-2xl shadow-sm focus-within:border-brand-500/50 ${
+                isSearchExpanded || searchQuery ? 'w-[180px] sm:w-64 border-brand-500/30' : 'w-[42px] cursor-pointer hover:bg-white/80 dark:hover:bg-white/10'
               }`}
               style={{ height: '42px' }}
               onClick={() => {
@@ -413,7 +412,7 @@ export default function TransactionsPage() {
               }}
             >
               <div className="w-[42px] h-full flex items-center justify-center shrink-0">
-                <Search size={18} className={`transition-colors duration-300 ${isSearchExpanded || searchQuery ? "text-indigo-500" : "text-slate-500 dark:text-slate-400 group-hover:text-indigo-500"}`} />
+                <Search size={18} className={`transition-colors duration-300 ${isSearchExpanded || searchQuery ? "text-brand-500" : "text-slate-500 dark:text-slate-400 group-hover:text-brand-500"}`} />
               </div>
               
               <input
@@ -460,8 +459,8 @@ export default function TransactionsPage() {
 
       {/* 4-CARD HERO METRICS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 animate-in fade-in duration-500">
-        <div className="glass-card p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] flex flex-col justify-center border border-indigo-500/10 transition-colors bg-gradient-to-br from-indigo-50/50 to-transparent dark:from-indigo-500/5">
-          <p className="text-indigo-600 dark:text-indigo-400 font-bold mb-1 tracking-wide uppercase text-[10px] md:text-xs flex items-center gap-1.5">
+        <div className="glass-card p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] flex flex-col justify-center border border-brand-500/10 transition-colors bg-gradient-to-br from-brand-50/50 to-transparent dark:from-brand-500/5">
+          <p className="text-brand-600 dark:text-brand-400 font-bold mb-1 tracking-wide uppercase text-[10px] md:text-xs flex items-center gap-1.5">
             <Wallet size={14} /> Total Balance
           </p>
           <h2 className="text-xl md:text-3xl font-extrabold text-slate-900 dark:text-white break-words">
@@ -504,7 +503,7 @@ export default function TransactionsPage() {
         <div className="flex bg-white/60 dark:bg-white/5 p-1.5 rounded-2xl w-fit border border-slate-200/80 dark:border-white/10 backdrop-blur-md shadow-sm">
           <button 
             onClick={() => setActiveFilter('all')} 
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeFilter === 'all' ? 'bg-white dark:bg-slate-800 shadow-[0_2px_10px_rgba(0,0,0,0.05)] text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeFilter === 'all' ? 'bg-white dark:bg-slate-800 shadow-[0_2px_10px_rgba(0,0,0,0.05)] text-brand-600 dark:text-brand-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
           >
             <ListFilter size={16} /> All
           </button>
@@ -527,12 +526,12 @@ export default function TransactionsPage() {
             onClick={() => setActiveWalletFilter('all')}
             className={`flex items-center gap-1.5 px-3 py-2 border rounded-xl text-xs font-bold transition-all shadow-sm backdrop-blur-md ${
               activeWalletFilter === 'all' 
-              ? 'bg-indigo-50 border-indigo-200 text-indigo-700 dark:bg-indigo-500/20 dark:border-indigo-500/30 dark:text-indigo-300 scale-105' 
+              ? 'bg-brand-50 border-brand-200 text-brand-700 dark:bg-brand-500/20 dark:border-brand-500/30 dark:text-brand-300 scale-105' 
               : 'bg-white/80 dark:bg-white/5 border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/10'
             }`}
           >
-            <Wallet size={14} className={activeWalletFilter === 'all' ? 'text-indigo-600 dark:text-indigo-400' : 'text-indigo-500'} />
-            <span className={`font-medium hidden sm:inline ${activeWalletFilter === 'all' ? 'text-indigo-600/70 dark:text-indigo-400/70' : 'text-slate-400'}`}>All Wallets</span> 
+            <Wallet size={14} className={activeWalletFilter === 'all' ? 'text-brand-600 dark:text-brand-400' : 'text-brand-500'} />
+            <span className={`font-medium hidden sm:inline ${activeWalletFilter === 'all' ? 'text-brand-600/70 dark:text-brand-400/70' : 'text-slate-400'}`}>All Wallets</span> 
           </button>
 
           <button 
@@ -579,7 +578,7 @@ export default function TransactionsPage() {
       {/* 🚀 RESPONSIVE TRANSACTIONS LIST */}
       <div className="glass-card rounded-[2rem] p-2 sm:p-4 transition-colors shadow-sm min-h-[400px] relative z-10">
         {loading ? (
-          <div className="p-10 flex justify-center"><Loader2 className="animate-spin text-indigo-500" size={32} /></div>
+          <div className="p-10 flex justify-center"><Loader2 className="animate-spin text-brand-500" size={32} /></div>
         ) : paginatedTx.length === 0 ? (
           <div key={`empty-${activeFilter}-${searchQuery}-${activeWalletFilter}`} className="p-16 text-center flex flex-col items-center animate-in fade-in zoom-in-95 duration-500">
             <div className="w-16 h-16 rounded-2xl bg-slate-100/80 dark:bg-white/5 flex items-center justify-center text-slate-400 mb-4 backdrop-blur-sm border border-slate-200/50 dark:border-white/5">
@@ -636,7 +635,7 @@ export default function TransactionsPage() {
                     <div className="flex gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                       <button 
                         onClick={(e) => { e.stopPropagation(); openEditModal(tx); }} 
-                        className="p-1.5 sm:p-2 text-slate-400 hover:text-indigo-600 bg-white/50 dark:bg-black/20 hover:bg-indigo-100 dark:hover:bg-indigo-500/10 rounded-lg transition-all" 
+                        className="p-1.5 sm:p-2 text-slate-400 hover:text-brand-600 bg-white/50 dark:bg-black/20 hover:bg-brand-100 dark:hover:bg-brand-500/10 rounded-lg transition-all" 
                         title="Edit"
                       >
                         <Edit2 size={14} className="sm:w-4 sm:h-4" />
@@ -678,7 +677,7 @@ export default function TransactionsPage() {
           <div className="relative z-10 w-full max-w-lg bg-white dark:bg-[#0A0A0E] rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] border border-slate-200 dark:border-white/10 overflow-hidden animate-in zoom-in-95">
             
             <div className="flex justify-between items-center p-6 border-b border-slate-200/80 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><UploadCloud size={20} className="text-indigo-500" /> Import Bank Statement</h3>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><UploadCloud size={20} className="text-brand-500" /> Import Bank Statement</h3>
               <button onClick={() => !isImporting && setIsImportModalOpen(false)} className="text-slate-500 hover:text-slate-900 dark:hover:text-white p-1 rounded-full"><X size={20}/></button>
             </div>
 
@@ -704,26 +703,26 @@ export default function TransactionsPage() {
                     onDrop={handleFileDrop}
                     className={`border-2 border-dashed rounded-3xl p-10 flex flex-col items-center justify-center text-center transition-all duration-300 ${
                       isDragging 
-                      ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-500/10 scale-105' 
+                      ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-500/10 scale-105' 
                       : 'border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800'
                     }`}
                   >
                     {isImporting ? (
-                      <Loader2 size={48} className="text-indigo-500 animate-spin mb-4" />
+                      <Loader2 size={48} className="text-brand-500 animate-spin mb-4" />
                     ) : (
-                      <FileText size={48} className={`mb-4 transition-colors ${isDragging ? 'text-indigo-500' : 'text-slate-400'}`} />
+                      <FileText size={48} className={`mb-4 transition-colors ${isDragging ? 'text-brand-500' : 'text-slate-400'}`} />
                     )}
                     <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Drag & Drop CSV</h4>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">M-Pesa, CRDB, NMB, or standard CSVs.</p>
                     
                     <input type="file" id="csvUpload" accept=".csv" className="hidden" onChange={handleFileInput} disabled={isImporting} />
-                    <label htmlFor="csvUpload" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-6 rounded-xl cursor-pointer transition-all active:scale-95 shadow-md disabled:opacity-50">
+                    <label htmlFor="csvUpload" className="bg-brand-600 hover:bg-brand-500 text-white font-bold py-2.5 px-6 rounded-xl cursor-pointer transition-all active:scale-95 shadow-md disabled:opacity-50">
                       Browse Files
                     </label>
                   </div>
                   
                   <div className="mt-6 text-center">
-                    <button onClick={downloadCSVTemplate} className="text-xs font-bold text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 flex items-center justify-center gap-1 mx-auto transition-colors">
+                    <button onClick={downloadCSVTemplate} className="text-xs font-bold text-brand-500 hover:text-brand-600 dark:text-brand-400 flex items-center justify-center gap-1 mx-auto transition-colors">
                       <Download size={14}/> Download Template Format
                     </button>
                   </div>
@@ -739,9 +738,9 @@ export default function TransactionsPage() {
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm animate-in fade-in" onClick={() => !isEditing && setIsEditModalOpen(false)} />
           <div className="relative z-10 w-full max-w-md bg-white dark:bg-[#0A0A0E] rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] border border-slate-200 dark:border-white/10 overflow-hidden animate-in zoom-in-95">
-            <div className="flex justify-between items-center p-6 border-b border-zinc-200/80 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
-              <h3 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white flex items-center gap-2"><Edit2 size={20} className="text-indigo-500" /> Edit Transaction</h3>
-              <button onClick={() => !isEditing && setIsEditModalOpen(false)} className="text-zinc-500 hover:text-rose-500 p-1 rounded-full"><X size={20} /></button>
+            <div className="flex justify-between items-center p-6 border-b border-slate-200/80 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
+              <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2"><Edit2 size={20} className="text-brand-500" /> Edit Transaction</h3>
+              <button onClick={() => !isEditing && setIsEditModalOpen(false)} className="text-slate-500 hover:text-rose-500 p-1 rounded-full"><X size={20} /></button>
             </div>
 
             <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
@@ -753,31 +752,31 @@ export default function TransactionsPage() {
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-400 mb-1">Title</label>
-                <input required type="text" value={editForm.title} onChange={(e) => setEditForm({...editForm, title: e.target.value})} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:ring-1 focus:ring-indigo-500 outline-none" />
+                <input required type="text" value={editForm.title} onChange={(e) => setEditForm({...editForm, title: e.target.value})} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:ring-1 focus:ring-brand-500 outline-none" />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 dark:text-slate-400 mb-1">Amount</label>
-                  <div className="flex items-center bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl px-3 py-3 focus-within:ring-1 focus-within:ring-indigo-500">
+                  <div className="flex items-center bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl px-3 py-3 focus-within:ring-1 focus-within:ring-brand-500">
                     <span className="text-slate-400 text-sm font-medium mr-1.5">{currencySymbol}</span>
                     <input required type="text" inputMode="numeric" value={editForm.amount} onChange={(e) => handlePriceChange(e.target.value)} className="w-full bg-transparent text-slate-900 dark:text-white outline-none font-bold" />
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 dark:text-slate-400 mb-1">Date</label>
-                  <input required type="date" value={editForm.date} onChange={(e) => setEditForm({...editForm, date: e.target.value})} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:ring-1 focus:ring-indigo-500 outline-none [color-scheme:light] dark:[color-scheme:dark]" />
+                  <input required type="date" value={editForm.date} onChange={(e) => setEditForm({...editForm, date: e.target.value})} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:ring-1 focus:ring-brand-500 outline-none [color-scheme:light] dark:[color-scheme:dark]" />
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-400 mb-1">Category</label>
-                <select value={editForm.category} onChange={(e) => setEditForm({...editForm, category: e.target.value})} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:ring-1 focus:ring-indigo-500 outline-none appearance-none">
+                <select value={editForm.category} onChange={(e) => setEditForm({...editForm, category: e.target.value})} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:ring-1 focus:ring-brand-500 outline-none appearance-none">
                   {CATEGORIES.map(cat => <option key={cat} value={cat} className="dark:bg-slate-900">{cat}</option>)}
                 </select>
               </div>
 
-              <button type="submit" disabled={isEditing} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl shadow-[0_8px_20px_-6px_rgba(99,102,241,0.6)] transition-all active:scale-95 mt-4 flex justify-center items-center gap-2">
+              <button type="submit" disabled={isEditing} className="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-3.5 rounded-xl shadow-[0_8px_20px_-6px_rgb(var(--brand-500)/0.6)] transition-all active:scale-95 mt-4 flex justify-center items-center gap-2">
                 {isEditing ? <Loader2 className="animate-spin" size={20} /> : "Update Transaction"}
               </button>
             </form>

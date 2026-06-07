@@ -111,9 +111,9 @@ export default function BudgetsPage() {
           <div className="relative shrink-0">
             <button 
               onClick={() => setIsPeriodDropdownOpen(!isPeriodDropdownOpen)}
-              className="relative z-50 flex items-center justify-center gap-2 bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/60 dark:border-white/10 hover:bg-white/60 dark:hover:bg-white/10 rounded-2xl px-4 py-2.5 shadow-sm transition-all group hover:border-indigo-500/50 h-[42px]"
+              className="relative z-50 flex items-center justify-center gap-2 bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/60 dark:border-white/10 hover:bg-white/60 dark:hover:bg-white/10 rounded-2xl px-4 py-2.5 shadow-sm transition-all group hover:border-brand-500/50 h-[42px]"
             >
-              <CalendarDays size={18} className="text-indigo-500 group-hover:scale-110 transition-transform" />
+              <CalendarDays size={18} className="text-brand-500 group-hover:scale-110 transition-transform" />
               <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
                 {MONTHS[selectedMonth]} {selectedYear}
               </span>
@@ -141,7 +141,7 @@ export default function BudgetsPage() {
                       <button 
                         key={monthStr}
                         onClick={() => { setSelectedMonth(index); setIsPeriodDropdownOpen(false); }}
-                        className={`py-2 rounded-xl text-sm font-bold transition-all duration-200 ${isSelected ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/25 scale-105' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}
+                        className={`py-2 rounded-xl text-sm font-bold transition-all duration-200 ${isSelected ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25 scale-105' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'}`}
                       >
                         {monthStr}
                       </button>
@@ -163,7 +163,7 @@ export default function BudgetsPage() {
         <div className="text-slate-500 py-10 transition-colors">Loading your budgets...</div>
       ) : activeBudgets.length === 0 ? (
         <div className="glass-card p-12 md:p-16 rounded-[2rem] text-center flex flex-col items-center justify-center transition-colors">
-          <div className="w-16 h-16 md:w-20 md:h-20 bg-indigo-50/80 dark:bg-white/5 text-indigo-500 dark:text-indigo-400 rounded-full flex items-center justify-center mb-6 border border-indigo-100/50 dark:border-white/5 backdrop-blur-sm transition-colors">
+          <div className="w-16 h-16 md:w-20 md:h-20 bg-brand-50/80 dark:bg-brand-500/10 text-brand-500 dark:text-brand-400 rounded-full flex items-center justify-center mb-6 border border-brand-100/50 dark:border-brand-500/20 backdrop-blur-sm transition-colors">
             <Wallet size={32} className="md:w-10 md:h-10" />
           </div>
           <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2 transition-colors">No Budgets Set</h2>
@@ -175,7 +175,7 @@ export default function BudgetsPage() {
       ) : (
         <>
           <div className="glass-card p-6 md:p-8 rounded-[2rem] relative overflow-hidden flex flex-col md:flex-row justify-between md:items-center gap-6 md:gap-8 animate-in fade-in duration-500 transition-colors z-10">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400"></div>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-500 via-purple-500 to-emerald-400"></div>
             
             <div className="flex flex-row items-center justify-between md:justify-start w-full md:w-auto gap-4 md:gap-8">
               
@@ -200,8 +200,8 @@ export default function BudgetsPage() {
                   />
                   <defs>
                     <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#818cf8" />
-                      <stop offset="100%" stopColor="#c084fc" />
+                      <stop offset="0%" stopColor="rgb(var(--brand-400))" />
+                      <stop offset="100%" stopColor="rgb(var(--brand-600))" />
                     </linearGradient>
                   </defs>
                 </svg>
@@ -307,7 +307,7 @@ function DetailedBudgetCard({ budget, currencySymbol, onEdit, onDelete }: any) {
       <div className="absolute top-4 right-4 flex gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-all z-10">
         <button 
           onClick={onEdit}
-          className="text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-100/80 dark:bg-black/20 hover:bg-indigo-100 dark:hover:bg-indigo-500/10 p-2 rounded-lg backdrop-blur-md transition-colors"
+          className="text-slate-400 dark:text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 bg-slate-100/80 dark:bg-black/20 hover:bg-brand-100 dark:hover:bg-brand-500/10 p-2 rounded-lg backdrop-blur-md transition-colors"
           title="Edit Budget Limit"
         >
           <Pencil size={16} />
@@ -323,7 +323,7 @@ function DetailedBudgetCard({ budget, currencySymbol, onEdit, onDelete }: any) {
 
       <div className="flex justify-between items-start pr-16">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 shrink-0 rounded-2xl bg-indigo-50/80 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:scale-110 transition-all duration-300 shadow-sm backdrop-blur-sm">
+          <div className="w-12 h-12 shrink-0 rounded-2xl bg-brand-50/80 dark:bg-brand-500/10 border border-brand-200/50 dark:border-brand-500/20 flex items-center justify-center text-brand-600 dark:text-brand-400 group-hover:scale-110 transition-all duration-300 shadow-sm backdrop-blur-sm">
             <Icon size={20} />
           </div>
           <div className="truncate">

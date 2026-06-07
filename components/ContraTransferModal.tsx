@@ -50,13 +50,13 @@ const CustomSelect = ({
       <div
         onClick={() => setIsOpen(!isOpen)}
         className={`w-full bg-slate-50 dark:bg-black/50 border rounded-2xl px-4 py-3.5 text-sm font-semibold flex justify-between items-center cursor-pointer transition-all duration-200 ${
-          isOpen ? "border-indigo-500 ring-1 ring-indigo-500/20 text-slate-900 dark:text-white" : "border-slate-200 dark:border-white/10 hover:border-indigo-500/50 text-slate-900 dark:text-white"
+          isOpen ? "border-brand-500 ring-1 ring-brand-500/20 text-slate-900 dark:text-white" : "border-slate-200 dark:border-white/10 hover:border-brand-500/50 text-slate-900 dark:text-white"
         }`}
       >
         <span className={selectedOption ? "" : "text-slate-400"}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
-        <ChevronDown size={16} className={`text-slate-400 transition-transform duration-300 ${isOpen ? "rotate-180 text-indigo-500" : ""}`} />
+        <ChevronDown size={16} className={`text-slate-400 transition-transform duration-300 ${isOpen ? "rotate-180 text-brand-500" : ""}`} />
       </div>
 
       {isOpen && (
@@ -69,7 +69,7 @@ const CustomSelect = ({
                 key={opt.value}
                 onClick={() => { onChange(opt.value); setIsOpen(false); }}
                 className={`px-4 py-3 text-sm font-semibold cursor-pointer transition-colors ${
-                  value === opt.value ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400" : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"
+                  value === opt.value ? "bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400" : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"
                 }`}
               >
                 {opt.label}
@@ -129,11 +129,11 @@ const CustomDatePicker = ({ value, onChange }: { value: string; onChange: (val: 
       <div
         onClick={() => setIsOpen(!isOpen)}
         className={`w-full bg-slate-50 dark:bg-black/50 border rounded-2xl px-4 py-3.5 text-sm font-semibold flex justify-between items-center cursor-pointer transition-all duration-200 ${
-          isOpen ? "border-indigo-500 ring-1 ring-indigo-500/20 text-slate-900 dark:text-white" : "border-slate-200 dark:border-white/10 hover:border-indigo-500/50 text-slate-900 dark:text-white"
+          isOpen ? "border-brand-500 ring-1 ring-brand-500/20 text-slate-900 dark:text-white" : "border-slate-200 dark:border-white/10 hover:border-brand-500/50 text-slate-900 dark:text-white"
         }`}
       >
         <span>{displayDate}</span>
-        <CalendarDays size={16} className={`text-slate-400 transition-colors ${isOpen ? "text-indigo-500" : ""}`} />
+        <CalendarDays size={16} className={`text-slate-400 transition-colors ${isOpen ? "text-brand-500" : ""}`} />
       </div>
 
       {isOpen && (
@@ -177,8 +177,8 @@ const CustomDatePicker = ({ value, onChange }: { value: string; onChange: (val: 
                   type="button"
                   onClick={(e) => { e.preventDefault(); handleSelect(day); }}
                   className={`w-7 h-7 mx-auto rounded-full text-xs font-semibold flex items-center justify-center transition-all ${
-                    isSelected ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/30" 
-                      : isToday ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+                    isSelected ? "bg-brand-600 text-white shadow-md shadow-brand-500/30" 
+                      : isToday ? "bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400"
                       : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
                   }`}
                 >
@@ -301,7 +301,7 @@ export default function ContraTransferModal({ accounts, onSuccess, currencySymbo
             
             <div className="flex justify-between items-center mb-6 px-2">
               <h3 className="font-bold text-xl tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-                <ArrowLeftRight className="text-indigo-500" /> Contra Transfer
+                <ArrowLeftRight className="text-brand-500" /> Contra Transfer
               </h3>
               <button onClick={closeModal} className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors bg-slate-100 dark:bg-white/5 p-1.5 rounded-full">
                 <X size={20} />
@@ -316,7 +316,7 @@ export default function ContraTransferModal({ accounts, onSuccess, currencySymbo
 
               <div className="flex justify-center -my-2 relative z-10 pointer-events-none">
                 <div className="bg-white dark:bg-[#0F0F15] p-1.5 rounded-full border border-slate-200 dark:border-white/10 shadow-sm">
-                  <ArrowRight size={16} className="text-indigo-500 rotate-90" />
+                  <ArrowRight size={16} className="text-brand-500 rotate-90" />
                 </div>
               </div>
 
@@ -328,7 +328,7 @@ export default function ContraTransferModal({ accounts, onSuccess, currencySymbo
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Transfer Amount</label>
-                  <div className="flex items-center bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3.5 focus-within:ring-1 focus-within:ring-indigo-500 transition-shadow">
+                  <div className="flex items-center bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-3.5 focus-within:ring-1 focus-within:ring-brand-500 transition-shadow">
                     <span className="text-slate-400 font-bold mr-2">{currencySymbol}</span>
                     <input required type="text" inputMode="numeric" placeholder="0" value={form.amount} onChange={(e) => handleAmountChange(e.target.value)} className="w-full bg-transparent text-slate-900 dark:text-white outline-none font-bold text-base" />
                   </div>
@@ -347,7 +347,7 @@ export default function ContraTransferModal({ accounts, onSuccess, currencySymbo
               <button 
                 type="submit" 
                 disabled={isProcessing || !form.fromWallet || !form.toWallet || !form.amount}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-[0_8px_20px_-6px_rgba(99,102,241,0.6)] transition-all active:scale-95 mt-6 flex justify-center items-center gap-2 disabled:opacity-50 disabled:hover:bg-indigo-600 disabled:active:scale-100"
+                className="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-4 rounded-2xl shadow-[0_8px_20px_-6px_rgb(var(--brand-500)/0.6)] transition-all active:scale-95 mt-6 flex justify-center items-center gap-2 disabled:opacity-50 disabled:hover:bg-brand-600 disabled:active:scale-100"
               >
                 {isProcessing ? <Loader2 className="animate-spin" size={20} /> : "Execute Transfer"}
               </button>

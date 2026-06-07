@@ -312,18 +312,18 @@ export default function SavingsPage() {
 
       {/* Hero Banner */}
       <div className="glass-card p-6 md:p-8 rounded-[2rem] flex flex-col md:flex-row justify-between md:items-center relative overflow-hidden transition-colors">
-        <div className="absolute -inset-4 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 dark:from-indigo-500/5 dark:to-purple-500/5 pointer-events-none rounded-[2rem]"></div>
+        <div className="absolute -inset-4 bg-gradient-to-br from-brand-500/10 to-brand-500/5 dark:from-brand-500/10 dark:to-brand-500/5 pointer-events-none rounded-[2rem]"></div>
         
-        <div className="absolute -right-10 -bottom-10 text-indigo-500/10 dark:text-indigo-500/10 transition-colors">
+        <div className="absolute -right-10 -bottom-10 text-brand-500/10 dark:text-brand-500/10 transition-colors">
           <PiggyBank size={150} className="md:w-[200px] md:h-[200px]" />
         </div>
         <div className="relative z-10 w-full md:w-auto">
-          <p className="text-indigo-600 dark:text-indigo-400 font-semibold text-sm md:text-base mb-1 transition-colors">Total Saved Across All Goals</p>
+          <p className="text-brand-600 dark:text-brand-400 font-semibold text-sm md:text-base mb-1 transition-colors">Total Saved Across All Goals</p>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white transition-colors break-words leading-tight">
             {currencySymbol}{totalSaved.toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </h2>
         </div>
-        <div className="relative z-10 text-left md:text-right mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-indigo-500/10 dark:border-white/5">
+        <div className="relative z-10 text-left md:text-right mt-4 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-brand-500/10 dark:border-white/5">
           <p className="text-slate-500 dark:text-slate-400 font-medium text-xs md:text-sm mb-1 transition-colors">Overall Target</p>
           <p className="text-xl md:text-2xl font-bold text-slate-700 dark:text-slate-200 transition-colors break-words">
             {currencySymbol}{totalTarget.toLocaleString(undefined, { maximumFractionDigits: 0 })}
@@ -335,23 +335,23 @@ export default function SavingsPage() {
       <div className="flex bg-slate-200/50 dark:bg-slate-900/50 p-1.5 rounded-2xl w-max border border-slate-300/50 dark:border-white/5 backdrop-blur-md relative z-10 overflow-x-auto max-w-full no-scrollbar">
         <button 
           onClick={() => setActiveTab('goals')}
-          className={`px-4 sm:px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 whitespace-nowrap ${activeTab === 'goals' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+          className={`px-4 sm:px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 whitespace-nowrap ${activeTab === 'goals' ? 'bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
         >
           Active Goals
         </button>
         <button 
           onClick={() => setActiveTab('history')}
-          className={`px-4 sm:px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 whitespace-nowrap ${activeTab === 'history' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+          className={`px-4 sm:px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 whitespace-nowrap ${activeTab === 'history' ? 'bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
         >
           Deposit History
         </button>
         <button 
           onClick={() => setActiveTab('completed')}
-          className={`px-4 sm:px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'completed' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+          className={`px-4 sm:px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'completed' ? 'bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
         >
           Completed
           {completedGoalsList.length > 0 && (
-            <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${activeTab === 'completed' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400' : 'bg-slate-200 dark:bg-slate-700'}`}>{completedGoalsList.length}</span>
+            <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${activeTab === 'completed' ? 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400' : 'bg-slate-200 dark:bg-slate-700'}`}>{completedGoalsList.length}</span>
           )}
         </button>
       </div>
@@ -379,7 +379,7 @@ export default function SavingsPage() {
                     <div className="absolute top-4 right-4 flex gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-all z-10">
                       <button 
                         onClick={() => setEditModal({ isOpen: true, goalId: goal.id, name: goal.name, targetAmount: goal.target_amount.toString(), targetDate: new Date(goal.target_date).toISOString().split('T')[0] })}
-                        className="text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-100/80 dark:bg-black/20 hover:bg-indigo-100 dark:hover:bg-indigo-500/10 p-2 rounded-lg backdrop-blur-md transition-colors"
+                        className="text-slate-400 dark:text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 bg-slate-100/80 dark:bg-black/20 hover:bg-brand-100 dark:hover:bg-brand-500/10 p-2 rounded-lg backdrop-blur-md transition-colors"
                         title="Edit Goal"
                       >
                         <Pencil size={16} />
@@ -395,7 +395,7 @@ export default function SavingsPage() {
 
                     <div>
                       <div className="flex items-center gap-4 mb-6">
-                        <div className="w-12 h-12 md:w-14 md:h-14 shrink-0 rounded-2xl bg-indigo-50/80 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 flex items-center justify-center text-indigo-500 dark:text-indigo-400 shadow-sm backdrop-blur-sm transition-colors">
+                        <div className="w-12 h-12 md:w-14 md:h-14 shrink-0 rounded-2xl bg-brand-50/80 dark:bg-brand-500/10 border border-brand-200/50 dark:border-brand-500/20 flex items-center justify-center text-brand-500 dark:text-brand-400 shadow-sm backdrop-blur-sm transition-colors">
                           <TrendingUp size={24} />
                         </div>
                         <div className="truncate pr-16">
@@ -415,7 +415,7 @@ export default function SavingsPage() {
                       
                       <div className="h-3 md:h-4 w-full bg-slate-100/80 dark:bg-slate-950/50 rounded-full overflow-hidden border border-slate-200/50 dark:border-white/5 mb-6 transition-colors shadow-inner backdrop-blur-sm">
                         <div 
-                          className="h-full bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.5)] transition-all duration-1000 ease-out" 
+                          className="h-full bg-brand-500 shadow-[0_0_15px_rgb(var(--brand-500)/0.5)] transition-all duration-1000 ease-out" 
                           style={{ width: `${percentage}%` }}
                         ></div>
                       </div>
@@ -461,7 +461,7 @@ export default function SavingsPage() {
                     <div className="absolute top-4 right-4 flex gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-all z-10">
                       <button 
                         onClick={() => setEditModal({ isOpen: true, goalId: goal.id, name: goal.name, targetAmount: goal.target_amount.toString(), targetDate: new Date(goal.target_date).toISOString().split('T')[0] })}
-                        className="text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-100/80 dark:bg-black/20 hover:bg-indigo-100 dark:hover:bg-indigo-500/10 p-2 rounded-lg backdrop-blur-md transition-colors"
+                        className="text-slate-400 dark:text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 bg-slate-100/80 dark:bg-black/20 hover:bg-brand-100 dark:hover:bg-brand-500/10 p-2 rounded-lg backdrop-blur-md transition-colors"
                         title="Edit Goal"
                       >
                         <Pencil size={16} />
@@ -522,7 +522,7 @@ export default function SavingsPage() {
           <div className="glass-card p-6 md:p-8 rounded-[2rem] transition-colors relative z-10 animate-in fade-in duration-300 slide-in-from-bottom-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 border-b border-slate-200/80 dark:border-white/5 pb-4 relative">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-100 dark:border-indigo-500/20">
+                <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 flex items-center justify-center border border-brand-100 dark:border-brand-500/20">
                   <History size={20} />
                 </div>
                 <div>
@@ -537,7 +537,7 @@ export default function SavingsPage() {
                   className="flex items-center justify-between sm:justify-start gap-3 bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 shadow-sm backdrop-blur-md w-full sm:w-auto hover:bg-white/80 dark:hover:bg-white/10 transition-colors cursor-pointer group"
                 >
                   <div className="flex items-center gap-2">
-                    <CalendarDays size={18} className="text-indigo-500 dark:text-indigo-400 group-hover:scale-110 transition-transform" />
+                    <CalendarDays size={18} className="text-brand-500 dark:text-brand-400 group-hover:scale-110 transition-transform" />
                     <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
                       {MONTHS[parseInt(filterMonth.split('-')[1]) - 1]} {filterMonth.split('-')[0]}
                     </span>
@@ -572,7 +572,7 @@ export default function SavingsPage() {
                                 setFilterMonth(`${pickerYear}-${String(idx + 1).padStart(2, '0')}`);
                                 setIsFilterOpen(false);
                               }}
-                              className={`py-2.5 rounded-xl text-xs font-bold transition-all ${isSelected ? 'bg-indigo-500 text-white shadow-[0_4px_14px_rgba(99,102,241,0.4)] scale-105' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10'}`}
+                              className={`py-2.5 rounded-xl text-xs font-bold transition-all ${isSelected ? 'bg-brand-500 text-white shadow-[0_4px_14px_rgb(var(--brand-500)/0.4)] scale-105' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10'}`}
                             >
                               {month}
                             </button>
@@ -583,7 +583,7 @@ export default function SavingsPage() {
                       <div className="mt-4 pt-4 border-t border-slate-200/50 dark:border-white/10 flex justify-center">
                         <button 
                           onClick={() => { setFilterMonth(currentMonthStr); setIsFilterOpen(false); }} 
-                          className="text-xs font-bold text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors px-4 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg"
+                          className="text-xs font-bold text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 transition-colors px-4 py-2 hover:bg-brand-50 dark:hover:bg-brand-500/10 rounded-lg"
                         >
                           Back to current month
                         </button>
@@ -624,7 +624,7 @@ export default function SavingsPage() {
                               const targetGoalName = tx.title.replace("Transfer to ", "");
                               setEditDepositModal({ isOpen: true, txId: tx.id, goalName: targetGoalName, amount: tx.amount.toString(), oldAmount: tx.amount, date: tx.date, oldDate: tx.date });
                             }}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-brand-500 hover:bg-brand-50 dark:hover:bg-brand-500/10 transition-colors"
                             title="Edit Deposit"
                          >
                            <Pencil size={14}/>
@@ -666,7 +666,7 @@ export default function SavingsPage() {
               </p>
               <button 
                 onClick={() => setWarningModal({ ...warningModal, isOpen: false })} 
-                className="w-full py-3.5 rounded-xl font-bold text-white bg-indigo-500 hover:bg-indigo-600 shadow-[0_4px_14px_rgba(99,102,241,0.4)] transition-all hover:-translate-y-0.5 active:scale-95"
+                className="w-full py-3.5 rounded-xl font-bold text-white bg-brand-600 hover:bg-brand-700 shadow-[0_4px_14px_rgb(var(--brand-500)/0.4)] transition-all hover:-translate-y-0.5 active:scale-95"
               >
                 Got it
               </button>
@@ -681,7 +681,7 @@ export default function SavingsPage() {
       {depositModal.isOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/10 dark:bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setDepositModal({ ...depositModal, isOpen: false })} />
-          <div className="relative z-10 w-full max-w-sm glass-card rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] overflow-visible animate-in zoom-in-95 duration-200 border border-indigo-200/50 dark:border-indigo-500/20">
+          <div className="relative z-10 w-full max-w-sm glass-card rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] overflow-visible animate-in zoom-in-95 duration-200 border border-brand-200/50 dark:border-brand-500/20">
             
             <div className="flex justify-between items-center p-6 border-b border-slate-200/80 dark:border-white/5 transition-colors">
               <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 transition-colors">Deposit Funds</h3>
@@ -689,7 +689,7 @@ export default function SavingsPage() {
             </div>
             
             <form onSubmit={submitDeposit} className="p-6 space-y-4">
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Transferring money to <span className="font-bold text-indigo-600 dark:text-indigo-400">{depositModal.goalName}</span>.</p>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Transferring money to <span className="font-bold text-brand-600 dark:text-brand-400">{depositModal.goalName}</span>.</p>
               
               <div className="grid grid-cols-1 gap-4">
                 
@@ -697,7 +697,7 @@ export default function SavingsPage() {
                   <label className="block text-sm font-semibold text-slate-700 dark:text-slate-400 mb-1">Amount ({currencySymbol})</label>
                   <input 
                     required type="text" inputMode="decimal" placeholder="e.g., 500.00" value={formatAmountForDisplay(depositInput)} onChange={handleDepositInputChange} 
-                    className={`w-full bg-slate-50 dark:bg-slate-950/50 border rounded-xl px-4 py-3 focus:outline-none focus:ring-1 text-lg font-bold transition-colors ${isDepositInsufficient ? 'border-rose-500 focus:ring-rose-500 text-rose-600 dark:text-rose-400' : 'border-slate-200/80 dark:border-white/10 focus:ring-indigo-500 text-slate-900 dark:text-slate-200'}`} autoFocus 
+                    className={`w-full bg-slate-50 dark:bg-slate-950/50 border rounded-xl px-4 py-3 focus:outline-none focus:ring-1 text-lg font-bold transition-colors ${isDepositInsufficient ? 'border-rose-500 focus:ring-rose-500 text-rose-600 dark:text-rose-400' : 'border-slate-200/80 dark:border-white/10 focus:ring-brand-500 text-slate-900 dark:text-slate-200'}`} autoFocus 
                   />
                   {/* 🚀 Insufficient Funds Warning */}
                   {isDepositInsufficient && (
@@ -711,7 +711,7 @@ export default function SavingsPage() {
                   <label className="block text-sm font-semibold text-slate-700 dark:text-slate-400 mb-1">Date of Transfer</label>
                   <input 
                     required type="date" value={depositDate} onChange={(e) => setDepositDate(e.target.value)} 
-                    className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 [color-scheme:light] dark:[color-scheme:dark]" 
+                    className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-brand-500 [color-scheme:light] dark:[color-scheme:dark]" 
                   />
                 </div>
                 
@@ -723,7 +723,7 @@ export default function SavingsPage() {
                       <button 
                         type="button" 
                         onClick={() => { setIsSourceWalletOpen(!isSourceWalletOpen); setIsDestWalletOpen(false); }}
-                        className={`w-full flex justify-between items-center bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors ${!selectedSourceWallet ? 'text-slate-400' : 'text-slate-700 dark:text-slate-300'}`}
+                        className={`w-full flex justify-between items-center bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-brand-500 transition-colors ${!selectedSourceWallet ? 'text-slate-400' : 'text-slate-700 dark:text-slate-300'}`}
                       >
                         <span className="truncate">{selectedSourceWallet ? selectedSourceWallet.name : 'Select Source'}</span>
                         <ChevronDown size={14} className={`text-slate-400 shrink-0 transition-transform duration-200 ${isSourceWalletOpen ? 'rotate-180' : ''}`} />
@@ -734,7 +734,7 @@ export default function SavingsPage() {
                           <div className="fixed inset-0 z-40" onClick={() => setIsSourceWalletOpen(false)} />
                           <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-48 overflow-y-auto custom-scrollbar">
                             {wallets.length === 0 ? <div className="px-3 py-3 text-xs text-slate-500 text-center">No wallets</div> : wallets.map((w) => (
-                              <button key={w.id} type="button" onClick={() => { setSelectedWalletId(w.id); setIsSourceWalletOpen(false); }} className={`w-full text-left px-3 py-2.5 text-xs transition-colors flex items-center justify-between ${selectedWalletId === w.id ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold' : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300'}`}>
+                              <button key={w.id} type="button" onClick={() => { setSelectedWalletId(w.id); setIsSourceWalletOpen(false); }} className={`w-full text-left px-3 py-2.5 text-xs transition-colors flex items-center justify-between ${selectedWalletId === w.id ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300'}`}>
                                 <span className="truncate pr-2">{w.name}</span>
                                 <span className="text-[10px] font-medium opacity-70 shrink-0">{currencySymbol}{Number(w.balance).toLocaleString()}</span>
                               </button>
@@ -751,7 +751,7 @@ export default function SavingsPage() {
                       <button 
                         type="button" 
                         onClick={() => { setIsDestWalletOpen(!isDestWalletOpen); setIsSourceWalletOpen(false); }}
-                        className={`w-full flex justify-between items-center bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors ${!selectedDestWallet ? 'text-slate-400' : 'text-slate-700 dark:text-slate-300'}`}
+                        className={`w-full flex justify-between items-center bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-brand-500 transition-colors ${!selectedDestWallet ? 'text-slate-400' : 'text-slate-700 dark:text-slate-300'}`}
                       >
                         <span className="truncate">{selectedDestWallet ? selectedDestWallet.name : 'Select Dest.'}</span>
                         <ChevronDown size={14} className={`text-slate-400 shrink-0 transition-transform duration-200 ${isDestWalletOpen ? 'rotate-180' : ''}`} />
@@ -762,7 +762,7 @@ export default function SavingsPage() {
                           <div className="fixed inset-0 z-40" onClick={() => setIsDestWalletOpen(false)} />
                           <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-48 overflow-y-auto custom-scrollbar">
                             {wallets.length === 0 ? <div className="px-3 py-3 text-xs text-slate-500 text-center">No wallets</div> : wallets.map((w) => (
-                              <button key={w.id} type="button" onClick={() => { setDestinationWalletId(w.id); setIsDestWalletOpen(false); }} className={`w-full text-left px-3 py-2.5 text-xs transition-colors flex items-center justify-between ${destinationWalletId === w.id ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold' : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300'}`}>
+                              <button key={w.id} type="button" onClick={() => { setDestinationWalletId(w.id); setIsDestWalletOpen(false); }} className={`w-full text-left px-3 py-2.5 text-xs transition-colors flex items-center justify-between ${destinationWalletId === w.id ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300'}`}>
                                 <span className="truncate pr-2">{w.name}</span>
                               </button>
                             ))}
@@ -775,7 +775,7 @@ export default function SavingsPage() {
 
               </div>
 
-              <button type="submit" disabled={isDepositing || !depositInput || !selectedWalletId || !destinationWalletId || isDepositInsufficient} className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-70 shadow-[0_8px_20px_-6px_rgba(99,102,241,0.6)] mt-2">
+              <button type="submit" disabled={isDepositing || !depositInput || !selectedWalletId || !destinationWalletId || isDepositInsufficient} className="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-70 shadow-[0_8px_20px_-6px_rgb(var(--brand-500)/0.6)] mt-2">
                 {isDepositing ? <Loader2 className="animate-spin" size={20} /> : "Confirm Transfer"}
               </button>
             </form>
@@ -795,7 +795,7 @@ export default function SavingsPage() {
               <button onClick={() => setEditDepositModal({ ...editDepositModal, isOpen: false })} className="text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 p-1 rounded-full"><X size={20} /></button>
             </div>
             <form onSubmit={submitEditDeposit} className="p-6 space-y-4">
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Updating deposit for <span className="font-bold text-indigo-600 dark:text-indigo-400">{editDepositModal.goalName}</span>.</p>
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Updating deposit for <span className="font-bold text-brand-600 dark:text-brand-400">{editDepositModal.goalName}</span>.</p>
               
               <div className="grid grid-cols-1 gap-4">
                 <div>
@@ -807,19 +807,19 @@ export default function SavingsPage() {
                       if (parts.length > 2) rawValue = parts[0] + "." + parts.slice(1).join("");
                       setEditDepositModal({ ...editDepositModal, amount: rawValue });
                     }} 
-                    className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 text-lg font-bold" autoFocus 
+                    className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-brand-500 text-lg font-bold" autoFocus 
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 dark:text-slate-400 mb-1">Date of Deposit</label>
                   <input 
                     required type="date" value={editDepositModal.date} onChange={(e) => setEditDepositModal({ ...editDepositModal, date: e.target.value })} 
-                    className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 [color-scheme:light] dark:[color-scheme:dark]" 
+                    className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-brand-500 [color-scheme:light] dark:[color-scheme:dark]" 
                   />
                 </div>
               </div>
 
-              <button type="submit" disabled={isEditingDeposit || !editDepositModal.amount} className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-70 shadow-[0_8px_20px_-6px_rgba(99,102,241,0.6)] mt-2">
+              <button type="submit" disabled={isEditingDeposit || !editDepositModal.amount} className="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-70 shadow-[0_8px_20px_-6px_rgb(var(--brand-500)/0.6)] mt-2">
                 {isEditingDeposit ? <Loader2 className="animate-spin" size={20} /> : "Update Transfer"}
               </button>
             </form>
@@ -865,19 +865,19 @@ export default function SavingsPage() {
             <form onSubmit={submitEdit} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-400 mb-1">Goal Name</label>
-                <input required type="text" value={editModal.name} onChange={(e) => setEditModal({ ...editModal, name: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                <input required type="text" value={editModal.name} onChange={(e) => setEditModal({ ...editModal, name: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-brand-500" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 dark:text-slate-400 mb-1">Target ({currencySymbol})</label>
-                  <input required type="text" inputMode="decimal" value={formatAmountForDisplay(editModal.targetAmount)} onChange={(e) => setEditModal({ ...editModal, targetAmount: cleanNumber(e.target.value) })} className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+                  <input required type="text" inputMode="decimal" value={formatAmountForDisplay(editModal.targetAmount)} onChange={(e) => setEditModal({ ...editModal, targetAmount: cleanNumber(e.target.value) })} className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-brand-500" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 dark:text-slate-400 mb-1">Target Date</label>
-                  <input required type="date" value={editModal.targetDate} onChange={(e) => setEditModal({ ...editModal, targetDate: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 [color-scheme:light] dark:[color-scheme:dark]" />
+                  <input required type="date" value={editModal.targetDate} onChange={(e) => setEditModal({ ...editModal, targetDate: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-brand-500 [color-scheme:light] dark:[color-scheme:dark]" />
                 </div>
               </div>
-              <button type="submit" disabled={isEditing} className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-70 shadow-[0_8px_20px_-6px_rgba(99,102,241,0.6)] mt-4">
+              <button type="submit" disabled={isEditing} className="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:-translate-y-0.5 transition-all active:scale-95 disabled:opacity-70 shadow-[0_8px_20px_-6px_rgb(var(--brand-500)/0.6)] mt-4">
                 {isEditing ? <Loader2 className="animate-spin" size={20} /> : "Save Changes"}
               </button>
             </form>

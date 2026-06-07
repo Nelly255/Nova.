@@ -71,7 +71,7 @@ export default function SpendingChart({
 
   if (loading) {
     return (
-      <div className="w-full h-48 flex flex-col items-center justify-center text-indigo-500/50">
+      <div className="w-full h-48 flex flex-col items-center justify-center text-brand-500/50">
         <Loader2 className="animate-spin mb-2" size={24} />
         <p className="text-sm font-medium">Crunching numbers...</p>
       </div>
@@ -113,11 +113,11 @@ export default function SpendingChart({
               
               {/* The Glowing Data Bar */}
               <div 
-                className="w-8 sm:w-10 md:w-12 bg-gradient-to-t from-indigo-600 via-violet-500 to-purple-500 rounded-t-full z-10 transition-all duration-1000 ease-out group-hover:brightness-125 relative overflow-hidden"
+                className="w-8 sm:w-10 md:w-12 bg-brand-500 rounded-t-full z-10 transition-all duration-1000 ease-out group-hover:brightness-125 relative overflow-hidden"
                 style={{ 
                   height: `${heightPercentage}%`,
                   animationDelay: `${index * 100}ms`,
-                  boxShadow: data.amount > 0 ? '0 0 20px rgba(139, 92, 246, 0.4)' : 'none'
+                  boxShadow: data.amount > 0 ? '0 0 20px rgb(var(--brand-500)/0.4)' : 'none'
                 }}
               >
                 {/* Inner 3D Highlight for the glass effect on hover */}
@@ -126,7 +126,7 @@ export default function SpendingChart({
             </div>
             
             {/* X-Axis Label */}
-            <div className="mt-4 text-xs font-bold text-slate-400 dark:text-slate-500 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors">
+            <div className="mt-4 text-xs font-bold text-slate-400 dark:text-slate-500 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
               {data.week}
             </div>
             

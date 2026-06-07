@@ -36,6 +36,13 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     
     const logoutUser = async () => {
       console.log("User idle for 30 mins. Logging out...");
+      
+      // 🚀 PATCH: Grab the user email before signing out and stash it
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.email) {
+        localStorage.setItem("nova_locked_email", session.user.email);
+      }
+      
       await supabase.auth.signOut();
       router.push("/login");
     };
@@ -68,10 +75,10 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   if (!isAuthorized) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-[#0A0A0E] flex flex-col items-center justify-center selection:bg-indigo-500/30">
+      <div className="min-h-screen bg-slate-50 dark:bg-[#0A0A0E] flex flex-col items-center justify-center selection:bg-brand-500/30">
         <div className="relative flex items-center justify-center mb-6">
-          <div className="absolute w-24 h-24 bg-indigo-500/20 rounded-full blur-xl animate-pulse"></div>
-          <Activity size={40} className="text-indigo-600 dark:text-indigo-400 animate-pulse relative z-10" />
+          <div className="absolute w-24 h-24 bg-brand-500/20 rounded-full blur-xl animate-pulse"></div>
+          <Activity size={40} className="text-brand-600 dark:text-brand-400 animate-pulse relative z-10" />
         </div>
         <h1 className={`${headerFont.className} text-xl font-bold text-slate-900 dark:text-white tracking-widest uppercase animate-pulse`}>
           Unlocking Vault...

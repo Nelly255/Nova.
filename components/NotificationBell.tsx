@@ -262,7 +262,7 @@ export default function NotificationBell() {
       
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="text-slate-500 hover:text-indigo-500 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors p-2 relative z-50 rounded-full hover:bg-slate-100 dark:hover:bg-white/5"
+        className="text-slate-500 hover:text-brand-500 dark:text-slate-400 dark:hover:text-brand-400 transition-colors p-2 relative z-50 rounded-full hover:bg-slate-100 dark:hover:bg-white/5"
         title="Notifications"
       >
         <Bell size={20} />
@@ -284,7 +284,7 @@ export default function NotificationBell() {
               <div className="flex items-center gap-3">
                 <h3 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 transition-colors">Notifications</h3>
                 {unreadCount > 0 && (
-                  <span className="bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold px-2.5 py-0.5 rounded-full backdrop-blur-sm">
+                  <span className="bg-brand-500/10 border border-brand-500/20 text-brand-600 dark:text-brand-400 text-xs font-bold px-2.5 py-0.5 rounded-full backdrop-blur-sm">
                     {unreadCount} New
                   </span>
                 )}
@@ -293,7 +293,7 @@ export default function NotificationBell() {
                 {unreadCount > 0 && (
                   <button 
                     onClick={markAllAsRead}
-                    className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                    className="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 transition-colors"
                   >
                     Mark all read
                   </button>
@@ -322,7 +322,7 @@ export default function NotificationBell() {
                       notif.type === 'danger' ? 'bg-rose-100/50 border-rose-200/50 text-rose-600 dark:bg-rose-500/10 dark:border-rose-500/20 dark:text-rose-400' :
                       notif.type === 'warning' ? 'bg-amber-100/50 border-amber-200/50 text-amber-600 dark:bg-amber-500/10 dark:border-amber-500/20 dark:text-amber-400' : 
                       notif.type === 'success' ? 'bg-emerald-100/50 border-emerald-200/50 text-emerald-600 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-400' : 
-                      'bg-indigo-500/10 border-indigo-500/20 text-indigo-600 dark:text-indigo-400'
+                      'bg-brand-500/10 border-brand-500/20 text-brand-600 dark:text-brand-400'
                     }`}>
                       {notif.read ? <CheckCircle2 size={20} /> : 
                        notif.type === 'danger' ? <AlertTriangle size={20} /> :
@@ -333,7 +333,7 @@ export default function NotificationBell() {
                       <p className={`text-sm font-bold transition-colors ${
                         notif.read 
                           ? 'text-slate-600 dark:text-slate-400' 
-                          : 'text-slate-900 dark:text-slate-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400'
+                          : 'text-slate-900 dark:text-slate-100 group-hover:text-brand-600 dark:group-hover:text-brand-400'
                       }`}>
                         {notif.title}
                       </p>
@@ -342,7 +342,7 @@ export default function NotificationBell() {
                     </div>
                     
                     {!notif.read && (
-                      <div className="w-2 h-2 rounded-full bg-indigo-500 mt-2 flex-shrink-0 shadow-sm shadow-indigo-500/50"></div>
+                      <div className="w-2 h-2 rounded-full bg-brand-500 mt-2 flex-shrink-0 shadow-sm shadow-brand-500/50"></div>
                     )}
                   </div>
                 ))

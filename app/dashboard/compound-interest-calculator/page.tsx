@@ -61,7 +61,7 @@ export default function DashboardCompoundInterestCalculator() {
       />
 
       {/* AMBIENT GLOW */}
-      <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#8438FF]/10 dark:bg-[#8438FF]/15 rounded-full blur-[120px] pointer-events-none opacity-80 z-0"></div>
+      <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-brand-500/10 dark:bg-brand-500/15 rounded-full blur-[120px] pointer-events-none opacity-80 z-0"></div>
       <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-[#10B981]/5 dark:bg-[#10B981]/10 rounded-full blur-[120px] pointer-events-none opacity-60 z-0"></div>
 
       <div className="relative z-10 p-4 sm:p-6 md:p-10 lg:p-12">
@@ -70,7 +70,7 @@ export default function DashboardCompoundInterestCalculator() {
         <header className="max-w-6xl mx-auto mb-12 md:mb-16 grid lg:grid-cols-2 gap-8 md:gap-10 items-end">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#12121A] border border-slate-200 dark:border-white/5 shadow-sm">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#8438FF] shadow-[0_0_8px_#8438FF] animate-pulse"></div>
+              <div className="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgb(var(--brand-500))] animate-pulse"></div>
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">WEALTH CALCULATOR</span>
             </div>
             
@@ -78,7 +78,7 @@ export default function DashboardCompoundInterestCalculator() {
               <span style={{ fontFamily: "'Dancing Script', cursive" }} className="text-[4rem] sm:text-5xl md:text-[5.5rem] font-bold text-slate-800 dark:text-slate-200 leading-[0.8] mb-2 pl-1">
                 Project your
               </span>
-              <span className="text-[3.5rem] sm:text-5xl md:text-[6.5rem] font-[900] tracking-[-0.04em] text-[#8438FF] leading-[0.85] mt-1 md:mt-0">
+              <span className="text-[3.5rem] sm:text-5xl md:text-[6.5rem] font-[900] tracking-[-0.04em] text-brand-500 leading-[0.85] mt-1 md:mt-0">
                 Future.
               </span>
             </h1>
@@ -105,60 +105,60 @@ export default function DashboardCompoundInterestCalculator() {
               <div>
                 <label className="flex justify-between text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">
                   <span>Initial Investment</span>
-                  <span className="text-[#8438FF]">{formatMoney(initialInvestment)}</span>
+                  <span className="text-brand-500">{formatMoney(initialInvestment)}</span>
                 </label>
                 <input 
                   type="range" min="0" max="10000000" step="100000"
                   value={initialInvestment}
                   onChange={(e) => setInitialInvestment(Number(e.target.value))}
-                  className="w-full accent-[#8438FF]"
+                  className="w-full accent-brand-500"
                 />
               </div>
 
               <div>
                 <label className="flex justify-between text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">
                   <span>Monthly Contribution</span>
-                  <span className="text-[#8438FF]">{formatMoney(monthlyContribution)}</span>
+                  <span className="text-brand-500">{formatMoney(monthlyContribution)}</span>
                 </label>
                 <input 
                   type="range" min="0" max="2000000" step="50000"
                   value={monthlyContribution}
                   onChange={(e) => setMonthlyContribution(Number(e.target.value))}
-                  className="w-full accent-[#8438FF]"
+                  className="w-full accent-brand-500"
                 />
               </div>
 
               <div>
                 <label className="flex justify-between text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">
                   <span>Years to Grow</span>
-                  <span className="text-[#8438FF]">{years} Years</span>
+                  <span className="text-brand-500">{years} Years</span>
                 </label>
                 <input 
                   type="range" min="1" max="40" step="1"
                   value={years}
                   onChange={(e) => setYears(Number(e.target.value))}
-                  className="w-full accent-[#8438FF]"
+                  className="w-full accent-brand-500"
                 />
               </div>
 
               <div>
                 <label className="flex justify-between text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">
                   <span>Estimated Annual Return (%)</span>
-                  <span className="text-[#8438FF]">{interestRate}%</span>
+                  <span className="text-brand-500">{interestRate}%</span>
                 </label>
                 <input 
                   type="range" min="1" max="20" step="0.5"
                   value={interestRate}
                   onChange={(e) => setInterestRate(Number(e.target.value))}
-                  className="w-full accent-[#8438FF]"
+                  className="w-full accent-brand-500"
                 />
               </div>
 
             </div>
 
             {/* RESULTS PANEL */}
-            <div className="group bg-[#8438FF]/5 dark:bg-[#8438FF]/10 p-8 md:p-10 rounded-3xl md:rounded-[2.5rem] border border-[#8438FF]/20 backdrop-blur-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col justify-center">
-              <div className="w-14 h-14 rounded-2xl bg-[#8438FF]/20 flex items-center justify-center text-[#8438FF] mb-6">
+            <div className="group bg-brand-500/5 dark:bg-brand-500/10 p-8 md:p-10 rounded-3xl md:rounded-[2.5rem] border border-brand-500/20 backdrop-blur-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col justify-center">
+              <div className="w-14 h-14 rounded-2xl bg-brand-500/20 flex items-center justify-center text-brand-500 mb-6">
                 <TrendingUp size={24} />
               </div>
               
@@ -167,7 +167,7 @@ export default function DashboardCompoundInterestCalculator() {
                 {formatMoney(totalFutureValue)}
               </h3>
               
-              <div className="h-px w-full bg-[#8438FF]/20 mb-8"></div>
+              <div className="h-px w-full bg-brand-500/20 mb-8"></div>
 
               <div className="grid grid-cols-2 gap-6">
                 <div>
@@ -180,7 +180,7 @@ export default function DashboardCompoundInterestCalculator() {
                 </div>
               </div>
 
-              <Link href="/dashboard" className="mt-10 inline-flex items-center justify-center gap-3 w-full py-4 bg-[#8438FF] hover:bg-[#7328F5] text-white rounded-2xl font-bold shadow-[0_8px_20px_rgba(132,56,255,0.3)] transition-all active:scale-95">
+              <Link href="/dashboard" className="mt-10 inline-flex items-center justify-center gap-3 w-full py-4 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-bold shadow-[0_8px_20px_rgb(var(--brand-500)/0.3)] transition-all active:scale-95">
                 Start Building Wealth <ArrowRight size={18} />
               </Link>
             </div>

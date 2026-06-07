@@ -9,12 +9,12 @@ const bodyFont = Inter({ subsets: ["latin"] });
 
 export default function PrivacyPolicy() {
   return (
-    <main className={`min-h-screen bg-slate-50 dark:bg-[#0A0A0E] text-slate-900 dark:text-slate-50 flex flex-col selection:bg-indigo-500/30 transition-colors duration-500 ${bodyFont.className}`}>
+    <main className={`min-h-screen bg-slate-50 dark:bg-[#0A0A0E] text-slate-900 dark:text-slate-50 flex flex-col selection:bg-brand-500/30 transition-colors duration-500 ${bodyFont.className}`}>
       
       {/* Simple Header */}
       <header className="w-full max-w-4xl mx-auto px-6 pt-8 pb-4 flex justify-between items-center z-50">
         <Link href="/" className="flex items-center gap-2 group">
-          <Activity size={24} className="text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform" />
+          <Activity size={24} className="text-brand-600 dark:text-brand-400 group-hover:scale-110 transition-transform" />
           <span className={`${headerFont.className} font-extrabold text-xl tracking-tight text-slate-900 dark:text-white`}>
             Nova.
           </span>

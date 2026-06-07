@@ -196,7 +196,7 @@ export default function AddTransactionModal() {
   const modalButton = (
     <button 
       onClick={() => setIsOpen(true)}
-      className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-[0_8px_20px_-6px_rgba(99,102,241,0.6)] border border-white/20 transition-all duration-300 hover:-translate-y-0.5 active:scale-95 px-4 py-2 md:px-5 md:py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 text-xs md:text-sm w-full"
+      className="bg-brand-600 hover:bg-brand-500 text-white shadow-[0_8px_20px_-6px_rgb(var(--brand-500)/0.6)] border border-white/20 transition-all duration-300 hover:-translate-y-0.5 active:scale-95 px-4 py-2 md:px-5 md:py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 text-xs md:text-sm w-full"
     >
       <Plus size={16} /> <span className="hidden sm:inline">Add Transaction</span><span className="sm:hidden">Add</span>
     </button>
@@ -267,7 +267,7 @@ export default function AddTransactionModal() {
                 <button 
                   type="button"
                   onClick={() => { setIsWalletOpen(!isWalletOpen); setIsCategoryOpen(false); }}
-                  className="w-full flex justify-between items-center bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-indigo-500 transition-colors"
+                  className="w-full flex justify-between items-center bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-brand-500 transition-colors"
                 >
                   <span className="truncate">{selectedAccount?.name || "Select a Wallet"}</span>
                   <ChevronDown size={18} className={`text-zinc-400 shrink-0 transition-transform duration-200 ${isWalletOpen ? 'rotate-180' : ''}`} />
@@ -288,7 +288,7 @@ export default function AddTransactionModal() {
                             }}
                             className={`w-full text-left px-4 py-3 rounded-xl text-sm transition-colors flex justify-between items-center ${
                               formData.account_id === acc.id 
-                              ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 font-bold' 
+                              ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-700 dark:text-brand-400 font-bold' 
                               : 'hover:bg-zinc-50 dark:hover:bg-white/5 text-zinc-700 dark:text-zinc-300 font-medium'
                             }`}
                           >
@@ -310,7 +310,7 @@ export default function AddTransactionModal() {
                   placeholder="e.g., Starbucks Coffee"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-indigo-500 transition-colors"
+                  className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-brand-500 transition-colors"
                 />
               </div>
 
@@ -324,7 +324,7 @@ export default function AddTransactionModal() {
                     placeholder={`${currencySymbol}0.00`}
                     value={formatAmountForDisplay(formData.amount)} 
                     onChange={handleAmountChange} 
-                    className={`w-full bg-zinc-50 dark:bg-zinc-950/50 border rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none transition-colors ${isInsufficient ? 'border-rose-500 ring-1 ring-rose-500' : 'border-zinc-200/80 dark:border-white/10 focus:border-indigo-500'}`}
+                    className={`w-full bg-zinc-50 dark:bg-zinc-950/50 border rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none transition-colors ${isInsufficient ? 'border-rose-500 ring-1 ring-rose-500' : 'border-zinc-200/80 dark:border-white/10 focus:border-brand-500'}`}
                   />
                 </div>
                 <div>
@@ -334,7 +334,7 @@ export default function AddTransactionModal() {
                     type="date"
                     value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-indigo-500 [color-scheme:light] dark:[color-scheme:dark]"
+                    className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-brand-500 [color-scheme:light] dark:[color-scheme:dark]"
                   />
                 </div>
               </div>
@@ -351,7 +351,7 @@ export default function AddTransactionModal() {
                     placeholder={`${currencySymbol}0.00`}
                     value={formatAmountForDisplay(transactionFee)} 
                     onChange={handleFeeChange} 
-                    className={`w-full bg-zinc-50 dark:bg-zinc-950/50 border rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none transition-colors ${isInsufficient ? 'border-rose-500 ring-1 ring-rose-500' : 'border-zinc-200/80 dark:border-white/10 focus:border-indigo-500'}`}
+                    className={`w-full bg-zinc-50 dark:bg-zinc-950/50 border rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none transition-colors ${isInsufficient ? 'border-rose-500 ring-1 ring-rose-500' : 'border-zinc-200/80 dark:border-white/10 focus:border-brand-500'}`}
                   />
                 </div>
               )}
@@ -371,7 +371,7 @@ export default function AddTransactionModal() {
                 <button 
                   type="button"
                   onClick={() => { setIsCategoryOpen(!isCategoryOpen); setIsWalletOpen(false); }}
-                  className="w-full flex justify-between items-center bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-indigo-500 transition-colors"
+                  className="w-full flex justify-between items-center bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3.5 text-zinc-900 dark:text-zinc-100 font-medium focus:outline-none focus:border-brand-500 transition-colors"
                 >
                   <span className="truncate">{formData.category}</span>
                   <ChevronDown size={18} className={`text-zinc-400 shrink-0 transition-transform duration-200 ${isCategoryOpen ? 'rotate-180' : ''}`} />
@@ -390,7 +390,7 @@ export default function AddTransactionModal() {
                             placeholder="Search or type new..."
                             value={categorySearch}
                             onChange={(e) => setCategorySearch(e.target.value)}
-                            className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
+                            className="w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-brand-500"
                           />
                         </div>
                       </div>
@@ -403,7 +403,7 @@ export default function AddTransactionModal() {
                               setIsCategoryOpen(false);
                               setCategorySearch("");
                             }}
-                            className="w-full text-left px-4 py-3 rounded-xl text-sm transition-colors flex items-center gap-2 text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-500/10 font-bold mb-1"
+                            className="w-full text-left px-4 py-3 rounded-xl text-sm transition-colors flex items-center gap-2 text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-500/10 font-bold mb-1"
                           >
                             <PlusCircle size={16} /> Create "{categorySearch}"
                           </button>
@@ -435,10 +435,10 @@ export default function AddTransactionModal() {
               <button 
                 type="submit" 
                 disabled={isLoading || isInsufficient || !formData.account_id}
-                className={`w-full shrink-0 text-white shadow-lg border border-white/20 transition-all duration-300 font-bold py-4 rounded-xl mt-6 flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed ${
+                className={`w-full shrink-0 text-white border border-white/20 transition-all duration-300 font-bold py-4 rounded-xl mt-6 flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed ${
                   isInsufficient || !formData.account_id
-                  ? 'bg-rose-600 shadow-rose-500/20 grayscale-[0.5]' 
-                  : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 hover:-translate-y-0.5 active:scale-95 shadow-indigo-500/20'
+                  ? 'bg-rose-600 shadow-[0_4px_14px_rgba(244,63,94,0.4)] grayscale-[0.5]' 
+                  : 'bg-brand-600 hover:bg-brand-500 hover:-translate-y-0.5 active:scale-95 shadow-[0_4px_14px_rgb(var(--brand-500)/0.4)]'
                 }`}
               >
                 {isLoading ? (

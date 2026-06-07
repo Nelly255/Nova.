@@ -54,7 +54,7 @@ export default function AICopilotButton() {
       {/* Notice the custom cubic-bezier for a "spring" effect when it shows/hides */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed z-40 flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-[0_8px_30px_rgb(0,0,0,0.15)] dark:shadow-[0_8px_30px_rgba(99,102,241,0.3)] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95
+        className={`fixed z-40 flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full bg-brand-600 hover:bg-brand-500 text-white shadow-[0_8px_30px_rgb(0,0,0,0.15)] dark:shadow-[0_8px_30px_rgb(var(--brand-500)/0.3)] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-95
           ${isVisible 
             ? "bottom-28 md:bottom-6 right-4 md:right-6 opacity-100 translate-y-0 scale-100" 
             : "bottom-28 md:bottom-6 right-4 md:right-6 opacity-0 translate-y-24 scale-75 pointer-events-none"
@@ -78,7 +78,7 @@ export default function AICopilotButton() {
           <div className="relative w-full max-w-[340px] bg-white dark:bg-[#0F0F15] border border-slate-200 dark:border-white/10 p-6 sm:p-7 rounded-[1.75rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.5)] overflow-hidden transform transition-all animate-in zoom-in-[0.90] slide-in-from-bottom-[60px] duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)]">
             
             {/* Ambient Background Glow */}
-            <div className="absolute -top-20 -right-20 w-40 h-40 bg-indigo-500/20 dark:bg-indigo-500/30 blur-3xl rounded-full pointer-events-none"></div>
+            <div className="absolute -top-20 -right-20 w-40 h-40 bg-brand-500/20 dark:bg-brand-500/30 blur-3xl rounded-full pointer-events-none"></div>
             <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-purple-500/20 dark:bg-purple-500/30 blur-3xl rounded-full pointer-events-none"></div>
 
             <button 
@@ -89,11 +89,11 @@ export default function AICopilotButton() {
             </button>
 
             <div className="relative z-10 flex flex-col items-center text-center mt-2">
-              <div className="w-14 h-14 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-500/20 dark:to-purple-500/20 rounded-[1rem] flex items-center justify-center border border-indigo-200 dark:border-indigo-500/30 mb-4 text-indigo-600 dark:text-indigo-400 shadow-inner group-hover:scale-110 transition-transform">
+              <div className="w-14 h-14 bg-gradient-to-br from-brand-100 to-purple-100 dark:from-brand-500/20 dark:to-purple-500/20 rounded-[1rem] flex items-center justify-center border border-brand-200 dark:border-brand-500/30 mb-4 text-brand-600 dark:text-brand-400 shadow-inner group-hover:scale-110 transition-transform">
                 <Bot size={28} className="animate-pulse duration-3000" />
               </div>
 
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-[9px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 mb-3">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-50 dark:bg-brand-500/10 border border-brand-100 dark:border-brand-500/20 text-[9px] font-black uppercase tracking-widest text-brand-600 dark:text-brand-400 mb-3">
                 <Lock size={10} /> Closed Beta
               </div>
 

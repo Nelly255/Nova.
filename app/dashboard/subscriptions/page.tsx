@@ -211,7 +211,7 @@ export default function SubscriptionsPage() {
   const MonthPickerOverlay = () => (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 border-b border-slate-200/80 dark:border-white/5 pb-4 relative">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-100 dark:border-indigo-500/20">
+        <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 flex items-center justify-center border border-brand-100 dark:border-brand-500/20">
           {activeTab === 'completed' ? <CheckCircle2 size={20} /> : <History size={20} />}
         </div>
         <div>
@@ -230,7 +230,7 @@ export default function SubscriptionsPage() {
           className="flex items-center justify-between sm:justify-start gap-3 bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 shadow-sm backdrop-blur-md w-full sm:w-auto hover:bg-white/80 dark:hover:bg-white/10 transition-colors cursor-pointer group"
         >
           <div className="flex items-center gap-2">
-            <CalendarDays size={18} className="text-indigo-500 dark:text-indigo-400 group-hover:scale-110 transition-transform" />
+            <CalendarDays size={18} className="text-brand-500 dark:text-brand-400 group-hover:scale-110 transition-transform" />
             <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
               {MONTHS[parseInt(selectedMonth.split('-')[1]) - 1]} {selectedMonth.split('-')[0]}
             </span>
@@ -251,14 +251,14 @@ export default function SubscriptionsPage() {
                 {MONTHS.map((month, idx) => {
                   const isSelected = selectedMonth === `${pickerYear}-${String(idx + 1).padStart(2, '0')}`;
                   return (
-                    <button key={month} onClick={() => { setSelectedMonth(`${pickerYear}-${String(idx + 1).padStart(2, '0')}`); setIsFilterOpen(false); }} className={`py-2.5 rounded-xl text-xs font-bold transition-all ${isSelected ? 'bg-indigo-500 text-white shadow-[0_4px_14px_rgba(99,102,241,0.4)] scale-105' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10'}`}>
+                    <button key={month} onClick={() => { setSelectedMonth(`${pickerYear}-${String(idx + 1).padStart(2, '0')}`); setIsFilterOpen(false); }} className={`py-2.5 rounded-xl text-xs font-bold transition-all ${isSelected ? 'bg-brand-500 text-white shadow-[0_4px_14px_rgb(var(--brand-500)/0.4)] scale-105' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10'}`}>
                       {month}
                     </button>
                   )
                 })}
               </div>
               <div className="mt-4 pt-4 border-t border-slate-200/50 dark:border-white/10 flex justify-center">
-                <button onClick={() => { setSelectedMonth(currentMonthStr); setIsFilterOpen(false); }} className="text-xs font-bold text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors px-4 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg">
+                <button onClick={() => { setSelectedMonth(currentMonthStr); setIsFilterOpen(false); }} className="text-xs font-bold text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 transition-colors px-4 py-2 hover:bg-brand-50 dark:hover:bg-brand-500/10 rounded-lg">
                   Back to current month
                 </button>
               </div>
@@ -288,10 +288,10 @@ export default function SubscriptionsPage() {
           </h2>
         </div>
         
-        <div className="glass-card p-6 rounded-[2rem] flex flex-col justify-center relative overflow-hidden transition-colors border border-indigo-100/50 dark:border-indigo-500/10">
-          <div className="absolute -inset-4 bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-indigo-500/5 dark:to-purple-500/5 pointer-events-none rounded-[2rem]"></div>
+        <div className="glass-card p-6 rounded-[2rem] flex flex-col justify-center relative overflow-hidden transition-colors border border-brand-100/50 dark:border-brand-500/10">
+          <div className="absolute -inset-4 bg-gradient-to-br from-brand-500/10 to-brand-500/5 dark:from-brand-500/10 dark:to-brand-500/5 pointer-events-none rounded-[2rem]"></div>
           <div className="relative z-10">
-            <p className="text-indigo-600 dark:text-indigo-400 text-sm font-medium mb-1 transition-colors">Remaining This Month</p>
+            <p className="text-brand-600 dark:text-brand-400 text-sm font-medium mb-1 transition-colors">Remaining This Month</p>
             <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-50 transition-colors break-words">
               {currencySymbol}{remainingThisMonth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </h2>
@@ -299,16 +299,16 @@ export default function SubscriptionsPage() {
         </div>
 
         <div className="glass-card p-6 rounded-[2rem] flex flex-col justify-center relative overflow-hidden transition-colors">
-          <div className="absolute -inset-4 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 dark:from-indigo-500/5 dark:to-purple-500/5 pointer-events-none rounded-[2rem]"></div>
-          <div className="absolute -right-6 -top-6 text-indigo-500/10 dark:text-indigo-500/20 transition-colors">
+          <div className="absolute -inset-4 bg-gradient-to-br from-brand-500/10 to-brand-500/5 dark:from-brand-500/10 dark:to-brand-500/5 pointer-events-none rounded-[2rem]"></div>
+          <div className="absolute -right-6 -top-6 text-brand-500/10 dark:text-brand-500/20 transition-colors">
             <CalendarClock size={100} />
           </div>
           <div className="relative z-10">
-            <p className="text-indigo-600 dark:text-indigo-400 text-sm font-medium mb-1 transition-colors">Next Bill Due</p>
+            <p className="text-brand-600 dark:text-brand-400 text-sm font-medium mb-1 transition-colors">Next Bill Due</p>
             {nextBill ? (
               <>
                 <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100 transition-colors truncate">{nextBill.name}</h2>
-                <p className={`text-sm mt-1 transition-colors font-medium ${today > nextBill.billing_date ? "text-rose-500" : "text-indigo-500 dark:text-indigo-300/80"}`}>
+                <p className={`text-sm mt-1 transition-colors font-medium ${today > nextBill.billing_date ? "text-rose-500" : "text-brand-500 dark:text-brand-300/80"}`}>
                   {today > nextBill.billing_date ? "Overdue" : "Due"} on the {nextBill.billing_date}{[1,21,31].includes(nextBill.billing_date) ? 'st' : [2,22].includes(nextBill.billing_date) ? 'nd' : [3,23].includes(nextBill.billing_date) ? 'rd' : 'th'} • {currencySymbol}{Number(nextBill.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </>
@@ -322,22 +322,22 @@ export default function SubscriptionsPage() {
       <div className="flex bg-slate-200/50 dark:bg-slate-900/50 p-1.5 rounded-2xl w-max border border-slate-300/50 dark:border-white/5 backdrop-blur-md relative z-10 overflow-x-auto max-w-full no-scrollbar">
         <button 
           onClick={() => setActiveTab('active')}
-          className={`px-4 sm:px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 whitespace-nowrap ${activeTab === 'active' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+          className={`px-4 sm:px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 whitespace-nowrap ${activeTab === 'active' ? 'bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
         >
           Active Subscriptions
         </button>
         <button 
           onClick={() => setActiveTab('completed')}
-          className={`px-4 sm:px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'completed' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+          className={`px-4 sm:px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 whitespace-nowrap flex items-center gap-1.5 ${activeTab === 'completed' ? 'bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
         >
           Completed
           {completedSubsList.length > 0 && selectedMonth === currentMonthStr && (
-            <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${activeTab === 'completed' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400' : 'bg-slate-200 dark:bg-slate-700'}`}>{completedSubsList.length}</span>
+            <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${activeTab === 'completed' ? 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-400' : 'bg-slate-200 dark:bg-slate-700'}`}>{completedSubsList.length}</span>
           )}
         </button>
         <button 
           onClick={() => setActiveTab('history')}
-          className={`px-4 sm:px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 whitespace-nowrap ${activeTab === 'history' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+          className={`px-4 sm:px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 whitespace-nowrap ${activeTab === 'history' ? 'bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
         >
           Payment History
         </button>
@@ -462,7 +462,7 @@ export default function SubscriptionsPage() {
                 filteredHistory.map((tx) => (
                   <div key={tx.id} className="flex items-center justify-between p-4 hover:bg-slate-100/50 dark:hover:bg-white/5 rounded-2xl transition-all border border-transparent hover:border-slate-200/50 dark:hover:border-white/5 group">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center bg-indigo-50/50 dark:bg-indigo-400/10 text-indigo-600 dark:text-indigo-400 border border-slate-200/30 dark:border-white/5 backdrop-blur-md transition-colors">
+                      <div className="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center bg-brand-50/50 dark:bg-brand-400/10 text-brand-600 dark:text-brand-400 border border-slate-200/30 dark:border-white/5 backdrop-blur-md transition-colors">
                         <CheckCircle2 size={18}/>
                       </div>
                       <div>
@@ -500,9 +500,9 @@ export default function SubscriptionsPage() {
       {confirmPayment.isOpen && confirmPayment.sub && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6">
           <div className="absolute inset-0 bg-slate-900/10 dark:bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setConfirmPayment({ isOpen: false, sub: null })} />
-          <div className="relative z-10 w-full max-w-sm glass-card rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] overflow-hidden animate-in zoom-in-95 duration-200 border border-indigo-200/50 dark:border-indigo-500/20">
+          <div className="relative z-10 w-full max-w-sm glass-card rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] overflow-hidden animate-in zoom-in-95 duration-200 border border-brand-200/50 dark:border-brand-500/20">
             <div className="p-6 text-center pt-8">
-              <div className="w-16 h-16 rounded-full bg-indigo-100 dark:bg-indigo-500/20 text-indigo-500 dark:text-indigo-400 flex items-center justify-center mx-auto mb-4 border border-indigo-200 dark:border-indigo-500/30">
+              <div className="w-16 h-16 rounded-full bg-brand-100 dark:bg-brand-500/20 text-brand-500 dark:text-brand-400 flex items-center justify-center mx-auto mb-4 border border-brand-200 dark:border-brand-500/30">
                 <CheckCircle size={28} />
               </div>
               <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">Log Payment</h3>
@@ -524,7 +524,7 @@ export default function SubscriptionsPage() {
                     value={transactionCharge}
                     onChange={(e) => setTransactionCharge(e.target.value)}
                     placeholder="0.00"
-                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-slate-900/50 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all"
                   />
                 </div>
               </div>
@@ -541,12 +541,12 @@ export default function SubscriptionsPage() {
                       onClick={() => setSelectedWalletId(wallet.id)}
                       className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${
                         selectedWalletId === wallet.id 
-                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' 
+                        ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400' 
                         : 'border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10'
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={selectedWalletId === wallet.id ? 'text-indigo-500 dark:text-indigo-400' : 'text-slate-500'}>
+                        <div className={selectedWalletId === wallet.id ? 'text-brand-500 dark:text-brand-400' : 'text-slate-500'}>
                           {getWalletIcon(wallet.type)}
                         </div>
                         <div className="text-left">
@@ -554,7 +554,7 @@ export default function SubscriptionsPage() {
                           <p className="text-[10px] mt-1 opacity-80">Bal: {currencySymbol}{Number(wallet.balance).toLocaleString()}</p>
                         </div>
                       </div>
-                      {selectedWalletId === wallet.id && <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.8)]" />}
+                      {selectedWalletId === wallet.id && <div className="w-2 h-2 rounded-full bg-brand-500 shadow-[0_0_8px_rgb(var(--brand-500)/0.8)]" />}
                     </button>
                   ))}
                 </div>
@@ -567,7 +567,7 @@ export default function SubscriptionsPage() {
                 <button 
                   onClick={executeLogPayment} 
                   disabled={isPaying === confirmPayment.sub.id || !selectedWalletId}
-                  className="flex-1 py-3.5 rounded-xl font-bold text-white bg-indigo-500 hover:bg-indigo-600 shadow-[0_4px_14px_rgba(99,102,241,0.4)] transition-all hover:-translate-y-0.5 active:scale-95 flex justify-center items-center gap-2 disabled:opacity-70 disabled:hover:translate-y-0"
+                  className="flex-1 py-3.5 rounded-xl font-bold text-white bg-brand-600 hover:bg-brand-500 shadow-[0_4px_14px_rgb(var(--brand-500)/0.4)] transition-all hover:-translate-y-0.5 active:scale-95 flex justify-center items-center gap-2 disabled:opacity-70 disabled:hover:translate-y-0"
                 >
                   {isPaying === confirmPayment.sub.id ? <Loader2 className="animate-spin" size={18} /> : "Yes, Log It"}
                 </button>

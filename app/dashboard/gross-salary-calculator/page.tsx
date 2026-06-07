@@ -73,14 +73,14 @@ export default function DashboardNetToGrossCalculator() {
   return (
     <div className="w-full bg-transparent text-slate-900 dark:text-slate-50 relative overflow-hidden print:bg-white print:text-black" style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}>
       
-      <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#3B82F6]/10 dark:bg-[#3B82F6]/15 rounded-full blur-[120px] pointer-events-none opacity-80 z-0 print:hidden"></div>
+      <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-brand-500/10 dark:bg-brand-500/15 rounded-full blur-[120px] pointer-events-none opacity-80 z-0 print:hidden"></div>
 
       <div className="relative z-10 p-4 sm:p-6 md:p-10 lg:p-12 print:hidden">
         
         <header className="max-w-6xl mx-auto mb-12 md:mb-16 grid lg:grid-cols-2 gap-8 md:gap-10 items-end">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#12121A] border border-slate-200 dark:border-white/5 shadow-sm">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] shadow-[0_0_8px_#3B82F6] animate-pulse"></div>
+              <div className="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgb(var(--brand-500))] animate-pulse"></div>
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">SALARY NEGOTIATION</span>
             </div>
             
@@ -88,7 +88,7 @@ export default function DashboardNetToGrossCalculator() {
               <span style={{ fontFamily: "'Dancing Script', cursive" }} className="text-[4rem] sm:text-5xl md:text-[5.5rem] font-bold text-slate-800 dark:text-slate-200 leading-[0.8] mb-2 pl-1">
                 Know your
               </span>
-              <span className="text-[3.5rem] sm:text-5xl md:text-[6.5rem] font-[900] tracking-[-0.04em] text-[#3B82F6] leading-[0.85] mt-1 md:mt-0">
+              <span className="text-[3.5rem] sm:text-5xl md:text-[6.5rem] font-[900] tracking-[-0.04em] text-brand-500 leading-[0.85] mt-1 md:mt-0">
                 True Value.
               </span>
             </h1>
@@ -116,7 +116,7 @@ export default function DashboardNetToGrossCalculator() {
                   Target Monthly Net Pay (TZS)
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-[#3B82F6]">
+                  <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-brand-500">
                     <Target size={24} />
                   </div>
                   <input 
@@ -124,21 +124,21 @@ export default function DashboardNetToGrossCalculator() {
                     value={targetNetSalary === 0 ? '' : targetNetSalary.toLocaleString('en-US')}
                     onChange={handleNetChange}
                     placeholder="e.g. 3,000,000"
-                    className="w-full bg-slate-50 dark:bg-[#14141A] border border-slate-200 dark:border-white/10 rounded-2xl pl-14 pr-4 py-5 text-2xl font-black text-slate-900 dark:text-white focus:outline-none focus:border-[#3B82F6] transition-colors"
+                    className="w-full bg-slate-50 dark:bg-[#14141A] border border-slate-200 dark:border-white/10 rounded-2xl pl-14 pr-4 py-5 text-2xl font-black text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 transition-colors"
                   />
                 </div>
               </div>
 
-              <div className="p-5 bg-blue-50 dark:bg-blue-500/5 rounded-2xl border border-blue-100 dark:border-blue-500/10 text-sm text-blue-800 dark:text-blue-400 font-medium">
+              <div className="p-5 bg-brand-50 dark:bg-brand-500/5 rounded-2xl border border-brand-100 dark:border-brand-500/10 text-sm text-brand-800 dark:text-brand-400 font-medium">
                 This tool automatically calculates the hidden tax burden, providing the exact gross figure required to satisfy NSSF (10%) and TRA PAYE brackets.
               </div>
 
             </div>
 
             {/* RESULTS PANEL */}
-            <div className="relative z-10 bg-[#3B82F6]/5 dark:bg-[#3B82F6]/10 p-6 md:p-10 rounded-3xl md:rounded-[2.5rem] border border-[#3B82F6]/20 backdrop-blur-3xl flex flex-col justify-center">
+            <div className="relative z-10 bg-brand-500/5 dark:bg-brand-500/10 p-6 md:p-10 rounded-3xl md:rounded-[2.5rem] border border-brand-500/20 backdrop-blur-3xl flex flex-col justify-center">
               
-              <div className="w-14 h-14 rounded-2xl bg-[#3B82F6]/20 flex items-center justify-center text-[#3B82F6] mb-6">
+              <div className="w-14 h-14 rounded-2xl bg-brand-500/20 flex items-center justify-center text-brand-500 mb-6">
                 <Landmark size={24} />
               </div>
               
@@ -147,14 +147,14 @@ export default function DashboardNetToGrossCalculator() {
                 {formatMoney(result.gross)}
               </h3>
               
-              <div className="h-px w-full bg-[#3B82F6]/20 mb-6"></div>
+              <div className="h-px w-full bg-brand-500/20 mb-6"></div>
 
               <div className="space-y-4 mb-8">
                 <div className="flex justify-between text-sm font-bold">
                   <span className="text-slate-500 dark:text-slate-400">Target Net Salary</span>
-                  <span className="text-[#3B82F6]">{formatMoney(targetNetSalary)}</span>
+                  <span className="text-brand-500">{formatMoney(targetNetSalary)}</span>
                 </div>
-                <div className="flex justify-between text-sm font-bold pt-4 border-t border-[#3B82F6]/10">
+                <div className="flex justify-between text-sm font-bold pt-4 border-t border-brand-500/10">
                   <span className="text-slate-500 dark:text-slate-400">Taxes You Need to Cover:</span>
                 </div>
                 <div className="flex justify-between text-sm font-bold">
@@ -165,7 +165,7 @@ export default function DashboardNetToGrossCalculator() {
                   <span className="text-slate-500 dark:text-slate-400 pl-4">PAYE (TRA)</span>
                   <span className="text-slate-900 dark:text-white">{formatMoney(result.paye)}</span>
                 </div>
-                <div className="flex justify-between text-sm font-bold pt-2 border-t border-[#3B82F6]/10">
+                <div className="flex justify-between text-sm font-bold pt-2 border-t border-brand-500/10">
                   <span className="text-slate-500 dark:text-slate-400">Total Tax Burden</span>
                   <span className="text-rose-500">{formatMoney(result.nssf + result.paye)}</span>
                 </div>
@@ -174,7 +174,7 @@ export default function DashboardNetToGrossCalculator() {
               <button 
                 onClick={handleDownloadPDF} 
                 disabled={targetNetSalary === 0}
-                className="mt-auto inline-flex items-center justify-center gap-3 w-full py-4 bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-2xl font-bold shadow-[0_8px_20px_rgba(59,130,246,0.3)] transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 disabled:shadow-none"
+                className="mt-auto inline-flex items-center justify-center gap-3 w-full py-4 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-bold shadow-[0_8px_20px_rgb(var(--brand-500)/0.3)] transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 disabled:shadow-none"
               >
                 Download Salary Report <Download size={18} />
               </button>

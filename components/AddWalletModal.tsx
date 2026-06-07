@@ -108,8 +108,8 @@ export default function AddWalletModal({ children, onSuccess }: { children: Reac
           </button>
 
           <div className="text-center mb-8 mt-2">
-            <div className="w-14 h-14 bg-[#F3E8FF] dark:bg-[#8B5CF6]/10 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-sm border border-[#E9D5FF] dark:border-[#8B5CF6]/20 transition-colors">
-              <Wallet size={24} className="text-[#8B5CF6] dark:text-[#A78BFA]" />
+            <div className="w-14 h-14 bg-brand-50 dark:bg-brand-500/10 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-sm border border-brand-100 dark:border-brand-500/20 transition-colors">
+              <Wallet size={24} className="text-brand-600 dark:text-brand-400" />
             </div>
             <h2 className="text-2xl md:text-3xl font-extrabold text-[#0F172A] dark:text-white mb-2 tracking-tight transition-colors">Add New Wallet</h2>
             <p className="text-[#64748B] dark:text-slate-400 font-medium text-sm transition-colors">Track your exact balances across M-Pesa, banks, and cash.</p>
@@ -126,11 +126,11 @@ export default function AddWalletModal({ children, onSuccess }: { children: Reac
                   onClick={() => setAccountType('mobile')}
                   className={`py-3 md:py-6 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all ${
                     accountType === 'mobile' 
-                    ? 'border-[#8B5CF6] dark:border-[#8B5CF6]/50 bg-[#F5F3FF] dark:bg-[#8B5CF6]/10 text-[#8B5CF6] dark:text-[#A78BFA] shadow-sm' 
+                    ? 'border-brand-500 dark:border-brand-500/50 bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 shadow-sm' 
                     : 'border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-white/10'
                   }`}
                 >
-                  <Smartphone size={22} className={accountType === 'mobile' ? 'text-[#8B5CF6] dark:text-[#A78BFA]' : 'text-slate-400 dark:text-slate-500'} />
+                  <Smartphone size={22} className={accountType === 'mobile' ? 'text-brand-600 dark:text-brand-400' : 'text-slate-400 dark:text-slate-500'} />
                   <span className="text-[10px] md:text-xs font-bold text-center">Mobile Money</span>
                 </button>
                 <button
@@ -138,11 +138,11 @@ export default function AddWalletModal({ children, onSuccess }: { children: Reac
                   onClick={() => setAccountType('bank')}
                   className={`py-3 md:py-6 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all ${
                     accountType === 'bank' 
-                    ? 'border-[#8B5CF6] dark:border-[#8B5CF6]/50 bg-[#F5F3FF] dark:bg-[#8B5CF6]/10 text-[#8B5CF6] dark:text-[#A78BFA] shadow-sm' 
+                    ? 'border-brand-500 dark:border-brand-500/50 bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 shadow-sm' 
                     : 'border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-white/10'
                   }`}
                 >
-                  <Landmark size={22} className={accountType === 'bank' ? 'text-[#8B5CF6] dark:text-[#A78BFA]' : 'text-slate-400 dark:text-slate-500'} />
+                  <Landmark size={22} className={accountType === 'bank' ? 'text-brand-600 dark:text-brand-400' : 'text-slate-400 dark:text-slate-500'} />
                   <span className="text-[10px] md:text-xs font-bold text-center">Bank</span>
                 </button>
                 <button
@@ -150,11 +150,11 @@ export default function AddWalletModal({ children, onSuccess }: { children: Reac
                   onClick={() => setAccountType('cash')}
                   className={`py-3 md:py-6 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all ${
                     accountType === 'cash' 
-                    ? 'border-[#8B5CF6] dark:border-[#8B5CF6]/50 bg-[#F5F3FF] dark:bg-[#8B5CF6]/10 text-[#8B5CF6] dark:text-[#A78BFA] shadow-sm' 
+                    ? 'border-brand-500 dark:border-brand-500/50 bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 shadow-sm' 
                     : 'border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-white/10'
                   }`}
                 >
-                  <Wallet size={22} className={accountType === 'cash' ? 'text-[#8B5CF6] dark:text-[#A78BFA]' : 'text-slate-400 dark:text-slate-500'} />
+                  <Wallet size={22} className={accountType === 'cash' ? 'text-brand-600 dark:text-brand-400' : 'text-slate-400 dark:text-slate-500'} />
                   <span className="text-[10px] md:text-xs font-bold text-center">Cash</span>
                 </button>
               </div>
@@ -170,7 +170,7 @@ export default function AddWalletModal({ children, onSuccess }: { children: Reac
                   onClick={() => setIsSelectOpen(!isSelectOpen)}
                   className={`w-full flex justify-between items-center bg-white dark:bg-white/5 border rounded-xl px-4 py-3.5 text-slate-900 dark:text-white font-medium transition-all text-sm md:text-base ${
                     isSelectOpen 
-                    ? 'border-[#8B5CF6] ring-1 ring-[#8B5CF6] dark:border-[#8B5CF6]/50 dark:ring-[#8B5CF6]/50' 
+                    ? 'border-brand-500 ring-1 ring-brand-500 dark:border-brand-500/50 dark:ring-brand-500/50' 
                     : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
                   }`}
                 >
@@ -194,12 +194,12 @@ export default function AddWalletModal({ children, onSuccess }: { children: Reac
                             }}
                             className={`w-full text-left px-4 py-3.5 rounded-xl text-sm transition-colors flex items-center justify-between ${
                               formData.provider === p.id 
-                              ? 'bg-[#F5F3FF] dark:bg-[#8B5CF6]/10 text-[#8B5CF6] dark:text-[#A78BFA] font-bold' 
+                              ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' 
                               : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300 font-medium'
                             }`}
                           >
                             <span>{p.label}</span>
-                            {formData.provider === p.id && <Check size={18} className="text-[#8B5CF6] dark:text-[#A78BFA]" />}
+                            {formData.provider === p.id && <Check size={18} className="text-brand-600 dark:text-brand-400" />}
                           </button>
                         ))}
                       </div>
@@ -219,7 +219,7 @@ export default function AddWalletModal({ children, onSuccess }: { children: Reac
                   placeholder="e.g. Main M-Pesa"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3.5 text-slate-900 dark:text-white font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-[#8B5CF6] dark:focus:border-[#8B5CF6]/80 focus:ring-1 focus:ring-[#8B5CF6] transition-all text-sm md:text-base"
+                  className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3.5 text-slate-900 dark:text-white font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-brand-500 dark:focus:border-brand-500/80 focus:ring-1 focus:ring-brand-500 transition-all text-sm md:text-base"
                 />
               </div>
 
@@ -232,7 +232,7 @@ export default function AddWalletModal({ children, onSuccess }: { children: Reac
                   placeholder="0.00"
                   value={formatAmountForDisplay(formData.balance)}
                   onChange={handleAmountChange}
-                  className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3.5 text-slate-900 dark:text-white font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-[#8B5CF6] dark:focus:border-[#8B5CF6]/80 focus:ring-1 focus:ring-[#8B5CF6] transition-all text-sm md:text-base"
+                  className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3.5 text-slate-900 dark:text-white font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-brand-500 dark:focus:border-brand-500/80 focus:ring-1 focus:ring-brand-500 transition-all text-sm md:text-base"
                 />
               </div>
             </div>
@@ -241,7 +241,7 @@ export default function AddWalletModal({ children, onSuccess }: { children: Reac
             <button 
               type="submit" 
               disabled={isLoading || !formData.name || !formData.balance}
-              className="w-full bg-[#8B5CF6] hover:bg-[#7C3AED] disabled:opacity-70 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all shadow-[0_8px_20px_-6px_rgba(139,92,246,0.5)] flex justify-center items-center gap-2 mt-2"
+              className="w-full bg-brand-600 hover:bg-brand-500 disabled:opacity-70 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all shadow-[0_8px_20px_-6px_rgb(var(--brand-500)/0.6)] flex justify-center items-center gap-2 mt-2"
             >
               {isLoading ? (
                 <Loader2 size={20} className="animate-spin" />

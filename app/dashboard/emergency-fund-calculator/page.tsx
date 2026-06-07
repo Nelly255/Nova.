@@ -53,8 +53,8 @@ export default function DashboardEmergencyFundCalculator() {
         }}
       />
 
-      {/* AMBIENT GLOW (Nova Purple Theme) */}
-      <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#8438FF]/10 dark:bg-[#8438FF]/15 rounded-full blur-[120px] pointer-events-none opacity-80 z-0"></div>
+      {/* AMBIENT GLOW */}
+      <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-brand-500/10 dark:bg-brand-500/15 rounded-full blur-[120px] pointer-events-none opacity-80 z-0"></div>
       <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-[#10B981]/5 dark:bg-[#10B981]/10 rounded-full blur-[120px] pointer-events-none opacity-60 z-0"></div>
 
       <div className="relative z-10 p-4 sm:p-6 md:p-10 lg:p-12">
@@ -63,7 +63,7 @@ export default function DashboardEmergencyFundCalculator() {
         <header className="max-w-6xl mx-auto mb-12 md:mb-16 grid lg:grid-cols-2 gap-8 md:gap-10 items-end">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#12121A] border border-slate-200 dark:border-white/5 shadow-sm">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#8438FF] shadow-[0_0_8px_#8438FF] animate-pulse"></div>
+              <div className="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgb(var(--brand-500))] animate-pulse"></div>
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">FINANCIAL SECURITY</span>
             </div>
             
@@ -71,7 +71,7 @@ export default function DashboardEmergencyFundCalculator() {
               <span style={{ fontFamily: "'Dancing Script', cursive" }} className="text-[4rem] sm:text-5xl md:text-[5.5rem] font-bold text-slate-800 dark:text-slate-200 leading-[0.8] mb-2 pl-1">
                 Build your
               </span>
-              <span className="text-[3.5rem] sm:text-5xl md:text-[6.5rem] font-[900] tracking-[-0.04em] text-[#8438FF] leading-[0.85] mt-1 md:mt-0">
+              <span className="text-[3.5rem] sm:text-5xl md:text-[6.5rem] font-[900] tracking-[-0.04em] text-brand-500 leading-[0.85] mt-1 md:mt-0">
                 Safety Net.
               </span>
             </h1>
@@ -98,39 +98,39 @@ export default function DashboardEmergencyFundCalculator() {
               <div>
                 <label className="flex justify-between text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">
                   <span>Target Goal Amount</span>
-                  <span className="text-[#8438FF]">{formatMoney(targetGoal)}</span>
+                  <span className="text-brand-500">{formatMoney(targetGoal)}</span>
                 </label>
                 <input 
                   type="range" min="100000" max="50000000" step="100000"
                   value={targetGoal}
                   onChange={(e) => setTargetGoal(Number(e.target.value))}
-                  className="w-full accent-[#8438FF]"
+                  className="w-full accent-brand-500"
                 />
               </div>
 
               <div>
                 <label className="flex justify-between text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">
                   <span>Current Savings</span>
-                  <span className="text-[#8438FF]">{formatMoney(currentSavings)}</span>
+                  <span className="text-brand-500">{formatMoney(currentSavings)}</span>
                 </label>
                 <input 
                   type="range" min="0" max={targetGoal} step="50000"
                   value={currentSavings}
                   onChange={(e) => setCurrentSavings(Number(e.target.value))}
-                  className="w-full accent-[#8438FF]"
+                  className="w-full accent-brand-500"
                 />
               </div>
 
               <div>
                 <label className="flex justify-between text-sm font-bold text-slate-700 dark:text-slate-300 mb-3">
                   <span>Timeline (Months)</span>
-                  <span className="text-[#8438FF]">{monthsToGoal} Months</span>
+                  <span className="text-brand-500">{monthsToGoal} Months</span>
                 </label>
                 <input 
                   type="range" min="1" max="60" step="1"
                   value={monthsToGoal}
                   onChange={(e) => setMonthsToGoal(Number(e.target.value))}
-                  className="w-full accent-[#8438FF]"
+                  className="w-full accent-brand-500"
                 />
               </div>
 
@@ -142,7 +142,7 @@ export default function DashboardEmergencyFundCalculator() {
                 </div>
                 <div className="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-[#8438FF] transition-all duration-500" 
+                    className="h-full bg-brand-500 transition-all duration-500" 
                     style={{ width: `${progressPercentage}%` }}
                   ></div>
                 </div>
@@ -151,8 +151,8 @@ export default function DashboardEmergencyFundCalculator() {
             </div>
 
             {/* RESULTS PANEL */}
-            <div className="group bg-[#8438FF]/5 dark:bg-[#8438FF]/10 p-8 md:p-10 rounded-3xl md:rounded-[2.5rem] border border-[#8438FF]/20 backdrop-blur-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col justify-center">
-              <div className="w-14 h-14 rounded-2xl bg-[#8438FF]/20 flex items-center justify-center text-[#8438FF] mb-6">
+            <div className="group bg-brand-500/5 dark:bg-brand-500/10 p-8 md:p-10 rounded-3xl md:rounded-[2.5rem] border border-brand-500/20 backdrop-blur-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col justify-center">
+              <div className="w-14 h-14 rounded-2xl bg-brand-500/20 flex items-center justify-center text-brand-500 mb-6">
                 <Target size={24} />
               </div>
               
@@ -163,12 +163,12 @@ export default function DashboardEmergencyFundCalculator() {
                 {isGoalReached ? "You did it." : formatMoney(monthlyRequired)}
               </h3>
               
-              <div className="h-px w-full bg-[#8438FF]/20 mb-8"></div>
+              <div className="h-px w-full bg-brand-500/20 mb-8"></div>
 
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Total Remaining</p>
-                  <p className="font-bold text-lg text-[#8438FF]">{formatMoney(amountNeeded)}</p>
+                  <p className="font-bold text-lg text-brand-500">{formatMoney(amountNeeded)}</p>
                 </div>
                 <div>
                   <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Time to Goal</p>
@@ -176,7 +176,7 @@ export default function DashboardEmergencyFundCalculator() {
                 </div>
               </div>
 
-              <Link href="/dashboard" className="mt-10 inline-flex items-center justify-center gap-3 w-full py-4 bg-[#8438FF] hover:bg-[#7328F5] text-white rounded-2xl font-bold shadow-[0_8px_20px_rgba(132,56,255,0.3)] transition-all active:scale-95">
+              <Link href="/dashboard" className="mt-10 inline-flex items-center justify-center gap-3 w-full py-4 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl font-bold shadow-[0_8px_20px_rgb(var(--brand-500)/0.3)] transition-all active:scale-95">
                 Automate Your Savings <ArrowRight size={18} />
               </Link>
             </div>

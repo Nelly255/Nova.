@@ -128,16 +128,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           
           <button 
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="absolute -right-4 top-10 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-white dark:border-white/10 rounded-full p-2 shadow-[0_4px_12px_rgba(0,0,0,0.05)] hover:bg-white dark:hover:bg-slate-700 transition-all duration-300 z-50 group hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            className="absolute -right-4 top-10 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-white dark:border-white/10 rounded-full p-2 shadow-[0_4px_12px_rgba(0,0,0,0.05)] hover:bg-white dark:hover:bg-slate-700 transition-all duration-300 z-50 group hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            {isCollapsed ? <Menu size={16} className="text-slate-600 dark:text-slate-300 group-hover:text-indigo-500" /> : <ChevronLeft size={16} className="text-slate-600 dark:text-slate-300 group-hover:text-indigo-500" />}
+            {isCollapsed ? <Menu size={16} className="text-slate-600 dark:text-slate-300 group-hover:text-brand-500" /> : <ChevronLeft size={16} className="text-slate-600 dark:text-slate-300 group-hover:text-brand-500" />}
           </button>
 
-          <Link href="/" className={`group shrink-0 flex items-center mb-6 mt-2 transition-all duration-500 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${isCollapsed ? 'justify-center' : 'gap-2 px-2 justify-start'}`}>
-            <Activity size={28} className="text-indigo-600 dark:text-indigo-400 shrink-0 group-hover:scale-110 transition-transform drop-shadow-[0_0_8px_rgba(99,102,241,0.3)]" />
+          <Link href="/" className={`group shrink-0 flex items-center mb-6 mt-2 transition-all duration-500 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${isCollapsed ? 'justify-center' : 'gap-2 px-2 justify-start'}`}>
+            <Activity size={28} className="text-brand-600 dark:text-brand-400 shrink-0 group-hover:scale-110 transition-transform drop-shadow-[0_0_8px_rgb(var(--brand-500)/0.3)]" />
             <div className={`overflow-hidden transition-all duration-500 flex items-center ${isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
-              <span className="font-extrabold text-2xl tracking-tight text-slate-900 dark:text-white whitespace-nowrap group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Nova.</span>
+              <span className="font-extrabold text-2xl tracking-tight text-slate-900 dark:text-white whitespace-nowrap group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Nova.</span>
             </div>
           </Link>
             
@@ -182,9 +182,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {installPrompt && (
               <button 
                 onClick={handleInstallApp} 
-                className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-start px-4 gap-3'} py-3 rounded-xl transition-all duration-300 font-bold group relative text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 backdrop-blur-md hover:bg-indigo-500/20 border border-indigo-500/20 shadow-[0_4px_12px_-4px_rgba(99,102,241,0.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500`}
+                className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-start px-4 gap-3'} py-3 rounded-xl transition-all duration-300 font-bold group relative text-brand-600 dark:text-brand-400 bg-brand-500/10 backdrop-blur-md hover:bg-brand-500/20 border border-brand-500/20 shadow-[0_4px_12px_-4px_rgb(var(--brand-500)/0.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500`}
               >
-                <Download size={20} className="group-hover:scale-110 transition-transform shrink-0 drop-shadow-[0_0_8px_rgba(99,102,241,0.3)]" />
+                <Download size={20} className="group-hover:scale-110 transition-transform shrink-0 drop-shadow-[0_0_8px_rgb(var(--brand-500)/0.3)]" />
                 <span className={`whitespace-nowrap overflow-hidden transition-all duration-500 ${isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>Install App</span>
               </button>
             )}
@@ -207,9 +207,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             ? "translate-y-0 opacity-100 pointer-events-auto" 
             : "-translate-y-32 opacity-0 pointer-events-none"
         }`}>
-          <Link href="/" className="group flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-lg">
-            <Activity size={24} className="text-indigo-600 dark:text-indigo-400 drop-shadow-[0_0_8px_rgba(99,102,241,0.3)] group-hover:scale-110 transition-transform" />
-            <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Nova.</span>
+          <Link href="/" className="group flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded-lg">
+            <Activity size={24} className="text-brand-600 dark:text-brand-400 drop-shadow-[0_0_8px_rgb(var(--brand-500)/0.3)] group-hover:scale-110 transition-transform" />
+            <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Nova.</span>
           </Link>
           
           <div className="flex items-center gap-1 sm:gap-2">
@@ -225,7 +225,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             <button 
               onClick={() => window.dispatchEvent(new Event("open-command-palette"))}
-              className="text-slate-500 hover:text-indigo-500 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+              className="text-slate-500 hover:text-brand-500 dark:text-slate-400 dark:hover:text-brand-400 transition-colors p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               title="Search"
               aria-label="Open Command Palette"
             >
@@ -235,7 +235,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {installPrompt && (
               <button 
                 onClick={handleInstallApp}
-                className="flex items-center gap-1.5 bg-indigo-500/20 border border-indigo-500/30 backdrop-blur-md hover:bg-indigo-500/30 text-indigo-700 dark:text-indigo-300 px-3.5 py-2 rounded-xl text-xs font-bold shadow-sm active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                className="flex items-center gap-1.5 bg-brand-500/20 border border-brand-500/30 backdrop-blur-md hover:bg-brand-500/30 text-brand-700 dark:text-brand-300 px-3.5 py-2 rounded-xl text-xs font-bold shadow-sm active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
               >
                 <Download size={14} /> Install
               </button>
@@ -287,13 +287,13 @@ function NavItem({ icon, label, href = "#", active = false, isCollapsed }: any) 
       href={href} 
       title={isCollapsed ? label : ""} 
       aria-current={active ? "page" : undefined}
-      className={`flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-start px-4 gap-3'} py-3 rounded-xl transition-all duration-300 font-medium group relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900
+      className={`flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-start px-4 gap-3'} py-3 rounded-xl transition-all duration-300 font-medium group relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900
       ${active 
-        ? 'bg-white/70 dark:bg-slate-800/60 backdrop-blur-md shadow-[0_8px_20px_-6px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.3)] border border-white/80 dark:border-white/10 text-indigo-600 dark:text-indigo-400 font-bold' 
+        ? 'bg-white/70 dark:bg-slate-800/60 backdrop-blur-md shadow-[0_8px_20px_-6px_rgba(0,0,0,0.1)] dark:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.3)] border border-white/80 dark:border-white/10 text-brand-600 dark:text-brand-400 font-bold' 
         : 'text-slate-500 dark:text-slate-400 hover:bg-white/40 dark:hover:bg-white/5 hover:backdrop-blur-sm border border-transparent'
       }`}
     >
-      <div className={`relative z-10 shrink-0 transition-transform duration-300 ease-out ${active ? 'scale-110 drop-shadow-[0_0_8px_rgba(99,102,241,0.4)]' : 'group-hover:scale-110 group-hover:-translate-y-0.5'}`}>
+      <div className={`relative z-10 shrink-0 transition-transform duration-300 ease-out ${active ? 'scale-110 drop-shadow-[0_0_8px_rgb(var(--brand-500)/0.4)]' : 'group-hover:scale-110 group-hover:-translate-y-0.5'}`}>
         {icon}
       </div>
       <div className={`relative z-10 overflow-hidden transition-all duration-500 flex items-center ${isCollapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
@@ -314,14 +314,14 @@ function MobileNavItem({ icon, label, href = "#", active = false }: any) {
           navigator.vibrate(50);
         }
       }}
-      className={`snap-center flex flex-col items-center justify-center min-w-[56px] py-2.5 px-2 rounded-2xl transition-all duration-300 relative group shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500
+      className={`snap-center flex flex-col items-center justify-center min-w-[56px] py-2.5 px-2 rounded-2xl transition-all duration-300 relative group shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500
       ${active 
-        ? 'text-indigo-600 dark:text-indigo-400 bg-white/60 dark:bg-slate-800/60 backdrop-blur-md shadow-[0_4px_12px_rgba(0,0,0,0.05)] border border-white/50 dark:border-white/5' 
+        ? 'text-brand-600 dark:text-brand-400 bg-white/60 dark:bg-slate-800/60 backdrop-blur-md shadow-[0_4px_12px_rgba(0,0,0,0.05)] border border-white/50 dark:border-white/5' 
         : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 border border-transparent'
       }`}
     >
       <div className={`transition-transform duration-300 ${active ? '-translate-y-1 scale-110 drop-shadow-md' : 'group-hover:-translate-y-1'}`}>{icon}</div>
-      {active && <span className="absolute bottom-1 w-1 h-1 rounded-full bg-indigo-600 dark:bg-indigo-400 shadow-[0_0_8px_rgba(99,102,241,0.8)]"></span>}
+      {active && <span className="absolute bottom-1 w-1 h-1 rounded-full bg-brand-600 dark:bg-brand-400 shadow-[0_0_8px_rgb(var(--brand-500)/0.8)]"></span>}
     </Link>
   );
 }

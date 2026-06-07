@@ -155,16 +155,16 @@ export default function DashboardImportCalculator() {
     <div className="w-full bg-transparent text-slate-900 dark:text-slate-50 relative overflow-hidden print:bg-white print:text-black" style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}>
       
       {/* AMBIENT GLOW */}
-      <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#8438FF]/10 dark:bg-[#8438FF]/15 rounded-full blur-[120px] pointer-events-none opacity-80 z-0 print:hidden"></div>
-      <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-[#10B981]/5 dark:bg-[#10B981]/10 rounded-full blur-[120px] pointer-events-none opacity-60 z-0 print:hidden"></div>
+      <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-brand-500/10 dark:bg-brand-500/15 rounded-full blur-[120px] pointer-events-none opacity-80 z-0 print:hidden"></div>
+      <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none opacity-60 z-0 print:hidden"></div>
 
       <div className="relative z-10 p-4 sm:p-6 md:p-10 lg:p-12 print:hidden">
         
         {/* HERO SECTION */}
         <header className="max-w-6xl mx-auto mb-12 md:mb-16 grid lg:grid-cols-2 gap-8 md:gap-10 items-end">
           <div className="space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#12121A] border border-slate-200 dark:border-white/5 shadow-sm">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#8438FF] shadow-[0_0_8px_#8438FF] animate-pulse"></div>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-white/5 shadow-sm">
+              <div className="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgb(var(--brand-500)/0.8)] animate-pulse"></div>
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">TRA IMPORT CALC</span>
             </div>
             
@@ -172,7 +172,7 @@ export default function DashboardImportCalculator() {
               <span style={{ fontFamily: "'Dancing Script', cursive" }} className="text-[4rem] sm:text-5xl md:text-[5.5rem] font-bold text-slate-800 dark:text-slate-200 leading-[0.8] mb-2 pl-1">
                 Clear your
               </span>
-              <span className="text-[3.5rem] sm:text-5xl md:text-[6.5rem] font-[900] tracking-[-0.04em] text-[#8438FF] leading-[0.85] mt-1 md:mt-0">
+              <span className="text-[3.5rem] sm:text-5xl md:text-[6.5rem] font-[900] tracking-[-0.04em] text-brand-600 dark:text-brand-400 leading-[0.85] mt-1 md:mt-0">
                 Dream Car.
               </span>
             </h1>
@@ -194,12 +194,12 @@ export default function DashboardImportCalculator() {
           <div className="grid lg:grid-cols-2 gap-6 md:gap-8">
             
             {/* INPUT CONTROLS */}
-            <div className="relative z-50 bg-white dark:bg-[#0F0F15] p-6 md:p-10 rounded-3xl md:rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-8">
+            <div className="relative z-50 bg-white dark:bg-slate-900 p-6 md:p-10 rounded-3xl md:rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-8">
               
               {/* LIVE RATE BADGE */}
-              <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-[#14141A] rounded-2xl border border-slate-200 dark:border-white/5">
+              <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-white/5">
                 <div className="flex items-center gap-3">
-                  <Activity size={18} className="text-[#8438FF]" />
+                  <Activity size={18} className="text-brand-500 dark:text-brand-400" />
                   <span className="text-sm font-bold text-slate-600 dark:text-slate-300">1 USD = {formatMoney(exchangeRate, 'TZS')}</span>
                 </div>
                 {rateStatus === "loading" && <span className="flex items-center gap-1.5 text-xs font-bold text-slate-400"><span className="w-2 h-2 bg-slate-400 rounded-full animate-pulse"></span> Fetching</span>}
@@ -213,7 +213,7 @@ export default function DashboardImportCalculator() {
                   CIF Value (Cost, Insurance, Freight) in USD
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#8438FF]">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-brand-500 dark:text-brand-400">
                     <DollarSign size={20} />
                   </div>
                   <input 
@@ -221,7 +221,7 @@ export default function DashboardImportCalculator() {
                     value={cifInput}
                     onChange={handleCifChange}
                     placeholder="e.g. 15,000"
-                    className="w-full bg-slate-50 dark:bg-[#14141A] border border-slate-200 dark:border-white/10 rounded-2xl pl-12 pr-4 py-4 text-lg font-black text-slate-900 dark:text-white focus:outline-none focus:border-[#8438FF] transition-colors"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-2xl pl-12 pr-4 py-4 text-lg font-black text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 transition-colors"
                   />
                 </div>
               </div>
@@ -232,13 +232,13 @@ export default function DashboardImportCalculator() {
                   Engine Capacity (CC)
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#8438FF]">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-brand-500 dark:text-brand-400">
                     <Settings2 size={18} />
                   </div>
                   <button 
                     type="button"
                     onClick={() => setIsEngineOpen(!isEngineOpen)}
-                    className={`w-full flex items-center justify-between bg-slate-50 dark:bg-[#14141A] border ${isEngineOpen ? 'border-[#8438FF] bg-[#8438FF]/5' : 'border-slate-200 dark:border-white/10'} rounded-2xl pl-12 pr-4 py-4 text-sm font-bold text-slate-900 dark:text-white transition-colors`}
+                    className={`w-full flex items-center justify-between bg-slate-50 dark:bg-slate-800 border ${isEngineOpen ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10' : 'border-slate-200 dark:border-white/10'} rounded-2xl pl-12 pr-4 py-4 text-sm font-bold text-slate-900 dark:text-white transition-colors`}
                   >
                     <span>{getEngineCapacityLabel(engineCapacity)}</span>
                     <ChevronDown size={18} className={`text-slate-400 transition-transform ${isEngineOpen ? 'rotate-180' : ''}`} />
@@ -253,7 +253,7 @@ export default function DashboardImportCalculator() {
                       ></div>
                       
                       {/* Dropdown Menu List */}
-                      <div className="absolute top-full left-0 w-full mt-2 bg-white dark:bg-[#1C1C24] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="absolute top-full left-0 w-full mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                         {[
                           { val: "under_1000", label: "Up to 1000 CC (0% Excise)" },
                           { val: "1001_1500", label: "1001 - 1500 CC (5% Excise)" },
@@ -265,7 +265,7 @@ export default function DashboardImportCalculator() {
                             key={option.val}
                             type="button"
                             onClick={() => { setEngineCapacity(option.val); setIsEngineOpen(false); }}
-                            className={`w-full text-left px-6 py-3 text-sm font-bold cursor-pointer transition-colors ${engineCapacity === option.val ? 'bg-[#8438FF] text-white' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'}`}
+                            className={`w-full text-left px-6 py-3 text-sm font-bold cursor-pointer transition-colors ${engineCapacity === option.val ? 'bg-brand-500 text-white' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'}`}
                           >
                             {option.label}
                           </button>
@@ -282,7 +282,7 @@ export default function DashboardImportCalculator() {
                   Year of Manufacture
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#8438FF]">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-brand-500 dark:text-brand-400">
                     <Calendar size={18} />
                   </div>
                   <input 
@@ -292,7 +292,7 @@ export default function DashboardImportCalculator() {
                     value={manufactureYear}
                     onChange={(e) => setManufactureYear(e.target.value)}
                     placeholder="e.g. 2018"
-                    className="w-full bg-slate-50 dark:bg-[#14141A] border border-slate-200 dark:border-white/10 rounded-2xl pl-12 pr-4 py-4 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-[#8438FF] transition-colors no-spinners"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-2xl pl-12 pr-4 py-4 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 transition-colors no-spinners"
                   />
                 </div>
                 {vehicleAge >= 8 && (
@@ -303,9 +303,9 @@ export default function DashboardImportCalculator() {
             </div>
 
             {/* RESULTS PANEL (SCREEN VERSION) */}
-            <div className="relative z-10 bg-[#8438FF]/5 dark:bg-[#8438FF]/10 p-6 md:p-10 rounded-3xl md:rounded-[2.5rem] border border-[#8438FF]/20 backdrop-blur-3xl flex flex-col justify-center">
+            <div className="relative z-10 bg-brand-500/5 dark:bg-brand-500/10 p-6 md:p-10 rounded-3xl md:rounded-[2.5rem] border border-brand-500/20 backdrop-blur-3xl flex flex-col justify-center">
               
-              <div className="w-14 h-14 rounded-2xl bg-[#8438FF]/20 flex items-center justify-center text-[#8438FF] mb-6">
+              <div className="w-14 h-14 rounded-2xl bg-brand-500/20 flex items-center justify-center text-brand-600 dark:text-brand-400 mb-6">
                 <Car size={24} />
               </div>
               
@@ -314,7 +314,7 @@ export default function DashboardImportCalculator() {
                 {formatMoney(grandTotalTzs, 'TZS')}
               </h3>
               
-              <div className="h-px w-full bg-[#8438FF]/20 mb-6"></div>
+              <div className="h-px w-full bg-brand-500/20 mb-6"></div>
 
               <div className="space-y-4 mb-8">
                 <div className="flex justify-between text-sm font-bold">
@@ -337,13 +337,13 @@ export default function DashboardImportCalculator() {
                   <span className="text-slate-500 dark:text-slate-400">Customs Processing Fee (0.6%)</span>
                   <span className="text-slate-900 dark:text-white">{formatMoney(cpfUsd, 'USD')}</span>
                 </div>
-                <div className="flex justify-between text-sm font-bold pt-3 border-t border-[#8438FF]/10">
+                <div className="flex justify-between text-sm font-bold pt-3 border-t border-brand-500/10">
                   <span className="text-slate-500 dark:text-slate-400">VAT (18%)</span>
                   <span className="text-slate-900 dark:text-white">{formatMoney(vatUsd, 'USD')}</span>
                 </div>
                 
                 {/* DYNAMIC HIV LEVY & REGISTRATION */}
-                <div className="flex justify-between text-sm font-bold pt-3 border-t border-[#8438FF]/10">
+                <div className="flex justify-between text-sm font-bold pt-3 border-t border-brand-500/10">
                   <span className="text-slate-500 dark:text-slate-400">Vehicle Registration</span>
                   <span className="text-slate-900 dark:text-white">{formatMoney(currentRegistrationFeeTzs, 'TZS')}</span>
                 </div>
@@ -356,7 +356,7 @@ export default function DashboardImportCalculator() {
               <button 
                 onClick={handleDownloadPDF} 
                 disabled={cifUsd === 0}
-                className="mt-auto inline-flex items-center justify-center gap-3 w-full py-4 bg-[#8438FF] hover:bg-[#7328F5] text-white rounded-2xl font-bold shadow-[0_8px_20px_rgba(132,56,255,0.3)] transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 disabled:shadow-none"
+                className="mt-auto inline-flex items-center justify-center gap-3 w-full py-4 bg-brand-600 hover:bg-brand-500 text-white rounded-2xl font-bold shadow-[0_8px_20px_rgb(var(--brand-500)/0.3)] transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 disabled:shadow-none"
               >
                 Download PDF Valuation <Download size={18} />
               </button>
@@ -367,7 +367,7 @@ export default function DashboardImportCalculator() {
           {/* DISCLAIMER SECTION */}
           <div className="mt-10 px-4 md:px-0 max-w-3xl mx-auto">
             <div className="flex items-start gap-3 p-4 rounded-2xl bg-slate-200/50 dark:bg-white/5 border border-slate-300 dark:border-white/10 text-slate-500 dark:text-slate-400">
-              <Info size={20} className="shrink-0 mt-0.5 text-[#8438FF]" />
+              <Info size={20} className="shrink-0 mt-0.5 text-brand-500 dark:text-brand-400" />
               <p className="text-xs sm:text-sm leading-relaxed">
                 <strong className="text-slate-700 dark:text-slate-200">Disclaimer:</strong> This calculator provides an estimate using the live, automatically updated USD/TZS exchange rate. Actual final assessments by the Tanzania Revenue Authority (TRA) may vary slightly based on the exact TRA exchange rate on the day of clearance and physical port inspections.
               </p>

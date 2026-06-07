@@ -75,10 +75,10 @@ export default function AddSubscriptionModal() {
   return (
     <div className="relative">
       
-      {/* UPGRADED: Vibrant Anchor Trigger Button */}
+      {/* UPGRADED: Solid Brand Trigger Button */}
       <button 
         onClick={() => { setIsOpen(!isOpen); setWarning(""); }}
-        className="relative z-50 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-[0_8px_20px_-6px_rgba(99,102,241,0.6)] border border-white/20 transition-all duration-300 hover:-translate-y-0.5 active:scale-95 px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 text-sm"
+        className="relative z-50 bg-brand-600 hover:bg-brand-500 text-white shadow-[0_8px_20px_-6px_rgb(var(--brand-500)/0.6)] border border-white/20 transition-all duration-300 hover:-translate-y-0.5 active:scale-95 px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 text-sm"
       >
         <Plus size={18} /> Add Subscription
       </button>
@@ -126,7 +126,7 @@ export default function AddSubscriptionModal() {
                     setFormData({ ...formData, name: e.target.value });
                     setWarning(""); // Clear warning when they start typing again
                   }}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
+                  className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
                 />
               </div>
 
@@ -140,7 +140,7 @@ export default function AddSubscriptionModal() {
                     placeholder="2,000"
                     value={formatAmountForDisplay(formData.amount)}
                     onChange={handleAmountChange}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
+                    className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
                   />
                 </div>
                 <div>
@@ -153,16 +153,16 @@ export default function AddSubscriptionModal() {
                     placeholder="e.g., 14"
                     value={formData.billing_date}
                     onChange={(e) => setFormData({ ...formData, billing_date: e.target.value })}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
+                    className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
                   />
                 </div>
               </div>
 
-              {/* UPGRADED: Vibrant Anchor Submit Button */}
+              {/* UPGRADED: Solid Brand Submit Button */}
               <button 
                 type="submit" 
                 disabled={isLoading}
-                className="w-full shrink-0 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-[0_8px_20px_-6px_rgba(99,102,241,0.6)] border border-white/20 transition-all duration-300 hover:-translate-y-0.5 active:scale-95 font-bold py-3.5 rounded-xl mt-4 flex justify-center items-center gap-2 disabled:opacity-70 disabled:hover:translate-y-0"
+                className="w-full shrink-0 bg-brand-600 hover:bg-brand-500 text-white shadow-[0_8px_20px_-6px_rgb(var(--brand-500)/0.6)] border border-white/20 transition-all duration-300 hover:-translate-y-0.5 active:scale-95 font-bold py-3.5 rounded-xl mt-4 flex justify-center items-center gap-2 disabled:opacity-70 disabled:hover:translate-y-0"
               >
                 {isLoading ? <Loader2 className="animate-spin" size={20} /> : "Save Subscription"}
               </button>

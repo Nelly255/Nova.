@@ -64,8 +64,14 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const savedCurrency = localStorage.getItem("app_currency") || "TZS";
-    // 🚀 Load saved theme & color
-    const savedTheme = (localStorage.getItem("app_theme") as 'light' | 'dark' | 'system') || "system";
+    
+    // 🚀 PATCHED: FORCE 'SYSTEM' AS THE ABSOLUTE DEFAULT IF NOTHING IS SET
+    let savedTheme = localStorage.getItem("app_theme") as 'light' | 'dark' | 'system';
+    if (!savedTheme) {
+      savedTheme = "system";
+      localStorage.setItem("app_theme", "system"); // Locks it in for the whole app
+    }
+    
     const savedColor = localStorage.getItem("nova_color") || "indigo";
     
     setCurrency(savedCurrency);

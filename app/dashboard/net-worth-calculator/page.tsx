@@ -50,10 +50,24 @@ export default function NetWorthCalculator() {
       // PREMIUM STYLING VARIABLES
       const slate900 = [15, 15, 21];
       const slate500 = [100, 116, 139];
-      const purpleAccent = [132, 56, 255];
       const rose600 = [225, 29, 72];
       const emerald500 = [16, 185, 129];
       
+      // Dynamically fetch the current brand color for the PDF!
+      let brandAccent = [132, 56, 255]; // Fallback to original purple
+      try {
+        const rootStyle = getComputedStyle(document.documentElement);
+        const brandVar = rootStyle.getPropertyValue('--brand-500').trim();
+        if (brandVar) {
+          const parts = brandVar.split(/[\s,]+/).filter(Boolean).map(Number);
+          if (parts.length === 3 && !parts.some(isNaN)) {
+            brandAccent = parts;
+          }
+        }
+      } catch (e) {
+        console.warn("Could not read brand color for PDF, using fallback.");
+      }
+
       // 1. Draw Sleek Brand Header
       doc.setFont("helvetica", "bold");
       doc.setFontSize(26);
@@ -88,7 +102,7 @@ export default function NetWorthCalculator() {
 
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(...(netWorth >= 0 ? purpleAccent : rose600));
+      doc.setTextColor(...(netWorth >= 0 ? brandAccent : rose600));
       doc.text(`${netWorth.toLocaleString()} TSH`, 140, 57);
 
       doc.setDrawColor(240, 240, 240);
@@ -145,7 +159,7 @@ export default function NetWorthCalculator() {
     <div className="min-h-screen bg-transparent text-slate-900 dark:text-slate-50 p-4 sm:p-6 md:p-12 transition-colors duration-500 relative overflow-hidden" style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}>
       
       {/* Background Glows */}
-      <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#8438FF]/10 dark:bg-[#8438FF]/15 rounded-full blur-[120px] pointer-events-none opacity-80 z-0"></div>
+      <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-brand-500/10 dark:bg-brand-500/15 rounded-full blur-[120px] pointer-events-none opacity-80 z-0"></div>
 
       <main className="max-w-6xl mx-auto relative z-10 pt-4">
         
@@ -153,7 +167,7 @@ export default function NetWorthCalculator() {
         <header className="mb-12 md:mb-20 grid lg:grid-cols-2 gap-8 md:gap-10 items-end">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#12121A] border border-slate-200 dark:border-white/5 shadow-sm">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#8438FF] shadow-[0_0_8px_#8438FF]"></div>
+              <div className="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgb(var(--brand-500))]"></div>
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">NOVA TOOLS</span>
             </div>
             
@@ -161,7 +175,7 @@ export default function NetWorthCalculator() {
               <span style={{ fontFamily: "'Dancing Script', cursive" }} className="text-[4rem] sm:text-5xl md:text-[5.5rem] font-bold text-slate-800 dark:text-slate-200 leading-[0.8] mb-2 pl-1">
                 Net Worth
               </span>
-              <span className="text-[3.5rem] sm:text-5xl md:text-[6rem] font-[900] tracking-[-0.04em] text-[#8438FF] leading-[0.85] mt-1 md:mt-0">
+              <span className="text-[3.5rem] sm:text-5xl md:text-[6rem] font-[900] tracking-[-0.04em] text-brand-500 leading-[0.85] mt-1 md:mt-0">
                 Analytics.
               </span>
             </h1>
@@ -189,7 +203,7 @@ export default function NetWorthCalculator() {
                 {/* ASSETS SECTION */}
                 <div>
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 bg-[#8438FF]/10 rounded-xl text-[#8438FF]">
+                    <div className="p-2 bg-brand-500/10 rounded-xl text-brand-500">
                       <TrendingUp size={18} />
                     </div>
                     <h3 className="text-sm font-black uppercase tracking-[0.15em] text-slate-900 dark:text-white">Capital & Assets</h3>
@@ -229,12 +243,12 @@ export default function NetWorthCalculator() {
           {/* THE FIX: Added overflow-hidden to column, removed 'h-full flex flex-col' from the card so flexbox stops breaking the layout on mobile */}
           <div className="lg:col-span-7 space-y-6 overflow-hidden">
             
-            <div className="bg-white dark:bg-[#0F0F15]/90 p-6 sm:p-8 md:p-12 rounded-3xl md:rounded-[2.5rem] border border-slate-100 dark:border-violet-500/10 backdrop-blur-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden w-full relative">
+            <div className="bg-white dark:bg-[#0F0F15]/90 p-6 sm:p-8 md:p-12 rounded-3xl md:rounded-[2.5rem] border border-slate-100 dark:border-brand-500/10 backdrop-blur-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden w-full relative">
               
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 mb-8 md:mb-10 pb-8 md:pb-10 border-b border-slate-100 dark:border-white/5">
                 <div>
                   <span className="text-[10px] font-black uppercase tracking-widest mb-1 md:mb-2 block text-slate-400">Debt-to-Asset Ratio</span>
-                  <div className="text-3xl md:text-4xl font-black text-[#8438FF] flex items-baseline gap-2">
+                  <div className="text-3xl md:text-4xl font-black text-brand-500 flex items-baseline gap-2">
                     {debtToAssetRatio}%
                     {parseFloat(debtToAssetRatio) > 50 && <span className="text-xs text-rose-500 font-bold bg-rose-500/10 px-2 py-1 rounded-lg">High Risk</span>}
                   </div>
@@ -278,8 +292,8 @@ export default function NetWorthCalculator() {
                     </tr>
                     <tr className="border-b last:border-0 border-slate-50 dark:border-white/5 hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors">
                       <td className="py-4 md:py-6 px-2">
-                        <div className="font-black text-[#8438FF] flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-[#8438FF]/10 flex items-center justify-center flex-shrink-0"><Activity size={14}/></div>
+                        <div className="font-black text-brand-500 flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-brand-500/10 flex items-center justify-center flex-shrink-0"><Activity size={14}/></div>
                           <span className="whitespace-nowrap">Net Worth Balance</span>
                         </div>
                       </td>
@@ -293,7 +307,7 @@ export default function NetWorthCalculator() {
                 <button 
                   onClick={handleDownloadPDF}
                   disabled={isGeneratingPDF}
-                  className="w-full py-4 md:py-5 bg-[#8438FF] hover:bg-[#7328F5] text-white rounded-2xl md:rounded-[1.5rem] font-bold text-sm md:text-[15px] flex items-center justify-center gap-3 shadow-[0_8px_20px_rgba(132,56,255,0.3)] transition-all duration-300 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed group"
+                  className="w-full py-4 md:py-5 bg-brand-600 hover:bg-brand-700 text-white rounded-2xl md:rounded-[1.5rem] font-bold text-sm md:text-[15px] flex items-center justify-center gap-3 shadow-[0_8px_20px_rgb(var(--brand-500)/0.3)] transition-all duration-300 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed group"
                 >
                   <FileText size={18} className="md:w-5 md:h-5 group-hover:-translate-y-1 transition-transform duration-300" /> 
                   {isGeneratingPDF ? "Generating PDF..." : "Generate Premium Report"}
@@ -348,7 +362,7 @@ function InputField({ label, value, setter, placeholder }: { label: string, valu
           inputMode="numeric"
           value={displayValue}
           onChange={handleInputChange}
-          className="w-full bg-[#F8F9FB] dark:bg-white/5 border border-transparent hover:border-slate-200 dark:hover:border-white/10 focus:border-[#8438FF]/50 focus:bg-white dark:focus:bg-[#0F0F15] py-3.5 md:py-4 pl-5 md:pl-6 pr-14 md:pr-16 rounded-2xl text-lg md:text-xl font-bold outline-none transition-all text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-700"
+          className="w-full bg-[#F8F9FB] dark:bg-white/5 border border-transparent hover:border-slate-200 dark:hover:border-white/10 focus:border-brand-500/50 focus:bg-white dark:focus:bg-[#0F0F15] py-3.5 md:py-4 pl-5 md:pl-6 pr-14 md:pr-16 rounded-2xl text-lg md:text-xl font-bold outline-none transition-all text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-700"
           placeholder={placeholder}
         />
         <div className="absolute right-5 md:right-6 top-1/2 -translate-y-1/2 text-[10px] md:text-xs font-black text-slate-300 dark:text-slate-500 tracking-widest uppercase pointer-events-none">

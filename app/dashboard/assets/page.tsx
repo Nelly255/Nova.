@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabase";
 import AddAssetModal from "@/components/AddAssetModal";
-import { Laptop, Car, Home, Camera, Briefcase, Trash2, TrendingDown, CalendarDays, BarChart3, ChevronDown, ChevronLeft, ChevronRight, Info, X, Lightbulb, Percent, Clock, DollarSign, Check, Tag, ArrowRight, Wallet, CreditCard, Gift, Edit2, Loader2 } from "lucide-react";
+import { Laptop, Car, Home, Camera, Briefcase, Trash2, TrendingDown, CalendarDays, BarChart3, ChevronDown, ChevronLeft, ChevronRight, Info, X, Lightbulb, Percent, Clock, Tag, ArrowRight, Wallet, CreditCard, Gift, Edit2, Loader2, Check } from "lucide-react";
 
 const getAssetIcon = (name: string) => {
   const lower = name.toLowerCase();
@@ -145,7 +145,6 @@ export default function AssetsPage() {
       .eq("id", id);
 
     if (!error) {
-      // 🚀 FIXED: Only attempt to deposit if the disposal type is strictly "cash"
       if (disposeType === 'cash' && walletId && assetToSell && price > 0) {
         const { error: txError } = await supabase
           .from("transactions")
@@ -265,7 +264,7 @@ export default function AssetsPage() {
             <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 transition-colors">Your Assets</h1>
             <button 
               onClick={() => setIsHelpOpen(true)}
-              className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-indigo-500 flex items-center justify-center hover:scale-110 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-all cursor-pointer"
+              className="w-8 h-8 rounded-full bg-brand-50 dark:bg-brand-500/10 border border-brand-100 dark:border-brand-500/20 text-brand-500 flex items-center justify-center hover:scale-110 hover:bg-brand-100 dark:hover:bg-brand-500/20 transition-all cursor-pointer"
             >
               <Info size={16} />
             </button>
@@ -277,9 +276,9 @@ export default function AssetsPage() {
           <div className="relative z-50">
             <button 
               onClick={() => setIsYearDropdownOpen(!isYearDropdownOpen)}
-              className="flex items-center gap-2 bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/60 dark:border-white/10 hover:bg-white/60 dark:hover:bg-white/10 rounded-2xl px-4 py-2.5 shadow-sm transition-all group hover:border-indigo-500/50 cursor-pointer"
+              className="flex items-center gap-2 bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/60 dark:border-white/10 hover:bg-white/60 dark:hover:bg-white/10 rounded-2xl px-4 py-2.5 shadow-sm transition-all group hover:border-brand-500/50 cursor-pointer"
             >
-              <CalendarDays size={18} className="text-indigo-500 group-hover:scale-110 transition-transform" />
+              <CalendarDays size={18} className="text-brand-500 group-hover:scale-110 transition-transform" />
               <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
                 {selectedYear} Fiscal Year
               </span>
@@ -298,7 +297,7 @@ export default function AssetsPage() {
                       key={y}
                       onClick={() => { setSelectedYear(y); setIsYearDropdownOpen(false); }}
                       className={`w-full text-left px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 ${
-                        selectedYear === y ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/25' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'
+                        selectedYear === y ? 'bg-brand-500 text-white shadow-md shadow-brand-500/25' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'
                       }`}
                     >
                       {y} Fiscal Year
@@ -323,7 +322,7 @@ export default function AssetsPage() {
             
             <div className="flex justify-between items-center p-6 border-b border-zinc-200/80 dark:border-white/5 shrink-0 bg-slate-50/50 dark:bg-white/5">
               <h3 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                <Edit2 size={20} className="text-indigo-500" /> Edit Asset
+                <Edit2 size={20} className="text-brand-500" /> Edit Asset
               </h3>
               <button onClick={() => !isEditing && setIsEditModalOpen(false)} className="text-zinc-500 hover:text-rose-500 dark:text-zinc-400 p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors">
                 <X size={20} />
@@ -336,14 +335,14 @@ export default function AssetsPage() {
                 <input 
                   required type="text" value={editForm.name} 
                   onChange={(e) => setEditForm({...editForm, name: e.target.value})} 
-                  className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors" 
+                  className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors" 
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-400 mb-1">Purchase Price</label>
-                  <div className="flex items-center bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl px-3 py-3 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-colors">
+                  <div className="flex items-center bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl px-3 py-3 focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500 transition-colors">
                     <span className="text-slate-400 text-sm font-medium mr-1.5 whitespace-nowrap">{currencySymbol}</span>
                     <input 
                       required type="text" inputMode="numeric" value={editForm.purchase_price} 
@@ -357,7 +356,7 @@ export default function AssetsPage() {
                   <input 
                     required type="date" value={editForm.purchase_date} 
                     onChange={(e) => setEditForm({...editForm, purchase_date: e.target.value})} 
-                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors [color-scheme:light] dark:[color-scheme:dark]" 
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors [color-scheme:light] dark:[color-scheme:dark]" 
                   />
                 </div>
               </div>
@@ -369,14 +368,14 @@ export default function AssetsPage() {
                     <input 
                       required type="number" step="0.1" value={editForm.depreciation_rate} 
                       onChange={(e) => setEditForm({...editForm, depreciation_rate: e.target.value})} 
-                      className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 pr-8 text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors" 
+                      className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 pr-8 text-slate-900 dark:text-slate-200 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors" 
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">%</span>
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-400 mb-1">Salvage Value</label>
-                  <div className="flex items-center bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl px-3 py-3 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-colors">
+                  <div className="flex items-center bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl px-3 py-3 focus-within:border-brand-500 focus-within:ring-1 focus-within:ring-brand-500 transition-colors">
                     <span className="text-slate-400 text-sm font-medium mr-1.5 whitespace-nowrap">{currencySymbol}</span>
                     <input 
                       type="text" inputMode="numeric" value={editForm.salvage_value} 
@@ -389,7 +388,7 @@ export default function AssetsPage() {
 
               <button 
                 type="submit" disabled={isEditing} 
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl shadow-[0_8px_20px_-6px_rgba(99,102,241,0.6)] transition-all duration-300 hover:-translate-y-0.5 active:scale-95 mt-4 flex justify-center items-center gap-2 disabled:opacity-70 disabled:hover:translate-y-0"
+                className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 rounded-xl shadow-[0_8px_20px_-6px_rgb(var(--brand-500)/0.6)] transition-all duration-300 hover:-translate-y-0.5 active:scale-95 mt-4 flex justify-center items-center gap-2 disabled:opacity-70 disabled:hover:translate-y-0"
               >
                 {isEditing ? <Loader2 className="animate-spin" size={20} /> : "Update Asset"}
               </button>
@@ -410,7 +409,7 @@ export default function AssetsPage() {
             <div className="flex justify-between items-center p-6 md:p-8 border-b border-zinc-200/80 dark:border-white/5 shrink-0 bg-slate-50/50 dark:bg-white/5">
               <div>
                 <h3 className="text-xl md:text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-3">
-                  <Briefcase className="text-indigo-500" /> Asset Intelligence
+                  <Briefcase className="text-brand-500" /> Asset Intelligence
                 </h3>
               </div>
               <button onClick={() => setIsHelpOpen(false)} className="text-zinc-500 hover:text-rose-500 dark:text-zinc-400 p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-white/10 transition-colors">
@@ -420,7 +419,7 @@ export default function AssetsPage() {
 
             <div className="p-6 md:p-8 overflow-y-auto max-h-[70vh] space-y-6">
               <div className="flex gap-4 items-start">
-                <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-100 dark:border-indigo-500/20">
+                <div className="w-10 h-10 rounded-full bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center shrink-0 border border-brand-100 dark:border-brand-500/20">
                   <TrendingDown size={18} />
                 </div>
                 <div>
@@ -497,7 +496,7 @@ export default function AssetsPage() {
       <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-2xl w-fit border border-slate-200 dark:border-white/10 mt-8">
         <button 
           onClick={() => setActiveTab('active')} 
-          className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeTab === 'active' ? 'bg-white dark:bg-slate-800 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+          className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${activeTab === 'active' ? 'bg-white dark:bg-slate-800 shadow-sm text-brand-600 dark:text-brand-400' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
         >
           Active Assets
         </button>
@@ -576,9 +575,9 @@ export default function AssetsPage() {
       </div>
 
       {!loading && activeAssetsOnly.length > 0 && activeTab === 'active' && (
-        <div className="mt-10 glass-card p-8 rounded-[2rem] transition-colors">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-xl bg-indigo-50/80 dark:bg-indigo-500/10 border border-indigo-200/50 dark:border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 backdrop-blur-sm">
+        <div className="mt-10 glass-card p-8 rounded-[2rem] transition-colors overflow-hidden relative">
+          <div className="flex items-center gap-3 mb-8 relative z-10">
+            <div className="w-12 h-12 rounded-xl bg-brand-50/80 dark:bg-brand-500/10 border border-brand-200/50 dark:border-brand-500/20 flex items-center justify-center text-brand-600 dark:text-brand-400 backdrop-blur-sm shadow-inner">
               <BarChart3 size={24} />
             </div>
             <div>
@@ -631,7 +630,6 @@ function AssetCard({ asset, wallets, selectedYear, isCurrentYear, currencySymbol
     setIsSelling(false);
   };
 
-  // 🚀 FIXED: Dynamic validation depending on disposal choice
   const canSubmit = 
     disposeType === 'giveaway' ? true : 
     disposeType === 'credit' ? Boolean(sellPrice) :
@@ -663,7 +661,7 @@ function AssetCard({ asset, wallets, selectedYear, isCurrentYear, currencySymbol
                 </button>
                 <button 
                   onClick={() => setDisposeType('credit')} 
-                  className={`flex-1 flex items-center justify-center gap-1.5 text-[10px] font-bold py-2 rounded-lg transition-all ${disposeType === 'credit' ? 'bg-white dark:bg-slate-800 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+                  className={`flex-1 flex items-center justify-center gap-1.5 text-[10px] font-bold py-2 rounded-lg transition-all ${disposeType === 'credit' ? 'bg-white dark:bg-slate-800 shadow-sm text-brand-600 dark:text-brand-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
                 >
                   <CreditCard size={12}/> Credit
                 </button>
@@ -675,7 +673,6 @@ function AssetCard({ asset, wallets, selectedYear, isCurrentYear, currencySymbol
                 </button>
               </div>
 
-              {/* 🚀 FIXED: Only show wallet selector for Cash sales */}
               {disposeType === 'cash' && (
                 <div className={`relative mb-3 ${isWalletOpen ? 'z-50' : 'z-40'}`}>
                   <button 
@@ -710,12 +707,11 @@ function AssetCard({ asset, wallets, selectedYear, isCurrentYear, currencySymbol
                 </div>
               )}
 
-              {/* 🚀 NEW: The Debt & Loan Pro Tip when selling on Credit */}
               {disposeType === 'credit' && (
-                <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 p-3 rounded-xl mb-3 flex gap-2.5 items-start animate-in fade-in zoom-in duration-300">
-                  <Lightbulb className="text-indigo-500 dark:text-indigo-400 shrink-0 mt-0.5" size={16} />
-                  <p className="text-[10px] md:text-xs text-indigo-900 dark:text-indigo-300 leading-relaxed font-medium">
-                    <strong className="block mb-1 text-indigo-700 dark:text-indigo-400">Nova Pro Tip</strong>
+                <div className="bg-brand-50 dark:bg-brand-500/10 border border-brand-100 dark:border-brand-500/20 p-3 rounded-xl mb-3 flex gap-2.5 items-start animate-in fade-in zoom-in duration-300">
+                  <Lightbulb className="text-brand-500 dark:text-brand-400 shrink-0 mt-0.5" size={16} />
+                  <p className="text-[10px] md:text-xs text-brand-900 dark:text-brand-300 leading-relaxed font-medium">
+                    <strong className="block mb-1 text-brand-700 dark:text-brand-400">Nova Pro Tip</strong>
                     Don't forget to head over to the <strong>Debts & Loans</strong> tab later to log this as an "Owed To Me" record so you can track the collection!
                   </p>
                 </div>
@@ -723,7 +719,7 @@ function AssetCard({ asset, wallets, selectedYear, isCurrentYear, currencySymbol
 
               <div className="flex items-center gap-2">
                 {disposeType !== 'giveaway' && (
-                  <div className={`flex items-center flex-1 bg-white dark:bg-slate-900 border-2 rounded-xl px-3 py-1.5 transition-all animate-in fade-in zoom-in duration-200 ${disposeType === 'credit' ? 'border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/20' : 'border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/20'}`}>
+                  <div className={`flex items-center flex-1 bg-white dark:bg-slate-900 border-2 rounded-xl px-3 py-1.5 transition-all animate-in fade-in zoom-in duration-200 ${disposeType === 'credit' ? 'border-brand-500 focus-within:ring-4 focus-within:ring-brand-500/20' : 'border-emerald-500 focus-within:ring-4 focus-within:ring-emerald-500/20'}`}>
                     <span className="text-slate-400 text-sm font-medium mr-1.5 whitespace-nowrap">{currencySymbol}</span>
                     <input
                       type="text"
@@ -737,7 +733,7 @@ function AssetCard({ asset, wallets, selectedYear, isCurrentYear, currencySymbol
                   </div>
                 )}
                 
-                <button disabled={!canSubmit} onClick={handleConfirmSell} className={`${disposeType === 'credit' ? 'bg-indigo-500 hover:bg-indigo-600 disabled:bg-indigo-500/50' : 'bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-500/50'} disabled:cursor-not-allowed text-white rounded-xl flex items-center justify-center transition-transform hover:scale-105 shrink-0 shadow-sm ${disposeType === 'giveaway' ? 'flex-1 py-2 font-bold text-sm' : 'w-9 h-9'}`} title="Confirm">
+                <button disabled={!canSubmit} onClick={handleConfirmSell} className={`${disposeType === 'credit' ? 'bg-brand-500 hover:bg-brand-600 disabled:bg-brand-500/50' : 'bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-500/50'} disabled:cursor-not-allowed text-white rounded-xl flex items-center justify-center transition-transform hover:scale-105 shrink-0 shadow-sm ${disposeType === 'giveaway' ? 'flex-1 py-2 font-bold text-sm' : 'w-9 h-9'}`} title="Confirm">
                   {disposeType === 'giveaway' ? 'Confirm Gift' : <ArrowRight size={16} />}
                 </button>
                 <button onClick={() => {setIsSelling(false); setDisposeType('cash');}} className={`bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 rounded-xl flex items-center justify-center transition-transform hover:scale-105 shrink-0 shadow-sm ${disposeType === 'giveaway' ? 'w-10 py-2' : 'w-9 h-9'}`} title="Cancel">
@@ -749,13 +745,13 @@ function AssetCard({ asset, wallets, selectedYear, isCurrentYear, currencySymbol
             <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all z-10">
               <button 
                 onClick={() => setIsSelling(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/80 dark:bg-slate-800/80 hover:bg-indigo-50 dark:hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold rounded-xl backdrop-blur-md transition-all shadow-sm border border-slate-200 dark:border-white/10"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/80 dark:bg-slate-800/80 hover:bg-brand-50 dark:hover:bg-brand-500/20 text-brand-600 dark:text-brand-400 text-xs font-bold rounded-xl backdrop-blur-md transition-all shadow-sm border border-slate-200 dark:border-white/10"
               >
                 <Tag size={14} /> Dispose
               </button>
               <button 
                 onClick={() => onEdit(asset)}
-                className="p-1.5 text-slate-400 hover:text-indigo-600 dark:text-slate-500 dark:hover:text-indigo-400 bg-white/80 dark:bg-slate-800/80 hover:bg-indigo-100 dark:hover:bg-indigo-500/10 rounded-xl backdrop-blur-md transition-all shadow-sm border border-slate-200 dark:border-white/10"
+                className="p-1.5 text-slate-400 hover:text-brand-600 dark:text-slate-500 dark:hover:text-brand-400 bg-white/80 dark:bg-slate-800/80 hover:bg-brand-100 dark:hover:bg-brand-500/10 rounded-xl backdrop-blur-md transition-all shadow-sm border border-slate-200 dark:border-white/10"
                 title="Edit Asset"
               >
                 <Edit2 size={16} />
@@ -776,7 +772,7 @@ function AssetCard({ asset, wallets, selectedYear, isCurrentYear, currencySymbol
         <div className="absolute bottom-5 right-5 flex gap-2 opacity-0 group-hover:opacity-100 transition-all z-10">
           <button 
             onClick={() => onEdit(asset)}
-            className="p-2 text-slate-400 hover:text-indigo-600 bg-white/50 dark:bg-black/20 hover:bg-indigo-100 dark:hover:bg-indigo-500/10 rounded-lg backdrop-blur-md transition-all"
+            className="p-2 text-slate-400 hover:text-brand-600 bg-white/50 dark:bg-black/20 hover:bg-brand-100 dark:hover:bg-brand-500/10 rounded-lg backdrop-blur-md transition-all"
             title="Edit Original Purchase"
           >
             <Edit2 size={16} />
@@ -793,7 +789,7 @@ function AssetCard({ asset, wallets, selectedYear, isCurrentYear, currencySymbol
 
       <div>
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-14 h-14 rounded-2xl bg-slate-50/80 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 flex items-center justify-center text-indigo-500 dark:text-indigo-400 shadow-sm backdrop-blur-sm transition-colors shrink-0">
+          <div className="w-14 h-14 rounded-2xl bg-slate-50/80 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 flex items-center justify-center text-brand-500 dark:text-brand-400 shadow-sm backdrop-blur-sm transition-colors shrink-0">
             {getAssetIcon(asset.name)}
           </div>
           <div>
@@ -837,9 +833,9 @@ function AssetCard({ asset, wallets, selectedYear, isCurrentYear, currencySymbol
                 </p>
               </div>
 
-              <div className="bg-indigo-50/80 dark:bg-indigo-500/10 rounded-xl border border-indigo-100/50 dark:border-indigo-500/20 transition-colors backdrop-blur-sm flex flex-row justify-between items-center p-3">
-                <p className="text-indigo-600 dark:text-indigo-400/80 transition-colors font-medium tracking-wide text-xs">Current Value</p>
-                <p className="font-bold text-indigo-700 dark:text-indigo-300 transition-colors text-sm">
+              <div className="bg-brand-50/80 dark:bg-brand-500/10 rounded-xl border border-brand-100/50 dark:border-brand-500/20 transition-colors backdrop-blur-sm flex flex-row justify-between items-center p-3">
+                <p className="text-brand-600 dark:text-brand-400/80 transition-colors font-medium tracking-wide text-xs">Current Value</p>
+                <p className="font-bold text-brand-700 dark:text-brand-300 transition-colors text-sm">
                   {currencySymbol}{Number(asset.currentValue).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                 </p>
               </div>
@@ -867,7 +863,7 @@ function AssetCard({ asset, wallets, selectedYear, isCurrentYear, currencySymbol
 }
 
 // ==========================================
-// FORECAST CHART
+// FORECAST CHART (Premium Area Line Graph)
 // ==========================================
 function DepreciationForecastChart({ assets, currencySymbol, formatCompactNumber }: { assets: any[], currencySymbol: string, formatCompactNumber: any }) {
   const currentYear = new Date().getFullYear();
@@ -899,21 +895,75 @@ function DepreciationForecastChart({ assets, currencySymbol, formatCompactNumber
 
   const maxAmount = Math.max(...chartData.map(d => d.amount), 1);
 
+  // Math for SVG mapping (X: 0 to 100%, Y: 20% to 85%)
+  const points = chartData.map((d, i) => {
+    const x = (i / (chartData.length - 1)) * 100;
+    const normalizedAmount = Math.max(d.amount, 0);
+    const y = 85 - ((normalizedAmount / maxAmount) * 65);
+    return { x, y, ...d };
+  });
+
+  // Generate smooth cubic bezier curve path
+  let pathD = `M ${points[0].x},${points[0].y}`;
+  for (let i = 1; i < points.length; i++) {
+    const pPrev = points[i - 1];
+    const pCurr = points[i];
+    const cpX = (pPrev.x + pCurr.x) / 2;
+    pathD += ` C ${cpX},${pPrev.y} ${cpX},${pCurr.y} ${pCurr.x},${pCurr.y}`;
+  }
+  const areaD = `${pathD} L 100,85 L 0,85 Z`;
+
   return (
-    <div className="h-64 flex items-end justify-between gap-2 sm:gap-6 pt-10">
-      {chartData.map((data, index) => {
-        const heightPercentage = Math.max((data.amount / maxAmount) * 100, 2); 
-        return (
-          <div key={data.year} className="relative flex flex-col items-center flex-1 h-full justify-end group">
-            <div className="absolute -top-12 opacity-0 group-hover:opacity-100 group-hover:-translate-y-2 transition-all duration-300 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold py-1.5 px-3 rounded-lg shadow-xl whitespace-nowrap z-10 pointer-events-none">
-              -{currencySymbol}{formatCompactNumber(data.amount)}
-              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900 dark:border-t-white"></div>
+    <div className="relative w-full h-[280px] mt-2 group/chart">
+      {/* BACKGROUND SVG GRAPH */}
+      <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
+        <defs>
+          <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="rgb(var(--brand-500))" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="rgb(var(--brand-500))" stopOpacity="0.0" />
+          </linearGradient>
+        </defs>
+        
+        {/* Baseline / Floor */}
+        <line x1="0" y1="85" x2="100" y2="85" stroke="currentColor" strokeOpacity="0.15" strokeWidth="0.2" vectorEffect="non-scaling-stroke" className="text-slate-500 dark:text-slate-400" strokeDasharray="1 1" />
+        
+        {/* Area Fill */}
+        <path d={areaD} fill="url(#areaGradient)" className="transition-all duration-700 ease-in-out" />
+        
+        {/* Premium Stroke Line */}
+        <path d={pathD} fill="none" stroke="rgb(var(--brand-500))" strokeWidth="3" vectorEffect="non-scaling-stroke" className="transition-all duration-700 ease-in-out drop-shadow-[0_6px_10px_rgb(var(--brand-500)/0.5)]" />
+      </svg>
+      
+      {/* HTML INTERACTIVE OVERLAYS */}
+      <div className="absolute inset-0 z-10">
+        {points.map((p) => (
+          <div key={p.year} className="absolute top-0 bottom-0 w-20 -ml-10 flex flex-col items-center group/point cursor-pointer" style={{ left: `${p.x}%` }}>
+            
+            {/* Tracking / Hover Line */}
+            <div className="absolute top-[5%] bottom-[15%] w-px bg-brand-500/20 opacity-0 group-hover/point:opacity-100 transition-opacity duration-300" style={{ borderLeft: '1px dashed rgb(var(--brand-500))' }} />
+            
+            {/* Floating Tooltip */}
+            <div 
+              className="absolute opacity-0 group-hover/point:opacity-100 transition-all duration-300 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold py-2 px-3.5 rounded-xl shadow-[0_10px_25px_-5px_rgba(0,0,0,0.3)] whitespace-nowrap z-20 pointer-events-none"
+              style={{ top: `${p.y}%`, marginTop: '-44px' }}
+            >
+              -{currencySymbol}{formatCompactNumber(p.amount)}
+              <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900 dark:border-t-white"></div>
             </div>
-            <div className="w-full max-w-[4rem] bg-gradient-to-t from-indigo-600 to-purple-500 rounded-t-xl transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(99,102,241,0.3)] group-hover:shadow-[0_0_20px_rgba(99,102,241,0.6)] group-hover:brightness-110" style={{ height: `${heightPercentage}%`, animationDelay: `${index * 150}ms` }}></div>
-            <div className="mt-4 text-sm font-semibold text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{data.year}</div>
+            
+            {/* Interactive Data Node (Dot) */}
+            <div 
+              className="absolute w-4 h-4 bg-white dark:bg-slate-900 border-[3.5px] border-brand-500 rounded-full transition-all duration-300 scale-75 group-hover/point:scale-125 group-hover/point:shadow-[0_0_15px_rgb(var(--brand-500)/0.7)] shadow-sm"
+              style={{ top: `${p.y}%`, marginTop: '-8px' }}
+            />
+            
+            {/* X-Axis Labels */}
+            <div className="absolute bottom-2 text-sm font-extrabold text-slate-500 dark:text-slate-400 group-hover/point:text-brand-600 dark:group-hover/point:text-brand-400 transition-colors">
+              {p.year}
+            </div>
           </div>
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
 }

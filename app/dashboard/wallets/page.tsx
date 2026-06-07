@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabase";
-import { Plus, Wallet, Smartphone, Landmark, Banknote, CreditCard, ArrowRight, Loader2, TrendingUp, Download, FileText, X, FileDown, Trash2, Lightbulb, AlertTriangle, ArrowLeftRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Wallet, Smartphone, Landmark, Banknote, CreditCard, ArrowRight, Loader2, TrendingUp, Download, FileText, X, FileDown, Trash2, Lightbulb, AlertTriangle, ArrowLeftRight, ChevronLeft, ChevronRight, Info } from "lucide-react";
 import AddWalletModal from "@/components/AddWalletModal"; 
 import ContraTransferModal from "@/components/ContraTransferModal";
 
@@ -37,7 +37,7 @@ const getWalletBranding = (provider: string) => {
     case 'cash':
       return { bg: 'from-amber-500 to-yellow-500', icon: Banknote, label: 'Physical Cash' };
     default:
-      return { bg: 'from-indigo-600 to-purple-600', icon: Wallet, label: provider || 'Wallet' };
+      return { bg: 'from-brand-600 to-brand-500', icon: Wallet, label: provider || 'Wallet' };
   }
 };
 
@@ -242,7 +242,7 @@ export default function WalletsPage() {
             .watermark { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-35deg); font-size: 120px; font-weight: 800; color: #e2e8f0; opacity: 0.3; z-index: -1; white-space: nowrap; pointer-events: none; }
             .header-container { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0f172a; padding-bottom: 24px; margin-bottom: 30px; }
             .brand-logo { display: flex; align-items: center; gap: 12px; }
-            .brand-logo svg { width: 32px; height: 32px; color: #4f46e5; }
+            .brand-logo svg { width: 32px; height: 32px; color: #0f172a; }
             .brand-name { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: #0f172a; }
             .doc-title { text-align: right; }
             .doc-title h1 { margin: 0; font-size: 28px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #0f172a; }
@@ -256,7 +256,7 @@ export default function WalletsPage() {
             .card-value { font-size: 18px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
             table { width: 100%; border-collapse: collapse; font-size: 12px; }
             thead { display: table-header-group; }
-            th { background-color: #4f46e5; color: white; padding: 12px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+            th { background-color: #0f172a; color: white; padding: 12px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
             th:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
             th:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
             td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
@@ -289,7 +289,7 @@ export default function WalletsPage() {
           <div class="summary-cards">
             <div class="card"><div class="card-label">Total Deposits In</div><div class="card-value text-green">+ ${formatTZS(totalIn)}</div></div>
             <div class="card"><div class="card-label">Total Withdrawals Out</div><div class="card-value text-red">- ${formatTZS(totalOut)}</div></div>
-            <div class="card" style="background-color: #4f46e5; color: white;"><div class="card-label" style="color: #e0e7ff;">Net Movement</div><div class="card-value">${formatTZS(totalIn - totalOut)}</div></div>
+            <div class="card" style="background-color: #0f172a; color: white;"><div class="card-label" style="color: #94a3b8;">Net Movement</div><div class="card-value">${formatTZS(totalIn - totalOut)}</div></div>
           </div>
           <table>
             <thead><tr><th>Date</th><th>Transaction Details</th><th class="text-right">Credit (+)</th><th class="text-right">Debit (-)</th><th class="text-right">Balance</th></tr></thead>
@@ -317,38 +317,59 @@ export default function WalletsPage() {
   return (
     <div className="p-6 md:p-10 max-w-5xl mx-auto animate-in fade-in duration-500 relative z-10 pb-32">
       
-      {/* HEADER */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
+      {/* HEADER (🚀 FIXED: Added relative z-50 to pop it above the other widgets) */}
+      <div className="relative z-50 flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white mb-1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Wallets & Accounts</h1>
           <p className="text-slate-500 dark:text-slate-400 font-medium">Manage your mobile money, bank accounts, and cash.</p>
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <ContraTransferModal accounts={accounts} onSuccess={fetchData} currencySymbol={currencySymbol}>
-            <button 
-              disabled={accounts.length < 2}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-900 dark:text-white px-5 py-2.5 rounded-xl font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ArrowLeftRight size={18} /> <span className="hidden sm:inline">Contra</span> Transfer
-            </button>
-          </ContraTransferModal>
+        <div className="flex flex-col sm:items-end gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-3 w-full">
+            <ContraTransferModal accounts={accounts} onSuccess={fetchData} currencySymbol={currencySymbol}>
+              <button 
+                disabled={accounts.length < 2}
+                className="group/contra relative flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-900 dark:text-white px-5 py-2.5 rounded-xl font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ArrowLeftRight size={18} /> <span className="hidden sm:inline">Contra</span> Transfer
+                
+                {/* 🚀 PREMIUM HINT TOOLTIP (DESKTOP ONLY) */}
+                <span className="hidden sm:block absolute top-[calc(100%+14px)] left-1/2 -translate-x-1/2 w-[260px] p-3.5 bg-slate-900 dark:bg-slate-100 text-slate-300 dark:text-slate-600 text-xs font-medium rounded-2xl shadow-xl opacity-0 invisible group-hover/contra:opacity-100 group-hover/contra:visible transition-all duration-300 z-50 translate-y-2 group-hover/contra:translate-y-0 pointer-events-none text-left normal-case border border-slate-800 dark:border-white">
+                  <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-900 dark:bg-slate-100 border-l border-t border-slate-800 dark:border-white rotate-45"></span>
+                  <span className="font-bold flex items-center gap-1.5 mb-1 text-white dark:text-slate-900">
+                    <Info size={14} className="text-brand-400 dark:text-brand-600" /> What is a Contra?
+                  </span>
+                  <span className="block leading-relaxed">
+                    Move money safely between your own accounts. It won't trigger false income or expenses, keeping your net worth accurate.
+                  </span>
+                </span>
+              </button>
+            </ContraTransferModal>
 
-          <AddWalletModal onSuccess={fetchData}>
-            <button className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-[0_4px_12px_rgba(99,102,241,0.3)] transition-all active:scale-95 whitespace-nowrap">
-              <Plus size={18} /> Add Wallet
-            </button>
-          </AddWalletModal>
+            <AddWalletModal onSuccess={fetchData}>
+              <button className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-[0_4px_12px_rgb(var(--brand-500)/0.3)] transition-all active:scale-95 whitespace-nowrap">
+                <Plus size={18} /> Add Wallet
+              </button>
+            </AddWalletModal>
+          </div>
+
+          {/* 🚀 MOBILE-ONLY INLINE HINT */}
+          <div className="sm:hidden flex items-start gap-2 px-3 py-2.5 bg-brand-50 dark:bg-brand-500/10 border border-brand-200/50 dark:border-brand-500/20 rounded-xl mt-1 animate-in fade-in duration-300 w-full">
+            <Info size={14} className="text-brand-600 dark:text-brand-400 shrink-0 mt-0.5" />
+            <p className="text-[11px] leading-relaxed text-brand-800 dark:text-brand-200 font-medium">
+              <strong className="font-bold">Contra:</strong> Move money safely between accounts without faking income or expenses.
+            </p>
+          </div>
         </div>
       </div>
 
       {/* TOTAL BALANCE WIDGET */}
       <div className="bg-white dark:bg-[#0F0F15]/80 backdrop-blur-xl border border-slate-200 dark:border-white/5 rounded-[2rem] p-8 mb-8 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[80px] pointer-events-none rounded-full"></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 blur-[80px] pointer-events-none rounded-full"></div>
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 relative z-10">
           <div>
             <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 font-semibold mb-2">
-              <Wallet size={18} className="text-indigo-500" />
+              <Wallet size={18} className="text-brand-500" />
               Total Liquidity
             </div>
             <h2 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
@@ -363,19 +384,19 @@ export default function WalletsPage() {
 
       {/* ONE-TIME PRO TIP */}
       {showProTip && (
-        <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 rounded-[2rem] p-6 mb-8 flex flex-col sm:flex-row gap-4 items-start sm:items-center relative overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500">
-          <div className="w-12 h-12 bg-indigo-500 text-white rounded-full flex items-center justify-center shrink-0 shadow-lg"><Lightbulb size={24} /></div>
+        <div className="bg-brand-50 dark:bg-brand-500/10 border border-brand-200 dark:border-brand-500/20 rounded-[2rem] p-6 mb-8 flex flex-col sm:flex-row gap-4 items-start sm:items-center relative overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500">
+          <div className="w-12 h-12 bg-brand-500 text-white rounded-full flex items-center justify-center shrink-0 shadow-lg"><Lightbulb size={24} /></div>
           <div className="flex-1 pr-8">
-            <h3 className="text-lg font-bold text-indigo-900 dark:text-indigo-100 mb-1">Nova Pro Tip</h3>
-            <p className="text-sm text-indigo-700/80 dark:text-indigo-300/80">When creating a new wallet, leave the <strong>Initial Balance as 0</strong>. Then, go to the Transactions page and log an <strong>"Income"</strong> for your actual starting balance. This creates a perfect paper trail for your statements!</p>
+            <h3 className="text-lg font-bold text-brand-900 dark:text-brand-100 mb-1">Nova Pro Tip</h3>
+            <p className="text-sm text-brand-700/80 dark:text-brand-300/80">When creating a new wallet, leave the <strong>Initial Balance as 0</strong>. Then, go to the Transactions page and log an <strong>"Income"</strong> for your actual starting balance. This creates a perfect paper trail for your statements!</p>
           </div>
-          <button onClick={dismissProTip} className="absolute top-4 right-4 sm:static bg-indigo-200/50 hover:bg-indigo-200 dark:bg-indigo-500/20 dark:hover:bg-indigo-500/40 text-indigo-700 dark:text-indigo-300 p-2 rounded-full transition-colors" title="Got it!"><X size={18} /></button>
+          <button onClick={dismissProTip} className="absolute top-4 right-4 sm:static bg-brand-200/50 hover:bg-brand-200 dark:bg-brand-500/20 dark:hover:bg-brand-500/40 text-brand-700 dark:text-brand-300 p-2 rounded-full transition-colors" title="Got it!"><X size={18} /></button>
         </div>
       )}
 
       {/* WALLETS GRID */}
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-500"><Loader2 size={40} className="animate-spin mb-4 text-indigo-500" /><p className="font-medium">Loading your wallets...</p></div>
+        <div className="flex flex-col items-center justify-center py-20 text-slate-500"><Loader2 size={40} className="animate-spin mb-4 text-brand-500" /><p className="font-medium">Loading your wallets...</p></div>
       ) : accounts.length === 0 ? (
         <div className="bg-slate-50 dark:bg-[#12121A] border border-dashed border-slate-300 dark:border-white/10 rounded-[2rem] p-12 text-center flex flex-col items-center">
           <div className="w-20 h-20 bg-slate-200 dark:bg-white/5 rounded-full flex items-center justify-center mb-6 text-slate-400 dark:text-slate-500"><CreditCard size={32} /></div>
@@ -385,7 +406,6 @@ export default function WalletsPage() {
         </div>
       ) : (
         <>
-          {/* 🚀 THE FIX: Changed to md:grid-cols-3 and optimized sizing/padding inside */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-5">
             {paginatedAccounts.map((account) => {
               const branding = getWalletBranding(account.provider);
@@ -476,13 +496,13 @@ export default function WalletsPage() {
               <button onClick={() => setStatementModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"><X size={20} /></button>
             </div>
             <div className="space-y-4 mb-8">
-              <div><label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Start Date</label><input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors [color-scheme:light] dark:[color-scheme:dark]"/></div>
-              <div><label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">End Date</label><input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 transition-colors [color-scheme:light] dark:[color-scheme:dark]"/></div>
+              <div><label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Start Date</label><input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors [color-scheme:light] dark:[color-scheme:dark]"/></div>
+              <div><label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">End Date</label><input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors [color-scheme:light] dark:[color-scheme:dark]"/></div>
               <p className="text-[11px] text-slate-500 bg-slate-50 dark:bg-white/5 p-3 rounded-lg border border-slate-200 dark:border-white/5">This will generate a file containing your opening balance, all transactions, bank charges, and the closing balance for this period.</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <button onClick={generateCSV} disabled={isGeneratingCSV || isGeneratingPDF} className="w-full bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-900 dark:text-white disabled:opacity-70 font-bold py-3.5 rounded-xl transition-all border border-slate-200 dark:border-white/10 flex flex-col items-center justify-center gap-1">{isGeneratingCSV ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />}<span className="text-xs">Export CSV</span></button>
-              <button onClick={generatePDF} disabled={isGeneratingCSV || isGeneratingPDF} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-70 font-bold py-3.5 rounded-xl transition-all shadow-[0_4px_12px_rgba(99,102,241,0.3)] flex flex-col items-center justify-center gap-1">{isGeneratingPDF ? <Loader2 size={18} className="animate-spin" /> : <FileDown size={18} />}<span className="text-xs">Print / Save PDF</span></button>
+              <button onClick={generatePDF} disabled={isGeneratingCSV || isGeneratingPDF} className="w-full bg-brand-600 hover:bg-brand-700 text-white disabled:opacity-70 font-bold py-3.5 rounded-xl transition-all shadow-[0_4px_12px_rgb(var(--brand-500)/0.3)] flex flex-col items-center justify-center gap-1">{isGeneratingPDF ? <Loader2 size={18} className="animate-spin" /> : <FileDown size={18} />}<span className="text-xs">Print / Save PDF</span></button>
             </div>
           </div>
         </div>
