@@ -223,7 +223,7 @@ export default function SignUp() {
             <button 
               type="submit"
               disabled={isLoading || isGoogleLoading}
-              className="w-full flex justify-center items-center gap-2 bg-gradient-to-r from-brand-500 to-purple-600 hover:from-brand-400 hover:to-purple-500 text-white font-bold py-4 rounded-xl shadow-[0_8px_20px_-6px_rgb(var(--brand-500)/0.6)] hover:-translate-y-0.5 active:scale-95 transition-all mt-6 disabled:opacity-70 disabled:hover:translate-y-0"
+              className="w-full flex justify-center items-center gap-2 bg-brand-600 dark:bg-brand-500 hover:bg-brand-700 dark:hover:bg-brand-400 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-brand-500/30 hover:-translate-y-0.5 active:scale-95 transition-all mt-6 disabled:opacity-70 disabled:hover:translate-y-0"
             >
               {isLoading ? <Loader2 className="animate-spin" size={20} /> : "Create Account with Email"}
             </button>
