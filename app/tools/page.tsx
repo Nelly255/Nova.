@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 import { Plus_Jakarta_Sans, Inter } from "next/font/google";
-import { ArrowLeft, Search, ArrowRight, Sun, Moon, LineChart, Car, Home, Wallet, Receipt, Target, Calculator, Building, TrendingUp, TrendingDown, Shield, Activity, Mail, Plus, FileText, Coffee } from "lucide-react"; // 🚀 Added Coffee icon
+import { ArrowLeft, Search, ArrowRight, Sun, Moon, LineChart, Car, Home, Wallet, Receipt, Target, Calculator, Building, TrendingUp, TrendingDown, Shield, Activity, Mail, Plus, FileText, Coffee } from "lucide-react"; 
 
 const headerFont = Plus_Jakarta_Sans({ subsets: ["latin"] });
 const bodyFont = Inter({ subsets: ["latin"] });
@@ -11,29 +12,78 @@ const bodyFont = Inter({ subsets: ["latin"] });
 export default function ToolsHubPage() {
   const [theme, setTheme] = useState('dark');
   const [searchTerm, setSearchTerm] = useState("");
+  const [hasActiveSession, setHasActiveSession] = useState(false);
   
   // PAGINATION STATE
   const [visibleCount, setVisibleCount] = useState(8);
 
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('app_theme');
-    if (savedTheme === 'light') {
-      setTheme('light');
-      document.documentElement.classList.remove('dark');
-    } else {
-      setTheme('dark');
+  // 🚀 Core Theme Applier Function
+  const applyThemeClass = (isDark: boolean) => {
+    setTheme(isDark ? 'dark' : 'light');
+    if (isDark) {
       document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
+  };
+
+  // 🚀 Auth & Cloud Theme Sync Check
+  useEffect(() => {
+    const initializeUserAndTheme = async () => {
+      // 1. Check for active Supabase session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        setHasActiveSession(true);
+        
+        // 2. Read theme from cloud (user_metadata)
+        const cloudTheme = session.user.user_metadata?.preferred_theme;
+        
+        if (cloudTheme) {
+          applyThemeClass(cloudTheme === 'dark');
+          localStorage.setItem('app_theme', cloudTheme); 
+          return; 
+        }
+      }
+
+      // 3. Fallback for guests or users without a saved cloud preference
+      const savedTheme = localStorage.getItem('app_theme');
+      if (savedTheme === 'dark' || savedTheme === 'light') {
+        applyThemeClass(savedTheme === 'dark');
+      } else {
+        // System preference
+        applyThemeClass(window.matchMedia('(prefers-color-scheme: dark)').matches);
+      }
+    };
+
+    initializeUserAndTheme();
+
+    // Listen for live OS changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemChange = () => {
+      const savedTheme = localStorage.getItem('app_theme');
+      if (!savedTheme || savedTheme === 'system') {
+        applyThemeClass(mediaQuery.matches);
+      }
+    };
+
+    mediaQuery.addEventListener('change', handleSystemChange);
+    return () => mediaQuery.removeEventListener('change', handleSystemChange);
   }, []);
 
-  const toggleTheme = () => {
+  const toggleTheme = async () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
+    applyThemeClass(newTheme === 'dark');
     localStorage.setItem('app_theme', newTheme);
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
+
+    // Sync to Cloud (Supabase) if logged in
+    if (hasActiveSession) {
+      const { error } = await supabase.auth.updateUser({
+        data: { preferred_theme: newTheme }
+      });
+      if (error) {
+        console.error("Failed to sync theme to cloud:", error);
+      }
     }
   };
 
@@ -153,18 +203,18 @@ export default function ToolsHubPage() {
   const hasMoreTools = filteredTools.length > visibleCount;
 
   return (
-    <main className={`min-h-screen flex flex-col bg-slate-50 dark:bg-[#0A0A0E] text-slate-900 dark:text-slate-50 relative overflow-hidden transition-colors duration-500 ${bodyFont.className}`}>
+    <main className={`min-h-screen flex flex-col bg-slate-50 dark:bg-[#0A0A0E] text-slate-900 dark:text-slate-50 relative overflow-hidden transition-colors duration-500 selection:bg-brand-500/30 ${bodyFont.className}`}>
       
       {/* AMBIENT GLOW */}
       <div className="absolute top-0 inset-x-0 h-[500px] overflow-hidden pointer-events-none z-0">
-        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-indigo-600/10 dark:bg-indigo-500/15 blur-[120px] rounded-full"></div>
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-brand-600/10 dark:bg-brand-500/15 blur-[120px] rounded-full"></div>
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 pt-8 pb-16 flex-grow w-full">
         
         {/* NAV */}
         <nav className="flex items-center justify-between mb-16">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors bg-white dark:bg-[#12121A] px-4 py-2 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm active:scale-95">
+          <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 transition-colors bg-white dark:bg-[#12121A] px-4 py-2 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm active:scale-95">
             <ArrowLeft size={16} /> <span className="hidden sm:inline">Back to Home</span><span className="sm:hidden">Back</span>
           </Link>
 
@@ -190,8 +240,8 @@ export default function ToolsHubPage() {
 
         {/* HEADER */}
         <header className="mb-12 text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 mb-6">
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-400">NOVA APP LIBRARY</span>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-500/10 border border-brand-100 dark:border-brand-500/20 mb-6">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-600 dark:text-brand-400">NOVA APP LIBRARY</span>
           </div>
           <h1 className={`${headerFont.className} text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 text-slate-900 dark:text-white`}>
             Financial Tools & Calculators.
@@ -204,7 +254,7 @@ export default function ToolsHubPage() {
         {/* SEARCH BAR */}
         <div className="max-w-2xl mx-auto mb-16">
           <div className="relative group">
-            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition-colors">
+            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-slate-400 group-focus-within:text-brand-500 transition-colors">
               <Search size={20} />
             </div>
             <input 
@@ -212,7 +262,7 @@ export default function ToolsHubPage() {
               placeholder="Search for taxes, budgeting, assets..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white dark:bg-[#12121A] border border-slate-200 dark:border-white/10 rounded-full pl-14 pr-6 py-4 text-base font-medium text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-sm"
+              className="w-full bg-white dark:bg-[#12121A] border border-slate-200 dark:border-white/10 rounded-full pl-14 pr-6 py-4 text-base font-medium text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 transition-all shadow-sm"
             />
           </div>
         </div>
@@ -225,7 +275,7 @@ export default function ToolsHubPage() {
                 <Link 
                   key={index} 
                   href={tool.href} 
-                  className="group bg-white dark:bg-[#111118]/60 backdrop-blur-sm border border-slate-200 dark:border-white/5 p-6 rounded-[1.5rem] hover:shadow-2xl hover:border-indigo-500/40 transition-all flex flex-col h-full relative overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500"
+                  className="group bg-white dark:bg-[#111118]/60 backdrop-blur-sm border border-slate-200 dark:border-white/5 p-6 rounded-[1.5rem] hover:shadow-2xl hover:border-brand-500/40 transition-all flex flex-col h-full relative overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500"
                   style={{ animationDelay: `${(index % 8) * 50}ms` }}
                 >
                   <div className="flex justify-between items-start mb-4">
@@ -239,7 +289,7 @@ export default function ToolsHubPage() {
                   <h3 className={`${headerFont.className} text-lg font-bold text-slate-900 dark:text-white mb-2 tracking-tight`}>{tool.title}</h3>
                   <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-6 flex-grow">{tool.description}</p>
                   
-                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 group-hover:translate-x-1 transition-transform">
+                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-brand-600 dark:text-brand-400 group-hover:translate-x-1 transition-transform">
                     Launch Tool <ArrowRight size={12} />
                   </div>
                 </Link>
@@ -253,7 +303,7 @@ export default function ToolsHubPage() {
                   onClick={() => setVisibleCount(prev => prev + 8)}
                   className="group inline-flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 px-8 py-3.5 rounded-full text-xs font-black uppercase tracking-widest transition-all shadow-sm active:scale-95"
                 >
-                  <Plus size={16} className="text-indigo-500 group-hover:rotate-90 transition-transform duration-300" /> 
+                  <Plus size={16} className="text-brand-500 group-hover:rotate-90 transition-transform duration-300" /> 
                   Load More Tools
                 </button>
               </div>
@@ -264,35 +314,39 @@ export default function ToolsHubPage() {
             <Search size={40} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
             <h3 className={`${headerFont.className} text-xl font-bold text-slate-900 dark:text-white mb-2`}>No tools found</h3>
             <p className="text-slate-500 dark:text-slate-400">We couldn't find a tool matching "{searchTerm}". Try another keyword.</p>
-            <button onClick={() => setSearchTerm("")} className="mt-6 text-indigo-600 dark:text-indigo-400 font-bold text-sm hover:underline">
+            <button onClick={() => setSearchTerm("")} className="mt-6 text-brand-600 dark:text-brand-400 font-bold text-sm hover:underline">
               Clear Search
             </button>
           </div>
         )}
 
-        {/* 🚀 KO-FI SUPPORT BANNER */}
-        <div className="mt-24 max-w-4xl mx-auto bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-500/5 dark:to-orange-500/10 border border-amber-200/50 dark:border-amber-500/20 rounded-[2rem] p-8 sm:p-12 text-center relative overflow-hidden shadow-sm">
-          {/* Decorative background shapes */}
-          <div className="absolute -top-10 -right-10 w-40 h-40 bg-amber-200/30 dark:bg-amber-500/10 rounded-full blur-2xl"></div>
-          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-orange-200/30 dark:bg-orange-500/10 rounded-full blur-2xl"></div>
-          
-          <div className="relative z-10 flex flex-col items-center">
-            <div className="w-16 h-16 bg-white dark:bg-[#12121A] text-amber-500 border border-amber-100 dark:border-amber-500/20 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
-              <Coffee size={32} />
+        {/* 🚀 PREMIUM KO-FI SUPPORT BANNER */}
+        <div className="mt-20 max-w-5xl mx-auto bg-gradient-to-r from-amber-50/80 to-orange-50/80 dark:from-amber-500/5 dark:to-orange-500/5 backdrop-blur-xl border border-amber-200/50 dark:border-amber-500/10 rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
+          {/* Subtle Glow */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/10 dark:bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
+
+          <div className="relative z-10 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-5 flex-1">
+            <div className="w-12 h-12 shrink-0 bg-white dark:bg-slate-900 text-amber-500 border border-amber-100 dark:border-amber-500/20 rounded-2xl flex items-center justify-center shadow-sm">
+              <Coffee size={24} />
             </div>
-            <h3 className={`${headerFont.className} text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white mb-4 tracking-tight`}>
-              Love these free tools?
-            </h3>
-            <p className="text-slate-600 dark:text-slate-400 max-w-xl mx-auto mb-8 text-base md:text-lg leading-relaxed">
-              We build these calculators to help Tanzanians make better financial decisions. If they saved you time or money, consider buying us a coffee to keep the servers running and the tools 100% free!
-            </p>
+            <div>
+              <h3 className={`${headerFont.className} text-xl font-bold text-slate-900 dark:text-white mb-1 tracking-tight`}>
+                Love these free tools?
+              </h3>
+              <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed max-w-2xl">
+                We build these calculators to help Tanzanians make better financial decisions. If they saved you time or money, consider buying us a coffee to keep the servers running and the tools 100% free!
+              </p>
+            </div>
+          </div>
+
+          <div className="relative z-10 shrink-0 w-full md:w-auto">
             <a 
               href="https://ko-fi.com/nellyjackson" 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="inline-flex items-center gap-2 bg-[#FF5E5B] hover:bg-[#E04B48] text-white px-8 py-4 rounded-full font-bold transition-all shadow-[0_8px_20px_rgba(255,94,91,0.3)] hover:shadow-[0_12px_25px_rgba(255,94,91,0.4)] hover:-translate-y-1 active:scale-95"
+              className="w-full md:w-auto inline-flex justify-center items-center gap-2 bg-[#FF5E5B] hover:bg-[#E04B48] text-white px-6 py-3 rounded-full font-bold text-sm transition-all shadow-[0_4px_14px_rgba(255,94,91,0.25)] hover:shadow-[0_6px_20px_rgba(255,94,91,0.4)] hover:-translate-y-0.5 active:scale-95"
             >
-              <Coffee size={20} /> Support Nova on Ko-fi
+              <Coffee size={18} /> Support on Ko-fi
             </a>
           </div>
         </div>
@@ -305,13 +359,13 @@ export default function ToolsHubPage() {
           
           <div className="sm:col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <Activity size={20} className="text-indigo-600 dark:text-indigo-400" />
+              <Activity size={20} className="text-brand-600 dark:text-brand-400" />
               <span className={`${headerFont.className} font-bold text-xl text-slate-900 dark:text-white`}>Nova.</span>
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-xs">
               Intelligent Wealth Management.
             </p>
-            <Link href="/contact" className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
+            <Link href="/contact" className="inline-flex items-center gap-2 text-sm font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 transition-colors">
               <Mail size={16} />
               Contact Support
             </Link>
@@ -320,29 +374,29 @@ export default function ToolsHubPage() {
           <div>
             <h4 className="font-bold text-slate-900 dark:text-white mb-4">Features</h4>
             <ul className="space-y-4 sm:space-y-3 text-sm text-slate-600 dark:text-slate-400">
-              <li><Link href="/expense-tracker" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Expense Tracker</Link></li>
-              <li><Link href="/net-worth-tracker" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Net Worth Tracker</Link></li>
-              <li><Link href="/subscription-tracker" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Subscription Radar</Link></li>
-              <li><Link href="/asset-tracker" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Asset Tracker</Link></li>
+              <li><Link href="/expense-tracker" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Expense Tracker</Link></li>
+              <li><Link href="/net-worth-tracker" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Net Worth Tracker</Link></li>
+              <li><Link href="/subscription-tracker" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Subscription Radar</Link></li>
+              <li><Link href="/asset-tracker" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Asset Tracker</Link></li>
             </ul>
           </div>
 
           <div>
             <h4 className="font-bold text-slate-900 dark:text-white mb-4">Free Tools</h4>
             <ul className="space-y-4 sm:space-y-3 text-sm text-slate-600 dark:text-slate-400">
-              <li><Link href="/property-tax-calculator-tanzania" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Property Tax Calculator</Link></li>
-              <li><Link href="/paye-calculator" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">PAYE Take-Home Calculator</Link></li>
-              <li><Link href="/tra-car-import-duty-calculator-tanzania" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">TRA Import Tool</Link></li>
-              <li><Link href="/freelance-invoice-calculator" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Freelance Invoice Tool</Link></li>
+              <li><Link href="/property-tax-calculator-tanzania" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Property Tax Calculator</Link></li>
+              <li><Link href="/paye-calculator" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">PAYE Take-Home Calculator</Link></li>
+              <li><Link href="/tra-car-import-duty-calculator-tanzania" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">TRA Import Tool</Link></li>
+              <li><Link href="/freelance-invoice-calculator" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Freelance Invoice Tool</Link></li>
             </ul>
           </div>
 
           <div>
             <h4 className="font-bold text-slate-900 dark:text-white mb-4">Company</h4>
             <ul className="space-y-4 sm:space-y-3 text-sm text-slate-600 dark:text-slate-400">
-              <li><Link href="/blog" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Financial Blog</Link></li>
-              <li><Link href="/privacy" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Terms of Service</Link></li>
+              <li><Link href="/blog" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Financial Blog</Link></li>
+              <li><Link href="/privacy" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Terms of Service</Link></li>
             </ul>
           </div>
         </div>

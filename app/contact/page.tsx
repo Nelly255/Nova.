@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Moon, Sun, Mail, MapPin, Activity, Shield, Phone, HelpCircle } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { ArrowLeft, Moon, Sun, Mail, MapPin, Activity, Shield, HelpCircle } from "lucide-react";
 
 // 📝 CUSTOM WHATSAPP ICON COMPONENT
 const WhatsAppIcon = ({ size = 24 }: { size?: number }) => (
@@ -12,34 +13,79 @@ const WhatsAppIcon = ({ size = 24 }: { size?: number }) => (
 );
 
 export default function ContactPage() {
-  const [isDark, setIsDark] = useState(true);
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [hasActiveSession, setHasActiveSession] = useState(false);
 
-  // INITIAL THEME CHECK
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('app_theme');
-    if (savedTheme === 'light') {
-      setIsDark(false);
-      document.documentElement.classList.remove('dark');
-    } else {
-      setIsDark(true);
+  // 🚀 Core Theme Applier Function
+  const applyThemeClass = (isDark: boolean) => {
+    setTheme(isDark ? 'dark' : 'light');
+    if (isDark) {
       document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
+  };
+
+  // 🚀 Auto-Detect System & Cloud Sync
+  useEffect(() => {
+    const initializeUserAndTheme = async () => {
+      // 1. Check for active Supabase session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        setHasActiveSession(true);
+        // Read theme from cloud (user_metadata)
+        const cloudTheme = session.user.user_metadata?.preferred_theme;
+        if (cloudTheme) {
+          applyThemeClass(cloudTheme === 'dark');
+          localStorage.setItem('app_theme', cloudTheme); 
+          return; 
+        }
+      }
+
+      // 2. Fallback to local storage OR System Preference
+      const savedTheme = localStorage.getItem('app_theme');
+      if (savedTheme === 'dark' || savedTheme === 'light') {
+        applyThemeClass(savedTheme === 'dark');
+      } else {
+        // SYSTEM AUTO-ADAPT
+        applyThemeClass(window.matchMedia('(prefers-color-scheme: dark)').matches);
+      }
+    };
+
+    initializeUserAndTheme();
+
+    // 3. Live Listener for OS changes (e.g., sunset automatic dark mode)
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemChange = () => {
+      const savedTheme = localStorage.getItem('app_theme');
+      if (!savedTheme || savedTheme === 'system') {
+        applyThemeClass(mediaQuery.matches);
+      }
+    };
+
+    mediaQuery.addEventListener('change', handleSystemChange);
+    return () => mediaQuery.removeEventListener('change', handleSystemChange);
   }, []);
 
-  const toggleTheme = () => {
-    const newTheme = !isDark;
-    setIsDark(newTheme);
-    if (newTheme) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('app_theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('app_theme', 'light');
+  const toggleTheme = async () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    applyThemeClass(newTheme === 'dark');
+    localStorage.setItem('app_theme', newTheme);
+
+    // Sync to Cloud (Supabase) if logged in
+    if (hasActiveSession) {
+      const { error } = await supabase.auth.updateUser({
+        data: { preferred_theme: newTheme }
+      });
+      if (error) {
+        console.error("Failed to sync theme to cloud:", error);
+      }
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FB] dark:bg-[#07070A] text-slate-900 dark:text-slate-50 transition-colors duration-500 relative overflow-hidden" style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}>
+    <div className="min-h-screen bg-[#F8F9FB] dark:bg-[#07070A] text-slate-900 dark:text-slate-50 transition-colors duration-500 relative overflow-hidden selection:bg-brand-500/30" style={{ fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif" }}>
 
       {/* 🚀 SCHEMA MARKUP FOR SEO */}
       <script
@@ -56,7 +102,7 @@ export default function ContactPage() {
       />
 
       {/* AMBIENT GLOW */}
-      <div className="absolute top-[-10%] left-[50%] translate-x-[-50%] w-[600px] h-[600px] bg-[#8438FF]/10 dark:bg-[#8438FF]/15 rounded-full blur-[120px] pointer-events-none opacity-80 z-0"></div>
+      <div className="absolute top-[-10%] left-[50%] translate-x-[-50%] w-[600px] h-[600px] bg-brand-600/10 dark:bg-brand-500/15 rounded-full blur-[120px] pointer-events-none opacity-80 z-0"></div>
 
       <div className="relative z-10 pt-6 md:pt-12 px-4 sm:px-6 flex flex-col min-h-screen">
 
@@ -73,15 +119,15 @@ export default function ContactPage() {
             className="p-2 sm:p-3 rounded-2xl bg-white dark:bg-[#12121A] border border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-300 shadow-sm hover:bg-slate-50 dark:hover:bg-[#1A1A24] transition-all active:scale-90"
             aria-label="Toggle Theme"
           >
-            {isDark ? <Sun size={18} /> : <Moon size={18} />}
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
           </button>
         </nav>
 
         {/* 🚀 HEADER SECTION */}
         <header className="max-w-6xl mx-auto w-full mb-20 grid lg:grid-cols-2 gap-10 items-end">
           <div className="space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#12121A] border border-slate-200 dark:border-white/5 shadow-sm">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#8438FF] shadow-[0_0_8px_#8438FF] animate-pulse"></div>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-50 dark:bg-[#12121A] border border-brand-100 dark:border-white/5 shadow-sm">
+              <div className="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(var(--brand-500),0.8)] animate-pulse"></div>
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">CONTACT US</span>
             </div>
             
@@ -89,7 +135,7 @@ export default function ContactPage() {
               <span style={{ fontFamily: "'Dancing Script', cursive" }} className="text-[4rem] sm:text-5xl md:text-[5.5rem] font-bold text-slate-800 dark:text-slate-200 leading-[0.8] mb-2 pl-1">
                 Get in
               </span>
-              <span className="text-[3.5rem] sm:text-5xl md:text-[6.5rem] font-[900] tracking-[-0.04em] text-[#8438FF] leading-[0.85] mt-1 md:mt-0">
+              <span className="text-[3.5rem] sm:text-5xl md:text-[6.5rem] font-[900] tracking-[-0.04em] text-brand-600 dark:text-brand-400 leading-[0.85] mt-1 md:mt-0">
                 Touch.
               </span>
             </h1>
@@ -115,13 +161,13 @@ export default function ContactPage() {
               
               {/* Email Block */}
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#8438FF]/10 flex items-center justify-center text-[#8438FF] shrink-0">
+                <div className="w-12 h-12 rounded-2xl bg-brand-600/10 dark:bg-brand-400/10 flex items-center justify-center text-brand-600 dark:text-brand-400 shrink-0">
                   <Mail size={24} />
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Email Us</h3>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">For support and partnerships.</p>
-                  <a href="mailto:info@nova.co.tz" className="text-base font-semibold text-[#8438FF] hover:underline">info@nova.co.tz</a>
+                  <a href="mailto:info@nova.co.tz" className="text-base font-semibold text-brand-600 dark:text-brand-400 hover:underline">info@nova.co.tz</a>
                 </div>
               </div>
 
@@ -158,10 +204,10 @@ export default function ContactPage() {
             </div>
           </div>
 
-          {/* 🚀 NEW FAQ SECTION SIDE */}
+          {/* 🚀 FAQ SECTION SIDE */}
           <div className="md:col-span-3">
             <div className="bg-white dark:bg-[#0F0F15]/80 p-8 md:p-10 rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-3xl relative overflow-hidden h-full flex flex-col">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-[#8438FF]/5 blur-[80px] pointer-events-none"></div>
+              <div className="absolute top-0 right-0 w-64 h-64 bg-brand-600/5 blur-[80px] pointer-events-none"></div>
 
               <div className="flex items-center gap-3 mb-8 relative z-10">
                 <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-700 dark:text-slate-300">
@@ -172,7 +218,7 @@ export default function ContactPage() {
 
               <div className="space-y-4 relative z-10 flex-grow">
                 {/* FAQ 1 */}
-                <div className="p-5 md:p-6 rounded-2xl bg-slate-50 dark:bg-[#12121A] border border-slate-200 dark:border-white/5 transition-all hover:border-[#8438FF]/30">
+                <div className="p-5 md:p-6 rounded-2xl bg-slate-50 dark:bg-[#12121A] border border-slate-200 dark:border-white/5 transition-all hover:border-brand-500/30">
                   <h4 className="font-bold text-slate-900 dark:text-white mb-2 text-base md:text-lg">Is Nova free to use?</h4>
                   <p className="text-sm md:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
                     Yes! Our core expense tracking features and utility calculators are available to everyone at no cost. We are committed to helping Tanzanians achieve financial literacy.
@@ -180,7 +226,7 @@ export default function ContactPage() {
                 </div>
 
                 {/* FAQ 2 */}
-                <div className="p-5 md:p-6 rounded-2xl bg-slate-50 dark:bg-[#12121A] border border-slate-200 dark:border-white/5 transition-all hover:border-[#8438FF]/30">
+                <div className="p-5 md:p-6 rounded-2xl bg-slate-50 dark:bg-[#12121A] border border-slate-200 dark:border-white/5 transition-all hover:border-brand-500/30">
                   <h4 className="font-bold text-slate-900 dark:text-white mb-2 text-base md:text-lg">How secure is my financial data?</h4>
                   <p className="text-sm md:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
                     We utilize bank-grade 256-bit encryption. Your data is entirely yours, securely stored, and we never sell your personal information to third parties.
@@ -188,7 +234,7 @@ export default function ContactPage() {
                 </div>
 
                 {/* FAQ 3 */}
-                <div className="p-5 md:p-6 rounded-2xl bg-slate-50 dark:bg-[#12121A] border border-slate-200 dark:border-white/5 transition-all hover:border-[#8438FF]/30">
+                <div className="p-5 md:p-6 rounded-2xl bg-slate-50 dark:bg-[#12121A] border border-slate-200 dark:border-white/5 transition-all hover:border-brand-500/30">
                   <h4 className="font-bold text-slate-900 dark:text-white mb-2 text-base md:text-lg">Can I track M-Pesa transactions?</h4>
                   <p className="text-sm md:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
                     Absolutely. Nova is built specifically for the local economy, natively supporting TZS alongside direct manual tracking for M-Pesa, Tigo Pesa, and local bank accounts.
@@ -204,7 +250,7 @@ export default function ContactPage() {
         <footer className="w-full max-w-7xl mx-auto pt-12 pb-12 border-t border-slate-200 dark:border-white/5 z-10 relative mt-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500">
             <div className="flex items-center gap-2">
-              <Activity size={16} className="text-[#8438FF]" />
+              <Activity size={16} className="text-brand-600 dark:text-brand-400" />
               <span className="font-bold text-slate-900 dark:text-white">Nova Financial.</span> © {new Date().getFullYear()}
             </div>
             <div className="flex items-center gap-6">

@@ -16,50 +16,55 @@ export default function WelcomePage() {
   const router = useRouter(); 
   const [hasActiveSession, setHasActiveSession] = useState(false);
 
-  // 🚀 Auth Check - Silently check session without forcing a redirect
+  // 🚀 Core Theme Applier Function
+  const applyThemeClass = (isDark: boolean) => {
+    setTheme(isDark ? 'dark' : 'light');
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
+
+  // 🚀 Auth & Cloud Theme Sync Check
   useEffect(() => {
-    const checkUser = async () => {
+    const initializeUserAndTheme = async () => {
+      // 1. Check for active Supabase session
       const { data: { session } } = await supabase.auth.getSession();
+      
       if (session) {
         setHasActiveSession(true);
+        
+        // 2. Read theme from cloud (user_metadata)
+        const cloudTheme = session.user.user_metadata?.preferred_theme;
+        
+        if (cloudTheme) {
+          // Cloud preference wins over everything else
+          applyThemeClass(cloudTheme === 'dark');
+          // Update local cache so it doesn't flicker on next reload before DB fetch
+          localStorage.setItem('app_theme', cloudTheme); 
+          return; // Exit early since cloud theme was applied
+        }
       }
-    };
-    checkUser();
-  }, []);
 
-  // 🚀 Auto System Theme Detection (Patched for 3-way support)
-  useEffect(() => {
-    const applyTheme = () => {
+      // 3. Fallback for guests or users without a saved cloud preference
       const savedTheme = localStorage.getItem('app_theme');
-      let isDark = false;
-
-      if (savedTheme === 'dark') {
-        isDark = true;
-      } else if (savedTheme === 'light') {
-        isDark = false;
+      if (savedTheme === 'dark' || savedTheme === 'light') {
+        applyThemeClass(savedTheme === 'dark');
       } else {
-        // 'system' or not set yet
-        isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      }
-
-      setTheme(isDark ? 'dark' : 'light');
-
-      if (isDark) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
+        // System preference
+        applyThemeClass(window.matchMedia('(prefers-color-scheme: dark)').matches);
       }
     };
 
-    // Apply on mount
-    applyTheme();
+    initializeUserAndTheme();
 
-    // Listen for live OS changes (e.g., sunset triggers dark mode)
+    // Listen for live OS changes (only applies if user hasn't hard-set a preference)
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleSystemChange = () => {
       const savedTheme = localStorage.getItem('app_theme');
       if (!savedTheme || savedTheme === 'system') {
-        applyTheme();
+        applyThemeClass(mediaQuery.matches);
       }
     };
 
@@ -67,15 +72,25 @@ export default function WelcomePage() {
     return () => mediaQuery.removeEventListener('change', handleSystemChange);
   }, []);
 
-  const toggleTheme = () => {
-    // This acts as a manual override on the landing page
+  const toggleTheme = async () => {
+    // Determine new theme
     const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
+    
+    // 1. Update UI instantly
+    applyThemeClass(newTheme === 'dark');
+    
+    // 2. Save locally for instant load next time
     localStorage.setItem('app_theme', newTheme);
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
+
+    // 3. Sync to Cloud (Supabase) if logged in
+    if (hasActiveSession) {
+      const { error } = await supabase.auth.updateUser({
+        data: { preferred_theme: newTheme }
+      });
+      
+      if (error) {
+        console.error("Failed to sync theme to cloud:", error);
+      }
     }
   };
 
@@ -168,7 +183,6 @@ export default function WelcomePage() {
         {/* Left Column: Typography & CTA */}
         <div className="text-left flex flex-col items-start order-2 lg:order-1 relative z-20">
           
-          {/* Replaced Quote Background with raw text + dot */}
           <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-bold mb-6 transition-colors tracking-wide uppercase">
             <span className="flex h-2 w-2 rounded-full bg-brand-500 shadow-[0_0_10px_rgb(var(--brand-500)/0.8)] animate-pulse"></span>
             "Give every dollar a purpose."
