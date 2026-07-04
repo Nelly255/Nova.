@@ -194,18 +194,71 @@ export default function DashboardPage() {
   // 🚀 TIME MACHINE CORE LOGIC
   const endOfSelectedPeriod = dateRange.to;
   const startOfSelectedPeriod = dateRange.from;
-  
-  const transactionsUpToSelected = transactions.filter(t => new Date(t.date) <= endOfSelectedPeriod);
-  const previousTransactions = transactions.filter(t => new Date(t.date) < startOfSelectedPeriod);
-  
+
   const currentPeriodTransactions = transactions.filter(t => {
     const d = new Date(t.date);
     return d >= startOfSelectedPeriod && d <= endOfSelectedPeriod;
   });
 
-  const prevIncome = previousTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + Number(t.amount), 0);
-  const prevExpense = previousTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + Number(t.amount), 0);
-  const openingBalance = prevIncome - prevExpense;
+  // 🚀 Contra entries, transfers, and loan movements are internal — they must never
+  // count as income or expense in the cash flow calculation.
+  const isExcludedFromRealWealth = (category: string) => {
+    const cat = (category || "").toLowerCase();
+    return cat.includes("transfer") || 
+           cat.includes("contra") || 
+           cat.includes("loan received") || 
+           cat.includes("loan given");
+  };
+
+  // 🚀 ROLLING OPENING BALANCE: Opening Balance = Previous Month's Closing Cash Flow
+  // Closing Cash Flow (any month) = Opening Balance + Real Income − Real Expenses
+  // Opening Balance (any month) = previous month's Closing Cash Flow
+  // Rolling forward month-by-month (Jan → Feb, Feb → Mar, Mar → Apr, ...) from the
+  // earliest real transaction up to (but not including) the month the selected period
+  // starts in. With no prior transactions this naturally resolves to 0.
+  const calculateRollingOpeningBalance = (targetYear: number, targetMonth: number) => {
+    if (transactions.length === 0) return 0;
+
+    // Net REAL cash flow per calendar month (income − expense), excluding Contra,
+    // Transfers, Loan Received, and Loan Given.
+    const monthlyRealNet = new Map<string, number>();
+    let earliestYear = targetYear;
+    let earliestMonth = targetMonth;
+
+    transactions.forEach(t => {
+      if (isExcludedFromRealWealth(t.category)) return; // Contra/Transfer/Loan = zero effect on cash flow
+
+      const d = new Date(t.date);
+      const y = d.getFullYear();
+      const m = d.getMonth();
+
+      if (y < earliestYear || (y === earliestYear && m < earliestMonth)) {
+        earliestYear = y;
+        earliestMonth = m;
+      }
+
+      const key = `${y}-${m}`;
+      const signedAmount = Number(t.amount) * (t.type === 'income' ? 1 : -1);
+      monthlyRealNet.set(key, (monthlyRealNet.get(key) || 0) + signedAmount);
+    });
+
+    // Roll forward: each month's Closing CF becomes the next month's Opening Balance.
+    let rollingBalance = 0;
+    let iterYear = earliestYear;
+    let iterMonth = earliestMonth;
+
+    while (iterYear < targetYear || (iterYear === targetYear && iterMonth < targetMonth)) {
+      rollingBalance += monthlyRealNet.get(`${iterYear}-${iterMonth}`) || 0;
+      iterMonth++;
+      if (iterMonth > 11) { iterMonth = 0; iterYear++; }
+    }
+
+    return rollingBalance;
+  };
+
+  // Period Opening Balance = Closing Cash Flow of the calendar month immediately
+  // before the selected period starts.
+  const openingBalance = calculateRollingOpeningBalance(startOfSelectedPeriod.getFullYear(), startOfSelectedPeriod.getMonth());
 
   const currentPeriodIncome = currentPeriodTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + Number(t.amount), 0);
   const currentPeriodExpense = currentPeriodTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + Number(t.amount), 0);

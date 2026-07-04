@@ -116,28 +116,28 @@ export default function WelcomePage() {
       href: "/net-worth-calculator",
       icon: <LineChart size={22} />,
       title: "Net Worth",
-      description: "Calculate your exact wealth standing in Tanzania.",
+      description: "See your actual financial standing today.",
       colorClass: "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-500/10 border-purple-100 dark:border-purple-500/20"
     },
     {
       href: "/tra-car-import-duty-calculator-tanzania",
       icon: <Car size={22} />,
       title: "TRA Import",
-      description: "Estimate taxes for vehicle imports via TRA formulas.",
+      description: "Estimate taxes for vehicle imports based on TRA rates.",
       colorClass: "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20"
     },
     {
       href: "/property-tax-calculator-tanzania",
       icon: <Home size={22} />,
       title: "Property Tax",
-      description: "Calculate Stamp Duty and CGT for real estate.",
+      description: "Calculate Stamp Duty and Capital Gains for real estate.",
       colorClass: "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20"
     },
     {
       href: "/paye-calculator",
       icon: <Wallet size={22} />,
       title: "PAYE Calculator",
-      description: "Calculate your exact take-home pay after TRA deductions.",
+      description: "Know your exact take-home pay after standard deductions.",
       colorClass: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20"
     }
   ];
@@ -145,9 +145,9 @@ export default function WelcomePage() {
   return (
     <main className={`min-h-screen bg-slate-50 dark:bg-[#0A0A0E] text-slate-900 dark:text-slate-50 flex flex-col relative overflow-hidden selection:bg-brand-500/30 transition-colors duration-500 ${bodyFont.className}`}>
       
-      {/* Background Glow Effects */}
-      <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-brand-600/10 dark:bg-brand-600/20 rounded-full blur-[120px] pointer-events-none opacity-60 animate-pulse duration-1000 z-0"></div>
-      <div className="absolute top-[20%] right-[-5%] w-[500px] h-[500px] bg-purple-500/10 dark:bg-purple-500/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+      {/* Background Glow Effects - Toned down for a calmer feel */}
+      <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-brand-600/5 dark:bg-brand-600/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+      <div className="absolute top-[20%] right-[-5%] w-[500px] h-[500px] bg-purple-500/5 dark:bg-purple-500/5 rounded-full blur-[120px] pointer-events-none z-0"></div>
 
       {/* Top Navigation Bar */}
       <header className="w-full max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-4 flex justify-between items-center z-[100] relative pointer-events-auto">
@@ -168,11 +168,11 @@ export default function WelcomePage() {
             {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
           </button>
 
-          <button onClick={handleLoginClick} className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white text-sm font-semibold px-2 sm:px-4 py-2 transition-colors relative z-[100]">
-            {hasActiveSession ? "Dashboard" : "Log In"}
+          <button onClick={handleLoginClick} className="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white text-sm font-medium px-2 sm:px-4 py-2 transition-colors relative z-[100]">
+            {hasActiveSession ? "Dashboard" : "Log in"}
           </button>
-          <button onClick={handlePrimaryAction} className="bg-white dark:bg-white/5 backdrop-blur-md text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-500/20 hover:bg-brand-50 dark:hover:bg-brand-500/10 hover:text-brand-700 dark:hover:text-brand-300 dark:hover:border-brand-500/30 px-4 sm:px-5 py-2 rounded-full text-sm font-bold transition-all active:scale-95 shadow-sm relative z-[100]">
-            {hasActiveSession ? "Open Vault" : "Sign Up"}
+          <button onClick={handlePrimaryAction} className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 px-4 sm:px-5 py-2 rounded-full text-sm font-medium transition-all active:scale-95 shadow-sm relative z-[100]">
+            {hasActiveSession ? "Go to Dashboard" : "Create account"}
           </button>
         </div>
       </header>
@@ -183,141 +183,146 @@ export default function WelcomePage() {
         {/* Left Column: Typography & CTA */}
         <div className="text-left flex flex-col items-start order-2 lg:order-1 relative z-20">
           
-          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-bold mb-6 transition-colors tracking-wide uppercase">
-            <span className="flex h-2 w-2 rounded-full bg-brand-500 shadow-[0_0_10px_rgb(var(--brand-500)/0.8)] animate-pulse"></span>
-            "Give every dollar a purpose."
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-200/50 dark:bg-white/5 border border-slate-300/50 dark:border-white/10 text-slate-600 dark:text-slate-300 text-xs font-medium mb-8 transition-colors">
+            Built for everyday life in Tanzania.
           </div>
 
-          <h1 className={`${headerFont.className} text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight mb-5 leading-[1.15] text-slate-900 dark:text-white transition-colors`}>
-            Your financial life, <br />
+          <h1 className={`${headerFont.className} text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 leading-[1.1] text-slate-900 dark:text-white transition-colors`}>
+            Finally, a place where <br />
             <span className="text-brand-600 dark:text-brand-400">
-              beautifully organized.
+              your money makes sense.
             </span>
           </h1>
           
           <p className="text-base md:text-lg text-slate-600 dark:text-slate-400 mb-10 max-w-lg leading-relaxed transition-colors">
-            Track assets, crush debt, and monitor subscriptions from one breathtaking dashboard. Keep <strong>your financial life beautifully organized</strong>. Stop wondering where your money went, and start directing where it goes.
+            See exactly what you earn, what you spend, and what’s left for tomorrow. No complicated spreadsheets—just a clear, honest picture of your finances.
           </p>
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto relative z-30 mb-8">
-            <button onClick={handlePrimaryAction} className="group flex items-center justify-center gap-3 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-900 px-8 py-4 rounded-full text-base font-bold transition-all hover:-translate-y-1 hover:shadow-xl dark:hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.4)] active:scale-95 w-full sm:w-auto">
-              {hasActiveSession ? "Open My Vault" : "Start Tracking"} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+            <button onClick={handlePrimaryAction} className="group flex items-center justify-center gap-2 bg-slate-900 dark:bg-white hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-900 px-7 py-3.5 rounded-full text-sm font-semibold transition-all active:scale-95 w-full sm:w-auto">
+              {hasActiveSession ? "Go to Dashboard" : "Start tracking"} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </button>
-            <a href="#free-tools" className="group flex items-center justify-center gap-2 bg-white dark:bg-white/5 backdrop-blur-md border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 px-8 py-4 rounded-full text-base font-bold transition-all hover:bg-slate-50 dark:hover:bg-white/10 hover:-translate-y-1 hover:shadow-md active:scale-95 w-full sm:w-auto">
-              Explore Free Tools
+            <a href="#free-tools" className="group flex items-center justify-center gap-2 bg-transparent hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-300 px-7 py-3.5 rounded-full text-sm font-medium transition-all active:scale-95 w-full sm:w-auto">
+              Explore free tools
             </a>
           </div>
 
           <div className="flex items-center gap-3 text-xs md:text-sm text-slate-500 font-medium transition-colors">
             <div className="flex -space-x-2">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="w-8 h-8 rounded-full border-2 border-white dark:border-[#0A0A0E] bg-slate-200 dark:bg-slate-800 flex items-center justify-center overflow-hidden transition-colors">
+                <div key={i} className="w-8 h-8 rounded-full border-2 border-slate-50 dark:border-[#0A0A0E] bg-slate-200 dark:bg-slate-800 flex items-center justify-center overflow-hidden transition-colors">
                   <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${i + 10}&backgroundColor=transparent`} alt="avatar" className="w-full h-full object-cover opacity-80" />
                 </div>
               ))}
             </div>
-            <span>Join 10k+ savers in Tanzania</span>
+            <span>Trusted by thousands in Tanzania.</span>
           </div>
         </div>
 
-        {/* Right Column: Illustration & Floating Widgets */}
+        {/* Right Column: Illustration & Realistic UI Snippet */}
         <div className="relative w-full h-[400px] lg:h-[550px] flex items-center justify-center order-1 lg:order-2 mt-10 lg:mt-0">
-          <div className="relative w-full max-w-md z-10 flex items-center justify-center animate-[pulse_6s_ease-in-out_infinite]">
+          <div className="relative w-full max-w-md z-10 flex items-center justify-center">
             <img 
               src="/hero-illustration.svg" 
               alt="Tracking finances in Tanzania" 
-              className="w-full h-auto drop-shadow-xl dark:drop-shadow-[0_20px_40px_rgba(0,0,0,0.5)] relative z-10 transition-all"
+              className="w-full h-auto drop-shadow-sm opacity-90 relative z-10 transition-all"
               style={{ minHeight: '300px', objectFit: 'contain' }} 
             />
           </div>
 
-          <div className="absolute top-[40%] lg:top-[45%] -right-4 lg:right-2 z-20 animate-[bounce_4s_ease-in-out_infinite] delay-100">
-            <div className="bg-white/90 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-white/10 p-4 rounded-2xl shadow-xl dark:shadow-2xl flex flex-col gap-1 w-48 transition-colors">
-              <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-semibold mb-1 transition-colors">
-                <Wallet size={14} className="text-brand-600 dark:text-brand-400" /> Total Balance
+          {/* Clean, static realistic UI snippet instead of bouncing widgets */}
+          <div className="absolute top-[30%] lg:top-[35%] -right-4 lg:right-4 z-20">
+            <div className="bg-white/70 dark:bg-slate-900/60 backdrop-blur-2xl border border-slate-200/50 dark:border-white/10 p-4 rounded-2xl shadow-lg flex flex-col gap-3 w-56 transition-colors">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">Recent</span>
+                <span className="text-slate-400 text-[10px]">Today</span>
               </div>
-              <h4 className={`${headerFont.className} text-2xl font-extrabold text-slate-900 dark:text-white transition-colors tracking-tight`}>24.5M TSH</h4>
-              <div className="flex items-center gap-1 text-brand-600 dark:text-brand-400 text-[10px] font-bold mt-1 bg-brand-100 dark:bg-brand-400/10 px-2 py-0.5 rounded-full w-fit transition-colors border border-brand-200 dark:border-transparent">
-                <TrendingUp size={10} /> +12% this month
+              
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700 shrink-0">
+                  <Home size={14} className="text-slate-600 dark:text-slate-300" />
+                </div>
+                <div className="flex flex-col flex-1">
+                  <span className="text-sm font-medium text-slate-900 dark:text-white leading-tight">Luku Token</span>
+                  <span className="text-[10px] text-slate-500">Utilities</span>
+                </div>
+                <span className={`${headerFont.className} text-sm font-semibold text-slate-700 dark:text-slate-200`}>-20k</span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700 shrink-0">
+                  <Wallet size={14} className="text-slate-600 dark:text-slate-300" />
+                </div>
+                <div className="flex flex-col flex-1">
+                  <span className="text-sm font-medium text-slate-900 dark:text-white leading-tight">Salary</span>
+                  <span className="text-[10px] text-slate-500">Income</span>
+                </div>
+                <span className={`${headerFont.className} text-sm font-semibold text-emerald-600 dark:text-emerald-400`}>+1.2M</span>
               </div>
             </div>
           </div>
 
-          <div className="absolute bottom-16 -left-4 lg:left-0 z-20 animate-[bounce_5s_ease-in-out_infinite] delay-300">
-            <div className="bg-white/90 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/50 dark:border-white/10 p-3.5 rounded-2xl shadow-xl dark:shadow-2xl flex items-center gap-4 w-56 transition-colors">
-              <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700 shrink-0 transition-colors">
-                <PieChart size={18} className="text-slate-700 dark:text-slate-300" />
-              </div>
-              <div className="flex flex-col flex-1">
-                <span className="text-sm font-bold text-slate-900 dark:text-white transition-colors">Netflix Sub</span>
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 transition-colors">Entertainment</span>
-              </div>
-              <span className={`${headerFont.className} text-sm font-bold text-slate-700 dark:text-slate-200 transition-colors tracking-tight`}>-35k</span>
-            </div>
-          </div>
-
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-brand-500/10 dark:bg-brand-500/20 blur-[80px] rounded-full pointer-events-none z-0 transition-colors"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-brand-500/5 dark:bg-brand-500/10 blur-[80px] rounded-full pointer-events-none z-0 transition-colors"></div>
         </div>
       </div>
 
       {/* HOW IT WORKS SECTION */}
       <div className="w-full max-w-7xl mx-auto px-6 py-20 z-10 border-t border-slate-200/50 dark:border-white/5">
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className={`${headerFont.className} text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-6 transition-colors tracking-tight`}>
+          <h2 className={`${headerFont.className} text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-4 transition-colors tracking-tight`}>
             How Nova Works
           </h2>
-          <div className="w-10 h-[2px] bg-red-500 mx-auto mb-8"></div>
-          <p className="text-slate-600 dark:text-slate-400 transition-colors text-lg">
-            A powerful, zero-friction process to completely transform your personal finances.
+          <p className="text-slate-600 dark:text-slate-400 transition-colors text-base md:text-lg">
+            A simple, quiet way to get your finances under control.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-14 max-w-5xl mx-auto relative">
           
-          <div className="flex flex-col sm:flex-row items-start gap-5 group">
-            <div className="shrink-0 relative text-slate-800 dark:text-slate-200 pt-1">
-              <Handshake size={32} strokeWidth={1.5} className="relative z-10" />
+          <div className="flex flex-col sm:flex-row items-start gap-5">
+            <div className="shrink-0 relative text-slate-400 dark:text-slate-500 pt-1">
+              <Handshake size={28} strokeWidth={1.5} />
             </div>
             <div>
-              <h3 className={`${headerFont.className} text-xl font-bold text-slate-900 dark:text-white mb-3`}>1. Unify Your Wallets</h3>
+              <h3 className={`${headerFont.className} text-lg font-bold text-slate-900 dark:text-white mb-2`}>1. Connect your accounts</h3>
               <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                Connect the reality of your daily spending. Whether you use physical cash, bank accounts, or mobile money like M-Pesa, Nova brings all your balances into one seamlessly organized dashboard.
+                Bring your cash, bank balances, and mobile money into one view. Stop checking three different apps to know how much money you actually have.
               </p>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-start gap-5 group">
-            <div className="shrink-0 relative text-slate-800 dark:text-slate-200 pt-1">
-              <Crosshair size={32} strokeWidth={1.5} className="relative z-10" />
+          <div className="flex flex-col sm:flex-row items-start gap-5">
+            <div className="shrink-0 relative text-slate-400 dark:text-slate-500 pt-1">
+              <Crosshair size={28} strokeWidth={1.5} />
             </div>
             <div>
-              <h3 className={`${headerFont.className} text-xl font-bold text-slate-900 dark:text-white mb-3`}>2. Track with Precision</h3>
+              <h3 className={`${headerFont.className} text-lg font-bold text-slate-900 dark:text-white mb-2`}>2. Track without the friction</h3>
               <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                Utilize our blazing-fast expense tracker to log transactions and bank charges instantly. Stay ahead of your bills with the Subscription Radar and stick to your zero-based budget effortlessly.
+                Log daily spending and bank charges in seconds. Keep an eye on upcoming bills so you are never caught off guard.
               </p>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-start gap-5 group">
-            <div className="shrink-0 relative text-slate-800 dark:text-slate-200 pt-1">
-              <CheckCircle2 size={32} strokeWidth={1.5} className="relative z-10" />
+          <div className="flex flex-col sm:flex-row items-start gap-5">
+            <div className="shrink-0 relative text-slate-400 dark:text-slate-500 pt-1">
+              <CheckCircle2 size={28} strokeWidth={1.5} />
             </div>
             <div>
-              <h3 className={`${headerFont.className} text-xl font-bold text-slate-900 dark:text-white mb-3`}>3. Build Lasting Wealth</h3>
+              <h3 className={`${headerFont.className} text-lg font-bold text-slate-900 dark:text-white mb-2`}>3. Watch your net worth grow</h3>
               <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                Watch your Net Worth grow over time. As you crush debt and optimize your spending habits, Nova generates beautiful visual insights to prove your financial independence is working.
+                See your progress as you pay down balances and save for the future. No hype, just clear visual proof of your hard work.
               </p>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-start gap-5 group">
-            <div className="shrink-0 relative text-slate-800 dark:text-slate-200 pt-1">
-              <Shield size={32} strokeWidth={1.5} className="relative z-10" />
+          <div className="flex flex-col sm:flex-row items-start gap-5">
+            <div className="shrink-0 relative text-slate-400 dark:text-slate-500 pt-1">
+              <Shield size={28} strokeWidth={1.5} />
             </div>
             <div>
-              <h3 className={`${headerFont.className} text-xl font-bold text-slate-900 dark:text-white mb-3`}>4. Absolute Privacy</h3>
+              <h3 className={`${headerFont.className} text-lg font-bold text-slate-900 dark:text-white mb-2`}>4. Total privacy</h3>
               <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                We do not own or sell your data. Your financial information is encrypted using bank-grade security protocols, ensuring that your privacy is always the top priority.
+                Your data stays yours. We do not sell your information. Everything is secured with industry-standard encryption.
               </p>
             </div>
           </div>
@@ -325,64 +330,64 @@ export default function WelcomePage() {
         </div>
       </div>
 
-      {/* PREMIUM FEATURES SECTION (Borderless Grid) */}
+      {/* CORE FEATURES SECTION */}
       <div className="w-full max-w-7xl mx-auto px-6 py-24 md:py-32 z-10">
-        <div className="text-center max-w-3xl mx-auto mb-20 md:mb-28">
-          <h2 className={`${headerFont.className} text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white mb-6 transition-colors tracking-tight`}>
-            Everything you need to build wealth.
+        <div className="text-center max-w-3xl mx-auto mb-20 md:mb-24">
+          <h2 className={`${headerFont.className} text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-4 transition-colors tracking-tight`}>
+            Everything you need. Nothing you don't.
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 text-lg md:text-xl transition-colors leading-relaxed">
-            We replaced six different apps with one powerful, unified dashboard. Stop jumping between spreadsheets and bank accounts.
+          <p className="text-slate-600 dark:text-slate-400 text-base md:text-lg transition-colors leading-relaxed">
+            Stop jumping between spreadsheets and bank accounts.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16 lg:gap-x-24 lg:gap-y-20 max-w-5xl mx-auto">
           
-          <div className="group flex flex-col items-start">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 mb-6 group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300">
-              <PieChart size={28} strokeWidth={1.5} />
+          <div className="flex flex-col items-start">
+            <div className="text-slate-800 dark:text-slate-300 mb-4">
+              <PieChart size={24} strokeWidth={1.5} />
             </div>
-            <h3 className={`${headerFont.className} text-2xl font-bold text-slate-900 dark:text-white mb-4 tracking-tight`}>
-              Intelligent Cash Flow
+            <h3 className={`${headerFont.className} text-xl font-bold text-slate-900 dark:text-white mb-3 tracking-tight`}>
+              Clear Cash Flow
             </h3>
-            <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-base">
-              Visualize your entire financial life in real-time. Know exactly what comes in, what goes out, and where you can optimize to save more every single month across cash and mobile money wallets.
+            <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-sm">
+              Visualize your entire financial life. Know exactly what comes in and what goes out so you can make informed decisions.
             </p>
           </div>
 
-          <div className="group flex flex-col items-start">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 mb-6 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-              <Zap size={28} strokeWidth={1.5} />
+          <div className="flex flex-col items-start">
+            <div className="text-slate-800 dark:text-slate-300 mb-4">
+              <Zap size={24} strokeWidth={1.5} />
             </div>
-            <h3 className={`${headerFont.className} text-2xl font-bold text-slate-900 dark:text-white mb-4 tracking-tight`}>
-              Subscription Radar
+            <h3 className={`${headerFont.className} text-xl font-bold text-slate-900 dark:text-white mb-3 tracking-tight`}>
+              Catch Recurring Charges
             </h3>
-            <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-base">
-              Spot hidden recurring charges instantly. Keep what you love, cut the rest, and never get caught off-guard.
+            <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-sm">
+              Spot hidden subscriptions. Keep what you actually use, cancel the rest, and stop wasting money on things you forgot about.
             </p>
           </div>
 
-          <div className="group flex flex-col items-start">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-cyan-50 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 mb-6 group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300">
-              <CreditCard size={28} strokeWidth={1.5} />
+          <div className="flex flex-col items-start">
+            <div className="text-slate-800 dark:text-slate-300 mb-4">
+              <CreditCard size={24} strokeWidth={1.5} />
             </div>
-            <h3 className={`${headerFont.className} text-2xl font-bold text-slate-900 dark:text-white mb-4 tracking-tight`}>
-              Debt Snowball
+            <h3 className={`${headerFont.className} text-xl font-bold text-slate-900 dark:text-white mb-3 tracking-tight`}>
+              Manage Debt
             </h3>
-            <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-base">
-              Organize your liabilities and attack them systematically using proven strategies until you are 100% debt-free.
+            <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-sm">
+              Organize your liabilities. Create a plan to pay them down systematically and track your balance until it hits zero.
             </p>
           </div>
 
-          <div className="group flex flex-col items-start">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 mb-6 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-              <Target size={28} strokeWidth={1.5} />
+          <div className="flex flex-col items-start">
+            <div className="text-slate-800 dark:text-slate-300 mb-4">
+              <Target size={24} strokeWidth={1.5} />
             </div>
-            <h3 className={`${headerFont.className} text-2xl font-bold text-slate-900 dark:text-white mb-4 tracking-tight`}>
-              Goal Setting & Assets
+            <h3 className={`${headerFont.className} text-xl font-bold text-slate-900 dark:text-white mb-3 tracking-tight`}>
+              Track Assets
             </h3>
-            <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-base">
-              Track depreciating assets like vehicles and equipment, while setting aside targeted funds for emergencies, vacations, or your first home.
+            <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-sm">
+              Log depreciating assets like vehicles, and track the funds you set aside for emergencies or future purchases.
             </p>
           </div>
 
@@ -390,16 +395,15 @@ export default function WelcomePage() {
       </div>
 
       {/* FREE TOOLS SECTION */}
-      <div id="free-tools" className="w-full max-w-7xl mx-auto px-6 py-12 lg:py-20 z-10 scroll-mt-20 border-t border-slate-200/50 dark:border-white/5">
+      <div id="free-tools" className="w-full max-w-7xl mx-auto px-6 py-16 lg:py-20 z-10 scroll-mt-20 bg-slate-100/50 dark:bg-white/[0.02] border-y border-slate-200/50 dark:border-white/5 rounded-3xl mb-24">
         <div className="text-center max-w-2xl mx-auto mb-10">
-          <h2 className={`${headerFont.className} text-3xl md:text-4xl font-extrabold mb-3 tracking-tight`}>Free Financial Tools.</h2>
-          <p className="text-slate-600 dark:text-slate-400 text-base">Professional calculators. No account needed.</p>
+          <h2 className={`${headerFont.className} text-2xl md:text-3xl font-extrabold mb-3 tracking-tight`}>Free Financial Tools</h2>
+          <p className="text-slate-600 dark:text-slate-400 text-sm">Useful calculators for Tanzania. No account required.</p>
         </div>
 
-        {/* PRIMARY ROW (4 Featured Items) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {featuredTools.map((tool, index) => (
-            <div key={index} className="animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both" style={{ animationDelay: `${index * 100}ms` }}>
+            <div key={index}>
               <ToolCard
                 href={tool.href}
                 icon={tool.icon}
@@ -414,30 +418,24 @@ export default function WelcomePage() {
         <div className="mt-10 flex justify-center">
           <Link 
             href="/tools"
-            className="group inline-flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-slate-800 px-8 py-3.5 rounded-full text-xs font-black uppercase tracking-widest transition-all shadow-sm hover:shadow-md hover:border-brand-200 dark:hover:border-brand-500/30 active:scale-95"
+            className="group inline-flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 px-6 py-2.5 rounded-full text-xs font-semibold transition-all active:scale-95"
           >
-            Explore All 11+ Free Tools <ArrowRight size={16} className="text-brand-500 group-hover:translate-x-1 transition-transform" />
+            View all tools <ArrowRight size={14} className="text-slate-400 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
       </div>
 
-      {/* 🚀 FINAL CTA SECTION (Borderless & Premium) */}
-      <div className="w-full max-w-4xl mx-auto px-6 py-24 md:py-32 z-10 text-center relative">
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-500/5 dark:bg-brand-500/10 blur-[100px] rounded-full pointer-events-none transition-colors"></div>
-        
+      {/* FINAL CTA SECTION */}
+      <div className="w-full max-w-4xl mx-auto px-6 pb-32 z-10 text-center relative">
         <div className="relative z-10">
-          <div className="w-16 h-16 bg-brand-50 dark:bg-brand-500/10 rounded-2xl flex items-center justify-center mx-auto mb-8 text-brand-600 dark:text-brand-400">
-            <Lock size={28} strokeWidth={1.5} />
-          </div>
-          
-          <h2 className={`${headerFont.className} text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white mb-6 transition-colors tracking-tight`}>
-            Take control of your future.
+          <h2 className={`${headerFont.className} text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white mb-6 transition-colors tracking-tight`}>
+            Ready to get started?
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed transition-colors mb-10">
-            Your financial data is encrypted, secure, and entirely yours. Join thousands of users building wealth with Nova today.
+          <p className="text-slate-600 dark:text-slate-400 text-base max-w-xl mx-auto leading-relaxed transition-colors mb-8">
+            Create an account today and get a clear picture of your finances.
           </p>
-          <button onClick={handlePrimaryAction} className="inline-flex items-center justify-center bg-brand-600 dark:bg-brand-500 hover:bg-brand-700 dark:hover:bg-brand-400 text-white px-10 py-4 rounded-full text-lg font-bold transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-500/30 active:scale-95">
-            {hasActiveSession ? "Go to Dashboard" : "Create Free Account"}
+          <button onClick={handlePrimaryAction} className="inline-flex items-center justify-center bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 px-8 py-3.5 rounded-full text-sm font-semibold transition-all active:scale-95">
+            {hasActiveSession ? "Go to Dashboard" : "Create free account"}
           </button>
         </div>
       </div>
@@ -452,54 +450,49 @@ export default function WelcomePage() {
               <span className={`${headerFont.className} font-bold text-xl text-slate-900 dark:text-white`}>Nova.</span>
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-xs">
-              Intelligent Wealth Management.
+              Clear finances. Quiet mind.
             </p>
-            <Link href="/contact" className="inline-flex items-center gap-2 text-sm font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 transition-colors">
+            <Link href="/contact" className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
               <Mail size={16} />
-              Contact Support
+              Contact us
             </Link>
           </div>
           
           <div>
-            <h4 className="font-bold text-slate-900 dark:text-white mb-4">Features</h4>
-            <ul className="space-y-4 sm:space-y-3 text-sm text-slate-600 dark:text-slate-400">
-              <li><Link href="/expense-tracker" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Expense Tracker</Link></li>
-              <li><Link href="/net-worth-tracker" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Net Worth Tracker</Link></li>
-              <li><Link href="/subscription-tracker" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Subscription Radar</Link></li>
-              <li><Link href="/asset-tracker" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Asset Tracker</Link></li>
+            <h4 className="font-semibold text-slate-900 dark:text-white mb-4 text-sm">Features</h4>
+            <ul className="space-y-4 sm:space-y-3 text-sm text-slate-500 dark:text-slate-400">
+              <li><Link href="/expense-tracker" className="hover:text-slate-900 dark:hover:text-white transition-colors">Expense Tracker</Link></li>
+              <li><Link href="/net-worth-tracker" className="hover:text-slate-900 dark:hover:text-white transition-colors">Net Worth Tracker</Link></li>
+              <li><Link href="/subscription-tracker" className="hover:text-slate-900 dark:hover:text-white transition-colors">Subscriptions</Link></li>
+              <li><Link href="/asset-tracker" className="hover:text-slate-900 dark:hover:text-white transition-colors">Assets</Link></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-bold text-slate-900 dark:text-white mb-4">Free Tools</h4>
-            <ul className="space-y-4 sm:space-y-3 text-sm text-slate-600 dark:text-slate-400">
-              <li><Link href="/property-tax-calculator-tanzania" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Property Tax Calculator</Link></li>
-              <li><Link href="/paye-calculator" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">PAYE Take-Home Calculator</Link></li>
-              <li><Link href="/tra-car-import-duty-calculator-tanzania" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">TRA Import Tool</Link></li>
-              <li><Link href="/freelance-invoice-calculator" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Freelance Invoice Tool</Link></li>
-              <li className="pt-1">
-                <Link href="/tools" className="inline-flex items-center gap-1.5 font-bold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 transition-colors group">
-                  Explore all tools <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </li>
+            <h4 className="font-semibold text-slate-900 dark:text-white mb-4 text-sm">Free Tools</h4>
+            <ul className="space-y-4 sm:space-y-3 text-sm text-slate-500 dark:text-slate-400">
+              <li><Link href="/property-tax-calculator-tanzania" className="hover:text-slate-900 dark:hover:text-white transition-colors">Property Tax Calculator</Link></li>
+              <li><Link href="/paye-calculator" className="hover:text-slate-900 dark:hover:text-white transition-colors">PAYE Calculator</Link></li>
+              <li><Link href="/tra-car-import-duty-calculator-tanzania" className="hover:text-slate-900 dark:hover:text-white transition-colors">TRA Import Tool</Link></li>
+              <li><Link href="/freelance-invoice-calculator" className="hover:text-slate-900 dark:hover:text-white transition-colors">Freelance Invoice</Link></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-bold text-slate-900 dark:text-white mb-4">Company</h4>
-            <ul className="space-y-4 sm:space-y-3 text-sm text-slate-600 dark:text-slate-400">
-              <li><Link href="/blog" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Financial Blog</Link></li>
-              <li><Link href="/privacy" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Privacy Policy</Link></li>
-              <li><Link href="/terms" className="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Terms of Service</Link></li>
+            <h4 className="font-semibold text-slate-900 dark:text-white mb-4 text-sm">Company</h4>
+            <ul className="space-y-4 sm:space-y-3 text-sm text-slate-500 dark:text-slate-400">
+              <li><Link href="/blog" className="hover:text-slate-900 dark:hover:text-white transition-colors">Blog</Link></li>
+              <li><Link href="/privacy" className="hover:text-slate-900 dark:hover:text-white transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-slate-900 dark:hover:text-white transition-colors">Terms of Service</Link></li>
             </ul>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 md:gap-4 text-sm text-slate-500 pt-8 border-t border-slate-200 dark:border-white/5">
-          <span>© {new Date().getFullYear()} Nova Financial. All rights reserved.</span>
-          <div className="flex items-center gap-2 font-medium bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-full border border-emerald-100 dark:border-emerald-500/20 w-fit">
-            <Shield size={14} /> Bank-Grade Security
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 md:gap-4 text-xs text-slate-500 pt-8 border-t border-slate-200 dark:border-white/5">
+          <span>© {new Date().getFullYear()} Nova. All rights reserved.</span>
+          <div className="flex items-center gap-2">
+            <Shield size={14} /> Encrypted & Secure
           </div>
         </div>
       </footer>
@@ -509,15 +502,12 @@ export default function WelcomePage() {
 
 function ToolCard({ href, icon, title, description, colorClass }: { href: string, icon: React.ReactNode, title: string, description: string, colorClass: string }) {
   return (
-    <Link href={href} className="group bg-white dark:bg-[#111118]/60 backdrop-blur-sm border border-slate-200 dark:border-white/5 p-6 rounded-[1.5rem] hover:shadow-2xl hover:border-brand-500/40 transition-all flex flex-col h-full relative overflow-hidden">
-      <div className={`w-12 h-12 rounded-xl flex items-center justify-center border mb-4 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 ${colorClass}`}>
+    <Link href={href} className="group bg-white dark:bg-[#111118]/60 border border-slate-200 dark:border-white/5 p-5 rounded-2xl hover:border-slate-300 dark:hover:border-white/10 transition-colors flex flex-col h-full relative overflow-hidden">
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-colors ${colorClass.replace('bg-', 'bg-').replace('text-', 'text-')}`}>
         {icon}
       </div>
-      <h3 className={`${headerFont.className} text-lg font-bold text-slate-900 dark:text-white mb-2 tracking-tight`}>{title}</h3>
-      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-4 flex-grow">{description}</p>
-      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-brand-600 dark:text-brand-400 group-hover:translate-x-1 transition-transform">
-        Open Tool <ArrowRight size={12} />
-      </div>
+      <h3 className={`${headerFont.className} text-base font-semibold text-slate-900 dark:text-white mb-1 tracking-tight`}>{title}</h3>
+      <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-4 flex-grow">{description}</p>
     </Link>
   );
 }

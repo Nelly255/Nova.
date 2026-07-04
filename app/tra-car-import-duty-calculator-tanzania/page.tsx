@@ -86,7 +86,7 @@ export default function ImportCalculator() {
   // CONSTANTS & TAX MATH
   const IMPORT_DUTY_RATE = 0.25; 
   const RAILWAY_LEVY_RATE = 0.02; 
-  const CPF_RATE = 0.006; 
+  const CPF_RATE = 0.01; // Updated to 1% per Finance Act 2026
   const VAT_RATE = 0.18; 
 
   // PARSE INPUTS FOR MATH
@@ -94,9 +94,9 @@ export default function ImportCalculator() {
   const parsedYear = parseInt(manufactureYear) || currentYear;
   const vehicleAge = manufactureYear ? Math.max(0, currentYear - parsedYear) : 0;
 
-  // EXCISE DUTY BRACKETS
+  // EXCISE DUTY BRACKETS (Updated per Finance Act 2026)
   const getExciseDutyRate = () => {
-    if (engineCapacity === "under_1000") return 0;
+    if (engineCapacity === "under_1000") return 0.05; // Now attracts 5%
     if (engineCapacity === "1001_1500" || engineCapacity === "1501_2000") return 0.05;
     return 0.10; // 2001_2500 and over_2500
   };
@@ -125,19 +125,20 @@ export default function ImportCalculator() {
     return flatTax + licenseFee;
   };
 
-  // DROPDOWN LABELS
+  // DROPDOWN LABELS (Updated per Finance Act 2026)
   const getEngineCapacityLabel = (val: string) => {
-    if (val === "under_1000") return "Up to 1000 CC (0% Excise)";
+    if (val === "under_1000") return "Up to 1000 CC (5% Excise)";
     if (val === "1001_1500") return "1001 - 1500 CC (5% Excise)";
     if (val === "1501_2000") return "1501 - 2000 CC (5% Excise)";
     if (val === "2001_2500") return "2001 - 2500 CC (10% Excise)";
     return "Over 2500 CC (10% Excise)";
   };
 
-  // FIXED TRA AGE PENALTY BRACKETS (0%, 15%, 30%)
+  // FIXED TRA AGE PENALTY BRACKETS (Updated per Finance Act 2026)
   const getAgePenaltyRate = () => {
-    if (vehicleAge > 10) return 0.30; 
-    if (vehicleAge >= 8) return 0.15; 
+    if (vehicleAge > 20) return 0.40; 
+    if (vehicleAge > 10) return 0.35; 
+    if (vehicleAge >= 8) return 0.18; 
     return 0; 
   };
 
@@ -293,7 +294,7 @@ export default function ImportCalculator() {
                       {/* Dropdown Menu List */}
                       <div className="absolute top-full left-0 w-full mt-2 bg-white dark:bg-[#1C1C24] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                         {[
-                          { val: "under_1000", label: "Up to 1000 CC (0% Excise)" },
+                          { val: "under_1000", label: "Up to 1000 CC (5% Excise)" },
                           { val: "1001_1500", label: "1001 - 1500 CC (5% Excise)" },
                           { val: "1501_2000", label: "1501 - 2000 CC (5% Excise)" },
                           { val: "2001_2500", label: "2001 - 2500 CC (10% Excise)" },
@@ -372,7 +373,7 @@ export default function ImportCalculator() {
                   <span className="text-slate-900 dark:text-white">{formatMoney(railwayLevyUsd, 'USD')}</span>
                 </div>
                 <div className="flex justify-between text-sm font-bold">
-                  <span className="text-slate-500 dark:text-slate-400">Customs Processing Fee (0.6%)</span>
+                  <span className="text-slate-500 dark:text-slate-400">Customs Processing Fee (1%)</span>
                   <span className="text-slate-900 dark:text-white">{formatMoney(cpfUsd, 'USD')}</span>
                 </div>
                 <div className="flex justify-between text-sm font-bold pt-3 border-t border-[#8438FF]/10">
@@ -475,7 +476,7 @@ export default function ImportCalculator() {
               <span className="font-bold">{formatMoney(railwayLevyUsd, 'USD')}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-600">Customs Processing Fee (0.6%)</span>
+              <span className="text-slate-600">Customs Processing Fee (1%)</span>
               <span className="font-bold">{formatMoney(cpfUsd, 'USD')}</span>
             </div>
             <div className="flex justify-between pt-2 border-t border-slate-100">

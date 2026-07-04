@@ -7,11 +7,11 @@ import AddTransactionModal from "@/components/AddTransactionModal";
 import { 
   ArrowDownToLine, Receipt, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, 
   Trash2, Edit2, UploadCloud, FileText, Loader2, CheckCircle2, AlertTriangle, X, Download, 
-  ListFilter, Search, Wallet, TrendingUp, Smartphone, Landmark, Banknote
+  ListFilter, Search, Wallet, TrendingUp, Smartphone, Landmark, Banknote, Scale
 } from "lucide-react";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const CATEGORIES = ["Housing", "Food", "Transportation", "Utilities", "Insurance", "Healthcare", "Savings", "Personal", "Debt Repayment", "Entertainment", "Income", "Asset Sale", "Loan Received", "Loan Given", "Transfer", "Other"];
+const CATEGORIES = ["Housing", "Food", "Transportation", "Utilities", "Insurance", "Healthcare", "Savings", "Personal", "Debt Repayment", "Entertainment", "Income", "Asset Sale", "Loan Received", "Loan Given", "Transfer", "Contra", "Other"];
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -39,7 +39,6 @@ export default function TransactionsPage() {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  // Added account_id to the editForm state to ensure we know which wallet to update
   const [editForm, setEditForm] = useState({ id: "", title: "", amount: "", date: "", type: "expense", category: "", account_id: "" });
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -167,7 +166,6 @@ export default function TransactionsPage() {
       const newAmount = Number(editForm.amount.replace(/,/g, ''));
       const { id, account_id, type: newType } = editForm;
 
-      // 1. Get the original transaction state first to compare
       const { data: oldTx, error: fetchError } = await supabase
         .from("transactions")
         .select("amount, type, account_id")
@@ -176,7 +174,6 @@ export default function TransactionsPage() {
 
       if (fetchError) throw fetchError;
 
-      // 2. Update the transaction itself
       const { error: updateTxError } = await supabase.from("transactions").update({
         title: editForm.title, 
         amount: newAmount, 
@@ -187,7 +184,6 @@ export default function TransactionsPage() {
 
       if (updateTxError) throw updateTxError;
 
-      // 3. Handle Wallet Balance adjustment if an account is linked
       if (account_id) {
         const { data: accountData } = await supabase
           .from("accounts")
@@ -200,21 +196,18 @@ export default function TransactionsPage() {
           const oldAmount = Number(oldTx.amount);
           const oldType = oldTx.type;
 
-          // Step A: Undo the old transaction effect on the wallet
           if (oldType === 'expense') {
             currentBalance += oldAmount;
           } else {
             currentBalance -= oldAmount;
           }
 
-          // Step B: Apply the new transaction effect to the wallet
           if (newType === 'expense') {
             currentBalance -= newAmount;
           } else {
             currentBalance += newAmount;
           }
 
-          // Step C: Save the adjusted balance back to Supabase
           await supabase
             .from("accounts")
             .update({ balance: currentBalance })
@@ -316,6 +309,7 @@ export default function TransactionsPage() {
     return matchTab && matchSearch && matchWallet;
   });
 
+  // 🚀 THIS HELPER EXCLUDES DOUBLE ENTRIES
   const isExcludedFromRealWealth = (category: string) => {
     const cat = (category || "").toLowerCase();
     return cat.includes("transfer") || 
@@ -324,13 +318,60 @@ export default function TransactionsPage() {
            cat.includes("loan given");
   };
 
+  // We only use "Real" transactions for Income and Expenses
   const realTransactions = currentPeriodTransactions.filter(t => !isExcludedFromRealWealth(t.category));
   const totalIncome = realTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + Number(t.amount), 0);
   const totalExpense = realTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + Number(t.amount), 0);
   
-  const allPeriodIncome = currentPeriodTransactions.filter(t => t.type === 'income').reduce((acc, t) => acc + Number(t.amount), 0);
-  const allPeriodExpense = currentPeriodTransactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + Number(t.amount), 0);
-  const netCash = allPeriodIncome - allPeriodExpense;
+  // 🚀 ROLLING OPENING BALANCE: OB = Previous Month's Closing Cash Flow
+  // Closing Cash Flow (any month) = Opening Balance + Real Income − Real Expenses
+  // Opening Balance (any month) = previous month's Closing Cash Flow
+  // So we roll forward month-by-month from the earliest real transaction up to
+  // (but not including) the selected month, carrying the balance as we go.
+  const calculateRollingOpeningBalance = (targetYear: number, targetMonth: number) => {
+    if (transactions.length === 0) return 0;
+
+    // Net REAL cash flow per month (income − expense), excluding Contra, Transfers,
+    // Loan Received, and Loan Given — same rule used for the current month's totals.
+    const monthlyRealNet = new Map<string, number>();
+    let earliestYear = targetYear;
+    let earliestMonth = targetMonth;
+
+    transactions.forEach(t => {
+      if (isExcludedFromRealWealth(t.category)) return; // Contra/Transfer/Loan = zero effect on cash flow
+
+      const d = new Date(t.date);
+      const y = d.getFullYear();
+      const m = d.getMonth();
+
+      if (y < earliestYear || (y === earliestYear && m < earliestMonth)) {
+        earliestYear = y;
+        earliestMonth = m;
+      }
+
+      const key = `${y}-${m}`;
+      const signedAmount = Number(t.amount) * (t.type === 'income' ? 1 : -1);
+      monthlyRealNet.set(key, (monthlyRealNet.get(key) || 0) + signedAmount);
+    });
+
+    // Roll forward: each month's Closing CF becomes the next month's Opening Balance.
+    let rollingBalance = 0;
+    let iterYear = earliestYear;
+    let iterMonth = earliestMonth;
+
+    while (iterYear < targetYear || (iterYear === targetYear && iterMonth < targetMonth)) {
+      rollingBalance += monthlyRealNet.get(`${iterYear}-${iterMonth}`) || 0;
+      iterMonth++;
+      if (iterMonth > 11) { iterMonth = 0; iterYear++; }
+    }
+
+    return rollingBalance;
+  };
+
+  const openingBalance = calculateRollingOpeningBalance(selectedYear, selectedMonth);
+
+  // 🚀 Closing Cash Flow = Opening Balance + Real Income - Real Expense
+  const totalCashFlow = openingBalance + totalIncome - totalExpense;
 
   const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE));
   const paginatedTx = filteredTransactions.slice(
@@ -457,14 +498,23 @@ export default function TransactionsPage() {
         </div>
       </header>
 
-      {/* 4-CARD HERO METRICS */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 animate-in fade-in duration-500">
+      {/* 5-CARD HERO METRICS */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-6 animate-in fade-in duration-500">
         <div className="glass-card p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] flex flex-col justify-center border border-brand-500/10 transition-colors bg-gradient-to-br from-brand-50/50 to-transparent dark:from-brand-500/5">
           <p className="text-brand-600 dark:text-brand-400 font-bold mb-1 tracking-wide uppercase text-[10px] md:text-xs flex items-center gap-1.5">
             <Wallet size={14} /> Total Balance
           </p>
           <h2 className="text-xl md:text-3xl font-extrabold text-slate-900 dark:text-white break-words">
             {currencySymbol}{walletBalances.total.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+          </h2>
+        </div>
+
+        <div className="glass-card p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] flex flex-col justify-center border border-slate-500/10 dark:border-slate-400/10 transition-colors bg-slate-50/30 dark:bg-slate-800/20">
+          <p className="text-slate-500 dark:text-slate-400 font-bold mb-1 tracking-wide uppercase text-[10px] md:text-xs flex items-center gap-1.5">
+            <Scale size={14} /> Opening Balance
+          </p>
+          <h2 className="text-xl md:text-3xl font-extrabold text-slate-700 dark:text-slate-300 break-words">
+            {openingBalance >= 0 ? '+' : ''}{currencySymbol}{openingBalance.toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </h2>
         </div>
 
@@ -486,13 +536,14 @@ export default function TransactionsPage() {
           </h2>
         </div>
 
-        <div className={`glass-card p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] flex flex-col justify-center border transition-colors ${netCash >= 0 ? 'border-emerald-500/10 bg-emerald-50/30 dark:bg-emerald-500/5' : 'border-rose-500/10 bg-rose-50/30 dark:bg-rose-500/5'}`}>
-          <p className={`font-bold mb-1 tracking-wide uppercase text-[10px] md:text-xs flex items-center gap-1.5 ${netCash >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-            <TrendingUp size={14} className={netCash < 0 ? "rotate-180" : ""} /> 
-            Net Cash Flow
+        {/* 🚀 TOTAL CASH FLOW (OB + IN - OUT) */}
+        <div className={`col-span-2 lg:col-span-1 glass-card p-4 md:p-6 rounded-[1.5rem] md:rounded-[2rem] flex flex-col justify-center border transition-colors ${totalCashFlow >= 0 ? 'border-emerald-500/10 bg-emerald-50/30 dark:bg-emerald-500/5' : 'border-rose-500/10 bg-rose-50/30 dark:bg-rose-500/5'}`}>
+          <p className={`font-bold mb-1 tracking-wide uppercase text-[10px] md:text-xs flex items-center gap-1.5 ${totalCashFlow >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+            <TrendingUp size={14} className={totalCashFlow < 0 ? "rotate-180" : ""} /> 
+            Total Cash Flow
           </p>
           <h2 className="text-xl md:text-3xl font-extrabold text-slate-900 dark:text-white break-words">
-            {netCash >= 0 ? '+' : ''}{currencySymbol}{netCash.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            {totalCashFlow >= 0 ? '+' : ''}{currencySymbol}{totalCashFlow.toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </h2>
         </div>
       </div>

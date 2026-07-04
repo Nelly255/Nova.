@@ -185,7 +185,7 @@ export default function SettingsPage() {
     document.body.removeChild(link);
   };
 
-  const downloadPDF = async (data: any[], title: string) => {
+  const downloadPDF = async (data: any[], title: string, options?: any) => {
     if (!data || data.length === 0) {
       showToast("No data available for this period.");
       return;
@@ -212,32 +212,33 @@ export default function SettingsPage() {
     }
 
     const sym = currency === "TZS" ? "TSh " : "$";
+    
+    const formatCurrency = (val: number, isIncome = false) => {
+        const sign = val < 0 ? '-' : (isIncome && val > 0 ? '+' : '');
+        return `${sign}${sym}${Math.abs(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    };
 
     let summaryHtml = '';
-    if (title.includes("Transactions")) {
-      const totalIncome = data
-        .filter(d => d.type === 'income')
-        .reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
-        
-      const totalExpense = data
-        .filter(d => d.type === 'expense')
-        .reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
-        
-      const net = totalIncome - totalExpense;
+    if (options?.isTransactions) {
+      const { openingBalance = 0, totalIncome = 0, totalExpense = 0, closingBalance = 0 } = options;
       
       summaryHtml = `
-        <div class="summary-container">
+        <div class="summary-container" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 40px;">
+          <div class="summary-card">
+            <span class="summary-label">Opening Balance</span>
+            <span class="summary-value" style="color: #475569;">${formatCurrency(openingBalance)}</span>
+          </div>
           <div class="summary-card">
             <span class="summary-label">Total Income</span>
-            <span class="summary-value text-emerald">+${sym}${totalIncome.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            <span class="summary-value text-emerald">${formatCurrency(totalIncome, true)}</span>
           </div>
           <div class="summary-card">
             <span class="summary-label">Total Expenses</span>
-            <span class="summary-value text-rose">-${sym}${totalExpense.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            <span class="summary-value text-rose">-${sym}${Math.abs(totalExpense).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           </div>
           <div class="summary-card" style="background: #EEF2FF; border-color: #C7D2FE;">
-            <span class="summary-label" style="color: #4F46E5;">Net Cash Flow</span>
-            <span class="summary-value" style="color: #312E81;">${net >= 0 ? '+' : ''}${sym}${net.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            <span class="summary-label" style="color: #4F46E5;">Closing Balance</span>
+            <span class="summary-value" style="color: #312E81;">${formatCurrency(closingBalance)}</span>
           </div>
         </div>
       `;
@@ -277,10 +278,9 @@ export default function SettingsPage() {
             .report-date { font-size: 12px; color: #94A3B8; font-weight: 500; }
             .user-name { font-size: 20px; font-weight: 800; color: #0F172A; margin-bottom: 2px; }
             
-            .summary-container { display: flex; gap: 20px; margin-bottom: 40px; }
-            .summary-card { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; flex: 1; }
+            .summary-card { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; }
             .summary-label { font-size: 10px; text-transform: uppercase; color: #64748B; font-weight: 700; letter-spacing: 1px; margin-bottom: 8px; display: block; }
-            .summary-value { font-size: 20px; font-weight: 800; color: #0F172A; letter-spacing: -0.5px; }
+            .summary-value { font-size: 18px; font-weight: 800; color: #0F172A; letter-spacing: -0.5px; }
             .text-emerald { color: #10B981; }
             .text-rose { color: #E11D48; }
 
@@ -337,32 +337,49 @@ export default function SettingsPage() {
             <thead>
               <tr>
                 ${headers.map(h => {
-                  const isNumber = h.includes('amount') || h.includes('price') || h.includes('value') || h.includes('depreciation');
+                  const isNumber = h.includes('amount') || h.includes('price') || h.includes('value') || h.includes('depreciation') || h === 'running_balance';
                   return `<th class="${isNumber ? 'align-right' : ''}">${h.replace(/_/g, " ")}</th>`;
                 }).join("")}
               </tr>
             </thead>
             <tbody>
-              ${data.map(row => {
+              ${data.map((row, index) => {
+                const isOB = index === 0 && options?.isTransactions;
                 const isContra = (row.category || '').toLowerCase() === 'contra' || (row.type || '').toLowerCase() === 'transfer';
+                
                 return `
                 <tr>
                   ${headers.map(h => {
                     let val = row[h];
                     if (val === null || val === undefined) val = "-";
                     
-                    const isNumber = h.includes('amount') || h.includes('price') || h.includes('value') || h.includes('depreciation');
+                    if (isOB) {
+                      // Custom row rendering specifically for Opening Balance 
+                      if (h === 'title') return `<td><strong>${val}</strong></td>`;
+                      if (h === 'running_balance') return `<td class="align-right amount-cell" style="font-weight: 800; color: #0F172A;">${formatCurrency(val)}</td>`;
+                      if (h === 'amount') return `<td class="align-right amount-cell" style="color: #94A3B8;">-</td>`;
+                      if (h === 'date') return `<td style="color: #94A3B8; font-size: 10px;">${val}</td>`;
+                      return `<td><span style="color:#CBD5E1;">-</span></td>`;
+                    }
+
+                    // Standard dynamic row rendering
+                    const isNumber = h.includes('amount') || h.includes('price') || h.includes('value') || h.includes('depreciation') || h === 'running_balance';
                     
                     if (isNumber && !isNaN(val)) {
-                      val = Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                      if (isContra) {
-                         return `<td class="align-right amount-cell" style="color: #94A3B8;">-${sym}${val}</td>`;
-                      } else if (row.type === 'expense') {
-                         return `<td class="align-right amount-cell text-rose">-${sym}${val}</td>`;
-                      } else if (row.type === 'income') {
-                         return `<td class="align-right amount-cell text-emerald">+${sym}${val}</td>`;
+                      const formattedNum = Number(val).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                      
+                      if (h === 'running_balance') {
+                         return `<td class="align-right amount-cell" style="font-weight: 700;">${sym}${formattedNum}</td>`;
                       }
-                      return `<td class="align-right amount-cell">${sym}${val}</td>`;
+                      
+                      if (isContra) {
+                         return `<td class="align-right amount-cell" style="color: #94A3B8;">${sym}${formattedNum}</td>`;
+                      } else if (row.type === 'expense') {
+                         return `<td class="align-right amount-cell text-rose">-${sym}${formattedNum}</td>`;
+                      } else if (row.type === 'income') {
+                         return `<td class="align-right amount-cell text-emerald">+${sym}${formattedNum}</td>`;
+                      }
+                      return `<td class="align-right amount-cell">${sym}${formattedNum}</td>`;
                     }
                     
                     if (h.includes('date') && val !== "-") {
@@ -409,33 +426,98 @@ export default function SettingsPage() {
   const handleExportTx = async (type: 'csv' | 'pdf') => {
     type === 'csv' ? setExportingTx(true) : setExportingTxPdf(true);
     
-    let query = supabase.from("transactions").select("*").order("date", { ascending: true });
-    
-    if (exportPeriod === "custom") {
-      if (startDate) query = query.gte("date", startDate);
-      if (endDate) query = query.lte("date", endDate);
-    }
+    try {
+      // 1. Calculate Opening Balance if using a custom date range
+      let openingBalance = 0;
+      if (exportPeriod === "custom" && startDate) {
+        const { data: obData } = await supabase
+          .from("transactions")
+          .select("type, amount, category")
+          .lt("date", startDate);
+        
+        if (obData) {
+          const obIncome = obData.filter(t => t.type === 'income' && (t.category || '').toLowerCase() !== 'contra').reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+          const obExpense = obData.filter(t => t.type === 'expense').reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+          openingBalance = obIncome - obExpense;
+        }
+      }
 
-    const { data, error } = await query;
-    if (!error && data) {
-      const formattedTx = data
-        .filter(tx => !((tx.category || '').toLowerCase() === 'contra' && tx.type === 'income'))
-        .map(tx => {
-          const isContra = (tx.category || '').toLowerCase() === 'contra';
-          return {
-            date: tx.date,
-            title: tx.title,
-            category: tx.category,
-            type: isContra ? 'transfer' : tx.type, 
-            amount: tx.amount
-          };
-        });
+      // 2. Fetch Active Period Transactions
+      let query = supabase.from("transactions").select("*").order("date", { ascending: true });
+      
+      if (exportPeriod === "custom") {
+        if (startDate) query = query.gte("date", startDate);
+        if (endDate) query = query.lte("date", endDate);
+      }
 
-      if (type === 'csv') downloadCSV(formattedTx, "Transactions_Data");
-      else await downloadPDF(formattedTx, "Transactions_Report"); 
+      const { data, error } = await query;
+      if (error) throw error;
+
+      if (data) {
+        let runningBal = openingBalance;
+        let periodIncome = 0;
+        let periodExpense = 0;
+
+        // 3. Map transactions and generate running balance line-by-line
+        const txRows = data
+          .filter(tx => !((tx.category || '').toLowerCase() === 'contra' && tx.type === 'income'))
+          .map(tx => {
+            const isContra = (tx.category || '').toLowerCase() === 'contra';
+            const txType = isContra ? 'transfer' : tx.type;
+            const amt = Number(tx.amount || 0);
+
+            if (!isContra) {
+              if (txType === 'income') {
+                  runningBal += amt;
+                  periodIncome += amt;
+              } else if (txType === 'expense') {
+                  runningBal -= amt;
+                  periodExpense += amt;
+              }
+            }
+
+            return {
+              date: tx.date,
+              title: tx.title,
+              category: tx.category,
+              type: txType, 
+              amount: amt,
+              running_balance: runningBal
+            };
+          });
+
+        // 4. Prepend the Opening Balance to act as Row 1 in both CSV and PDF
+        const finalData = [
+            {
+                date: startDate || "All Time",
+                title: "Opening Balance",
+                category: "-",
+                type: "balance",
+                amount: openingBalance,
+                running_balance: openingBalance
+            },
+            ...txRows
+        ];
+
+        const closingBalance = openingBalance + periodIncome - periodExpense;
+
+        if (type === 'csv') {
+            downloadCSV(finalData, "Transactions_Data");
+        } else {
+            await downloadPDF(finalData, "Transactions_Report", {
+                isTransactions: true,
+                openingBalance,
+                totalIncome: periodIncome,
+                totalExpense: periodExpense,
+                closingBalance
+            }); 
+        }
+      }
+    } catch (err) {
+      showToast("Failed to export transactions.");
+    } finally {
+      type === 'csv' ? setExportingTx(false) : setExportingTxPdf(false);
     }
-    
-    type === 'csv' ? setExportingTx(false) : setExportingTxPdf(false);
   };
 
   const handleExportAssets = async (type: 'csv' | 'pdf') => {
