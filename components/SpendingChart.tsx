@@ -7,11 +7,11 @@ import { Loader2 } from "lucide-react";
 export default function SpendingChart({ 
   selectedMonth, 
   selectedYear,
-  currencySymbol // 🚀 ADDED: Injected prop from DashboardPage
+  currencySymbol 
 }: { 
   selectedMonth: number; 
   selectedYear: number; 
-  currencySymbol: string; // 🚀 ADDED: Prop type
+  currencySymbol: string; 
 }) {
   const [chartData, setChartData] = useState<{ week: string; amount: number }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,10 +28,20 @@ export default function SpendingChart({
         .eq("type", "expense");
 
       if (!error && data) {
-        // 1. Filter transactions to match the selected time-travel period
+        // 1. Filter transactions to match the selected time-travel period AND rigorously ignore all internal transfers
         const periodTransactions = data.filter((t: any) => {
           const d = new Date(t.date);
-          return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
+          
+          // Check both category and type fields to guarantee no transfers slip through
+          const categoryName = (t.category || '').toLowerCase();
+          const typeName = (t.type || '').toLowerCase();
+          
+          const isInternalTransfer = 
+            categoryName === 'contra' || 
+            categoryName === 'transfer' || 
+            typeName === 'transfer';
+
+          return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear && !isInternalTransfer;
         });
 
         // 2. Group the spending into 4 weeks

@@ -39,13 +39,23 @@ export default function CategoryChart({
       const { data, error } = await supabase.from("transactions").select("*").eq("type", "expense");
 
       if (!error && data) {
-        // Filter strictly by the time-machine dropdown
+        // 1. Filter strictly by the time-machine dropdown AND rigorously ignore all internal transfers
         const periodTransactions = data.filter((t: any) => {
           const d = new Date(t.date);
-          return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
+          
+          // Check both category and type fields to guarantee no transfers slip through
+          const categoryName = (t.category || '').toLowerCase();
+          const typeName = (t.type || '').toLowerCase();
+          
+          const isInternalTransfer = 
+            categoryName === 'contra' || 
+            categoryName === 'transfer' || 
+            typeName === 'transfer';
+
+          return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear && !isInternalTransfer;
         });
 
-        // Group the spending by category
+        // 2. Group the true spending by category
         const grouped: Record<string, number> = {};
         let total = 0;
 
@@ -54,7 +64,7 @@ export default function CategoryChart({
           total += Number(t.amount);
         });
 
-        // Convert the grouped data into an array with percentages and colors
+        // 3. Convert the grouped data into an array with percentages and colors
         const formattedData = Object.keys(grouped)
           .map((key, index) => ({
             category: key,
