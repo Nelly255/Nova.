@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Plus_Jakarta_Sans } from "next/font/google";
-// 🚀 UPGRADED: Added the Search icon for the new tour step!
-import { LayoutDashboard, ArrowRightLeft, Target, ShieldCheck, X, ChevronRight, Check, Search } from "lucide-react";
+// 🚀 UPGRADED: Added Calculator and Sparkles icons for the new steps!
+import { LayoutDashboard, ArrowRightLeft, Target, ShieldCheck, X, ChevronRight, Check, Search, Calculator, Sparkles } from "lucide-react";
 
 const headerFont = Plus_Jakarta_Sans({ subsets: ["latin"] });
 
@@ -65,12 +65,25 @@ export default function QuickTourModal() {
       icon: <ShieldCheck size={32} className="text-rose-500" />,
       color: "from-slate-100 to-rose-50 dark:from-slate-800 dark:to-rose-500/20"
     },
-    // 🚀 NEW STEP: Command Palette / Global Search
     {
       title: "5. Global Search",
       description: "Work like a pro. Press Cmd/Ctrl + K on your keyboard or tap the Search icon to instantly jump anywhere in the app.",
       icon: <Search size={32} className="text-purple-500" />,
       color: "from-slate-100 to-purple-50 dark:from-slate-800 dark:to-purple-500/20"
+    },
+    // 🚀 NEW STEP: Tax Tools
+    {
+      title: "6. Tax Tools",
+      description: "Crunch the numbers instantly. Use our built-in calculators for PAYE, VAT, DST, and vehicle imports tailored for Tanzania.",
+      icon: <Calculator size={32} className="text-cyan-500" />,
+      color: "from-slate-100 to-cyan-50 dark:from-slate-800 dark:to-cyan-500/20"
+    },
+    // 🚀 NEW STEP: AI Analysis (Coming Soon)
+    {
+      title: "7. AI Analysis",
+      description: "Coming soon! Our smart AI assistant will analyze your spending patterns and give you personalized wealth-building strategies.",
+      icon: <Sparkles size={32} className="text-fuchsia-500" />,
+      color: "from-slate-100 to-fuchsia-50 dark:from-slate-800 dark:to-fuchsia-500/20"
     }
   ];
 
@@ -114,7 +127,7 @@ export default function QuickTourModal() {
           {/* Footer Controls */}
           <div className="p-6 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
             {/* Step Indicators */}
-            <div className="flex gap-1.5">
+            <div className="flex gap-1.5 flex-wrap max-w-[50%]">
               {tourSteps.map((_, idx) => (
                 <div 
                   key={idx} 

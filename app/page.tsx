@@ -450,7 +450,7 @@ export default function WelcomePage() {
               <span className={`${headerFont.className} font-bold text-xl text-slate-900 dark:text-white`}>Nova.</span>
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-xs">
-              Clear finances. Quiet mind.
+              Intelligent Wealth Management. 
             </p>
             <Link href="/contact" className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
               <Mail size={16} />
