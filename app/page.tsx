@@ -234,8 +234,8 @@ export default function WelcomePage() {
           <div className="absolute bottom-6 right-2 sm:right-6 lg:top-[40%] lg:bottom-auto lg:-right-4 z-20">
             <div className="bg-white/70 dark:bg-slate-900/75 backdrop-blur-xl border border-white/60 dark:border-white/10 p-4 rounded-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.35)] flex flex-col gap-3.5 w-56 transition-all duration-300 hover:scale-[1.02]">
               <div className="flex items-center justify-between border-b border-slate-200/30 dark:border-white/5 pb-1.5">
-                <span className="text-slate-500 dark:text-slate-400 text-[11px] font-semibold uppercase tracking-wider">Recent</span>
-                <span className="text-slate-400 dark:text-slate-500 text-[10px] font-medium">Today</span>
+                <span className="text-slate-600 dark:text-slate-300 text-[11px] font-semibold uppercase tracking-wider">Recent</span>
+                <span className="text-slate-600 dark:text-slate-300 text-[10px] font-medium">Today</span>
               </div>
               
               <div className="flex items-center gap-3">
@@ -244,7 +244,7 @@ export default function WelcomePage() {
                 </div>
                 <div className="flex flex-col flex-1 min-w-0">
                   <span className="text-xs font-bold text-slate-900 dark:text-white truncate leading-tight">Luku Token</span>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Utilities</span>
+                  <span className="text-[10px] text-slate-600 dark:text-slate-300 font-medium">Utilities</span>
                 </div>
                 <span className={`${headerFont.className} text-xs font-bold text-slate-800 dark:text-slate-200 shrink-0`}>-20k</span>
               </div>
@@ -255,7 +255,7 @@ export default function WelcomePage() {
                 </div>
                 <div className="flex flex-col flex-1 min-w-0">
                   <span className="text-xs font-bold text-slate-900 dark:text-white truncate leading-tight">Salary</span>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Income</span>
+                  <span className="text-[10px] text-slate-600 dark:text-slate-300 font-medium">Income</span>
                 </div>
                 <span className={`${headerFont.className} text-xs font-bold text-emerald-600 dark:text-emerald-400 shrink-0`}>+1.2M</span>
               </div>
@@ -398,7 +398,7 @@ export default function WelcomePage() {
       <div id="free-tools" className="w-full max-w-7xl mx-auto px-6 py-16 lg:py-20 z-10 scroll-mt-20 bg-slate-100/80 dark:bg-white/[0.02] border-y border-slate-300 dark:border-white/5 rounded-3xl mb-24">
         <div className="text-center max-w-2xl mx-auto mb-10">
           <h2 className={`${headerFont.className} text-2xl md:text-3xl font-extrabold mb-3 tracking-tight text-slate-900 dark:text-white`}>Free Financial Tools</h2>
-          <p className="text-slate-700 dark:text-slate-400 text-sm">Useful calculators for Tanzania. No account required.</p>
+          <p className="text-slate-700 dark:text-slate-300 text-sm">Useful calculators for Tanzania. No account required.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -420,7 +420,7 @@ export default function WelcomePage() {
             href="/tools"
             className="group inline-flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 px-6 py-2.5 rounded-full text-xs font-semibold transition-all active:scale-95"
           >
-            View all tools <ArrowRight size={14} className="text-slate-500 group-hover:translate-x-1 transition-transform" />
+            View all tools <ArrowRight size={14} className="text-slate-600 dark:text-slate-400 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
       </div>
