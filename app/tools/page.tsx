@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { Plus_Jakarta_Sans, Inter } from "next/font/google";
-import { ArrowLeft, Search, ArrowRight, Sun, Moon, LineChart, Car, Home, Wallet, Receipt, Target, Calculator, Building, TrendingUp, TrendingDown, Shield, Activity, Mail, Plus, FileText, Coffee } from "lucide-react"; 
+import { ArrowLeft, Search, ArrowRight, Sun, Moon, LineChart, Car, Home, Wallet, Receipt, Target, Calculator, Building, TrendingUp, TrendingDown, Shield, Activity, Mail, Plus, FileText, Coffee, Share2, MessageCircle, Bookmark } from "lucide-react"; 
 
 const headerFont = Plus_Jakarta_Sans({ subsets: ["latin"] });
 const bodyFont = Inter({ subsets: ["latin"] });
@@ -16,6 +16,10 @@ export default function ToolsHubPage() {
   
   // PAGINATION STATE
   const [visibleCount, setVisibleCount] = useState(8);
+
+  // SHARE & SAVE STATE
+  const [copied, setCopied] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   // 🚀 Core Theme Applier Function
   const applyThemeClass = (isDark: boolean) => {
@@ -91,6 +95,42 @@ export default function ToolsHubPage() {
   useEffect(() => {
     setVisibleCount(8);
   }, [searchTerm]);
+
+  // SHARE HANDLERS
+  const platformUrl = typeof window !== "undefined" ? window.location.href : "https://nova.co.tz/tools";
+  const shareMessage = `Check out Nova's free Financial Tools & Calculators for Tanzania. Super helpful! ${platformUrl}`;
+
+  const handleWhatsAppShare = () => {
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
+    window.open(whatsappUrl, "_blank");
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(platformUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleNativeShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Nova Financial Tools',
+          text: 'Free financial calculators and tools for Tanzania.',
+          url: platformUrl,
+        });
+      } catch (error) {
+        console.log('Error sharing', error);
+      }
+    } else {
+      handleCopyLink();
+    }
+  };
+
+  const handleSaveToggle = () => {
+    setIsSaved(true);
+    alert("Press Ctrl+D (Windows) or Cmd+D (Mac) to bookmark this page, or use 'Add to Home Screen' on your mobile device.");
+  };
 
   const allTools = [
     {
@@ -320,9 +360,8 @@ export default function ToolsHubPage() {
           </div>
         )}
 
-        {/* 🚀 PREMIUM KO-FI SUPPORT BANNER */}
-        <div className="mt-20 max-w-5xl mx-auto bg-gradient-to-r from-amber-50/80 to-orange-50/80 dark:from-amber-500/5 dark:to-orange-500/5 backdrop-blur-xl border border-amber-200/50 dark:border-amber-500/10 rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
-          {/* Subtle Glow */}
+        {/* 🚀 PREMIUM KO-FI SUPPORT BANNER (Moved UP) */}
+        <div className="mt-16 max-w-5xl mx-auto bg-gradient-to-r from-amber-50/80 to-orange-50/80 dark:from-amber-500/5 dark:to-orange-500/5 backdrop-blur-xl border border-amber-200/50 dark:border-amber-500/10 rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
           <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/10 dark:bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
 
           <div className="relative z-10 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-5 flex-1">
@@ -348,6 +387,44 @@ export default function ToolsHubPage() {
             >
               <Coffee size={18} /> Support on Ko-fi
             </a>
+          </div>
+        </div>
+
+        {/* 🚀 GLOBAL SHARE & BOOKMARK BANNER (Moved DOWN with Save toggle) */}
+        <div className="mt-8 w-full bg-white dark:bg-[#111118] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 transition-colors shadow-sm">
+          <div className="text-center md:text-left flex-1">
+            <h4 className={`${headerFont.className} text-xl font-bold text-slate-900 dark:text-white mb-2`}>Keep these tools handy</h4>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Bookmark this page to your home screen or share the library with your network.</p>
+          </div>
+          
+          <div className="flex flex-wrap items-center justify-center md:justify-end gap-3 w-full md:w-auto">
+            <button 
+              onClick={handleWhatsAppShare}
+              className="flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-white px-5 py-3 rounded-xl text-sm font-semibold transition-all active:scale-95"
+            >
+              <MessageCircle size={18} />
+              <span className="hidden sm:inline">WhatsApp</span>
+            </button>
+            
+            <button 
+              onClick={handleNativeShare}
+              className="flex items-center justify-center gap-2 bg-brand-50 dark:bg-brand-500/10 hover:bg-brand-100 dark:hover:bg-brand-500/20 text-brand-700 dark:text-brand-400 px-5 py-3 rounded-xl text-sm font-semibold transition-all active:scale-95"
+            >
+              <Share2 size={18} />
+              <span className="hidden sm:inline">{copied ? "Copied!" : "Share Link"}</span>
+            </button>
+
+            <button 
+              onClick={handleSaveToggle}
+              className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all active:scale-95 ${
+                isSaved 
+                  ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20" 
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+              }`}
+            >
+              <Bookmark size={18} fill={isSaved ? "currentColor" : "none"} />
+              <span className="hidden sm:inline">{isSaved ? "Saved" : "Save"}</span>
+            </button>
           </div>
         </div>
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Moon, Sun, Download, Car, DollarSign, Activity, AlertCircle, Calendar, ChevronDown, Settings2, Info } from "lucide-react";
+import { ArrowLeft, Moon, Sun, Download, Car, DollarSign, Activity, AlertCircle, Calendar, ChevronDown, Settings2, Info, Wallet, Receipt, LineChart, Shield, ArrowRight } from "lucide-react";
 
 export default function ImportCalculator() {
   // THEME STATE
@@ -392,6 +392,24 @@ export default function ImportCalculator() {
                 </div>
               </div>
 
+              {/* 🚀 STRATEGY 1: POST-TASK IN-FLOW PROMOTION (Only shows when calculating) */}
+              {cifUsd > 0 && (
+                <div className="mb-6 p-4 rounded-2xl bg-[#8438FF]/10 border border-[#8438FF]/20 flex flex-col xl:flex-row items-center justify-between gap-4 print:hidden animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  <div className="flex items-center gap-3 w-full xl:w-auto">
+                    <div className="p-2 bg-[#8438FF]/20 rounded-xl text-[#8438FF] shrink-0">
+                      <Wallet size={20} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm text-slate-900 dark:text-white">Planning to buy this car?</h4>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">Use our Budget tool to save up for it.</p>
+                    </div>
+                  </div>
+                  <Link href="/budget-calculator" className="w-full xl:w-auto px-4 py-2 bg-white dark:bg-[#12121A] text-[#8438FF] text-xs font-bold rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors whitespace-nowrap text-center shadow-sm">
+                    Open Budget Planner
+                  </Link>
+                </div>
+              )}
+
               <button 
                 onClick={handleDownloadPDF} 
                 disabled={cifUsd === 0}
@@ -413,6 +431,56 @@ export default function ImportCalculator() {
             </div>
           </div>
         </section>
+
+        {/* 🚀 STRATEGY 2: BOTTOM DISCOVERY GRID */}
+        <div className="max-w-6xl mx-auto pb-20 print:hidden">
+          <div className="pt-10 border-t border-slate-200 dark:border-white/10">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-black text-slate-900 dark:text-white">
+                More Free Tools from Nova
+              </h2>
+              <Link href="/tools" className="text-sm font-bold text-[#8438FF] flex items-center gap-1 hover:underline">
+                View All <ArrowRight size={16} />
+              </Link>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Promo Tool 1 */}
+              <Link href="/paye-calculator" className="group p-6 bg-white dark:bg-[#0F0F15] border border-slate-200 dark:border-white/5 rounded-3xl hover:border-emerald-500/40 hover:shadow-xl transition-all duration-300 flex flex-col gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                  <Receipt size={22} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-900 dark:text-white text-base mb-2 group-hover:text-emerald-500 transition-colors">PAYE Calculator</h4>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Calculate your exact take-home pay after TRA deductions.</p>
+                </div>
+              </Link>
+
+              {/* Promo Tool 2 */}
+              <Link href="/net-worth-calculator" className="group p-6 bg-white dark:bg-[#0F0F15] border border-slate-200 dark:border-white/5 rounded-3xl hover:border-purple-500/40 hover:shadow-xl transition-all duration-300 flex flex-col gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                  <LineChart size={22} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-900 dark:text-white text-base mb-2 group-hover:text-purple-500 transition-colors">Net Worth Tracker</h4>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Calculate your exact wealth standing in Tanzania.</p>
+                </div>
+              </Link>
+
+              {/* Promo Tool 3 */}
+              <Link href="/expense-tracker" className="group p-6 bg-white dark:bg-[#0F0F15] border border-slate-200 dark:border-white/5 rounded-3xl hover:border-[#8438FF]/40 hover:shadow-xl transition-all duration-300 flex flex-col gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-[#8438FF]/10 text-[#8438FF] flex items-center justify-center">
+                  <Shield size={22} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-900 dark:text-white text-base mb-2 group-hover:text-[#8438FF] transition-colors">Expense Tracker</h4>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">Securely log and categorize your daily spending.</p>
+                </div>
+              </Link>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       {/* ========================================= */}
