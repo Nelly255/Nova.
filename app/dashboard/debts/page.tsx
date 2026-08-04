@@ -29,12 +29,13 @@ export default function DebtsPage() {
   const [addForm, setAddForm] = useState({ 
     name: "", total_amount: "", interest_rate: "", min_payment: "", 
     category: "Credit Card", type: "liability" as 'liability' | 'receivable',
-    wallet_id: "" 
+    wallet_id: "",
+    affect_wallet: true
   });
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isWalletOpen, setIsWalletOpen] = useState(false);
 
-  const [paymentModal, setPaymentModal] = useState({ isOpen: false, id: "", name: "", remaining: 0, wallet_id: "" });
+  const [paymentModal, setPaymentModal] = useState({ isOpen: false, id: "", name: "", remaining: 0, wallet_id: "", affect_wallet: true });
   const [paymentAmount, setPaymentAmount] = useState("");
   const [isPaying, setIsPaying] = useState(false);
   const [isPaymentWalletOpen, setIsPaymentWalletOpen] = useState(false);
@@ -116,13 +117,15 @@ export default function DebtsPage() {
 
   const handleAddDebt = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!addForm.wallet_id) return alert("Please select a wallet!");
     
     const amount = parseFloat(addForm.total_amount);
-    const selectedWallet = wallets.find(w => w.id === addForm.wallet_id);
+    const selectedWallet = addForm.affect_wallet ? wallets.find(w => w.id === addForm.wallet_id) : null;
     
-    if (addForm.type === 'receivable' && selectedWallet && Number(selectedWallet.balance) < amount) {
-      return alert("Insufficient funds in the selected wallet.");
+    if (addForm.affect_wallet) {
+      if (!addForm.wallet_id) return alert("Please select a wallet!");
+      if (addForm.type === 'receivable' && selectedWallet && Number(selectedWallet.balance) < amount) {
+        return alert("Insufficient funds in the selected wallet.");
+      }
     }
 
     setIsAdding(true);
@@ -138,32 +141,32 @@ export default function DebtsPage() {
     }]);
 
     if (!error) {
-      const isLiability = addForm.type === 'liability';
-      
-      const { error: txError } = await supabase.from("transactions").insert([{
-        title: isLiability ? `Borrowed: ${addForm.name}` : `Lent: ${addForm.name}`,
-        amount: amount,
-        type: isLiability ? 'income' : 'expense',
-        category: isLiability ? 'Loan Received' : 'Loan Given',
-        date: new Date().toISOString().split("T")[0],
-        account_id: addForm.wallet_id 
-      }]);
+      if (addForm.affect_wallet && selectedWallet) {
+        const isLiability = addForm.type === 'liability';
+        
+        const { error: txError } = await supabase.from("transactions").insert([{
+          title: isLiability ? `Borrowed: ${addForm.name}` : `Lent: ${addForm.name}`,
+          amount: amount,
+          type: isLiability ? 'income' : 'expense',
+          category: isLiability ? 'Loan Received' : 'Loan Given',
+          date: new Date().toISOString().split("T")[0],
+          account_id: addForm.wallet_id 
+        }]);
 
-      if (selectedWallet) {
         const newBalance = isLiability 
           ? Number(selectedWallet.balance) + amount 
           : Number(selectedWallet.balance) - amount;
         await supabase.from("accounts").update({ balance: newBalance }).eq("id", addForm.wallet_id);
-      }
 
-      if (txError) {
-        console.error("Failed to adjust liquid cash:", txError);
-      } else {
-        window.dispatchEvent(new Event("transactionUpdated"));
+        if (txError) {
+          console.error("Failed to adjust liquid cash:", txError);
+        } else {
+          window.dispatchEvent(new Event("transactionUpdated"));
+        }
       }
 
       setIsAddModalOpen(false);
-      setAddForm({ name: "", total_amount: "", interest_rate: "", min_payment: "", category: "Credit Card", type: "liability", wallet_id: "" });
+      setAddForm({ name: "", total_amount: "", interest_rate: "", min_payment: "", category: "Credit Card", type: "liability", wallet_id: "", affect_wallet: true });
       
       setActiveTab(addForm.type);
       setStatusFilter('ongoing');
@@ -178,18 +181,20 @@ export default function DebtsPage() {
 
   const handleRecordPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!paymentModal.wallet_id) return alert("Please select a wallet!");
     
     const payAmount = parseFloat(paymentAmount) || 0;
     const targetRecord = debts.find(d => d.id === paymentModal.id);
     const isReceivable = targetRecord?.type === 'receivable';
-    const selectedWallet = wallets.find(w => w.id === paymentModal.wallet_id);
+    const selectedWallet = paymentModal.affect_wallet ? wallets.find(w => w.id === paymentModal.wallet_id) : null;
+
+    if (paymentModal.affect_wallet) {
+      if (!paymentModal.wallet_id) return alert("Please select a wallet!");
+      if (!isReceivable && selectedWallet && Number(selectedWallet.balance) < payAmount) {
+        return alert("Insufficient funds in the selected wallet.");
+      }
+    }
 
     if (payAmount > paymentModal.remaining) return;
-    
-    if (!isReceivable && selectedWallet && Number(selectedWallet.balance) < payAmount) {
-      return alert("Insufficient funds in the selected wallet.");
-    }
 
     setIsPaying(true);
     
@@ -200,18 +205,22 @@ export default function DebtsPage() {
       .update({ remaining_amount: newRemaining })
       .eq("id", paymentModal.id);
 
-    const { error: txError } = await supabase
-      .from("transactions")
-      .insert([{
-        title: isReceivable ? `Received: ${paymentModal.name}` : `Payment: ${paymentModal.name}`,
-        amount: payAmount,
-        type: isReceivable ? "income" : "expense",
-        category: isReceivable ? "Debt Repayment" : "Debt Paydown",
-        date: new Date().toISOString().split("T")[0],
-        account_id: paymentModal.wallet_id 
-      }]);
+    let txError = null;
 
-    if (selectedWallet) {
+    if (paymentModal.affect_wallet && selectedWallet) {
+      const { error: tError } = await supabase
+        .from("transactions")
+        .insert([{
+          title: isReceivable ? `Received: ${paymentModal.name}` : `Payment: ${paymentModal.name}`,
+          amount: payAmount,
+          type: isReceivable ? "income" : "expense",
+          category: isReceivable ? "Debt Repayment" : "Debt Paydown",
+          date: new Date().toISOString().split("T")[0],
+          account_id: paymentModal.wallet_id 
+        }]);
+      
+      txError = tError;
+
       const newBalance = isReceivable 
         ? Number(selectedWallet.balance) + payAmount 
         : Number(selectedWallet.balance) - payAmount;
@@ -220,7 +229,7 @@ export default function DebtsPage() {
 
     setIsPaying(false);
     if (!debtError && !txError) {
-      setPaymentModal({ ...paymentModal, isOpen: false });
+      setPaymentModal({ ...paymentModal, isOpen: false, affect_wallet: true });
       setPaymentAmount("");
       
       if (newRemaining <= 0) {
@@ -229,7 +238,7 @@ export default function DebtsPage() {
       }
 
       fetchData(); 
-      window.dispatchEvent(new Event("transactionUpdated"));
+      if (paymentModal.affect_wallet) window.dispatchEvent(new Event("transactionUpdated"));
     } else {
       alert("Failed to process payment.");
     }
@@ -269,11 +278,11 @@ export default function DebtsPage() {
   const selectedWalletForPayment = wallets.find(w => w.id === paymentModal.wallet_id);
 
   const amountValAdd = parseFloat(addForm.total_amount) || 0;
-  const isAddInsufficient = addForm.type === 'receivable' && selectedWalletForAdd && Number(selectedWalletForAdd.balance) < amountValAdd;
+  const isAddInsufficient = addForm.affect_wallet && addForm.type === 'receivable' && selectedWalletForAdd && Number(selectedWalletForAdd.balance) < amountValAdd;
 
   const amountValPay = parseFloat(paymentAmount) || 0;
   const isTargetLiability = debts.find(d => d.id === paymentModal.id)?.type === 'liability';
-  const isPayInsufficient = isTargetLiability && selectedWalletForPayment && Number(selectedWalletForPayment.balance) < amountValPay;
+  const isPayInsufficient = paymentModal.affect_wallet && isTargetLiability && selectedWalletForPayment && Number(selectedWalletForPayment.balance) < amountValPay;
 
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-6 md:space-y-8 pb-32 relative bg-transparent min-h-screen transition-colors duration-300">
@@ -287,7 +296,7 @@ export default function DebtsPage() {
         <div className="relative">
           <button 
             onClick={() => {
-              setAddForm(prev => ({ ...prev, wallet_id: wallets.length > 0 ? wallets[0].id : "" }));
+              setAddForm(prev => ({ ...prev, wallet_id: wallets.length > 0 ? wallets[0].id : "", affect_wallet: true }));
               setIsAddModalOpen(true);
             }}
             className="bg-brand-600 hover:bg-brand-500 text-white shadow-[0_8px_20px_-6px_rgb(var(--brand-500)/0.6)] border border-white/20 transition-all duration-300 hover:-translate-y-0.5 active:scale-95 px-4 py-2 md:px-5 md:py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 text-xs md:text-sm"
@@ -315,31 +324,62 @@ export default function DebtsPage() {
                     <input required type="text" placeholder={addForm.type === 'liability' ? "e.g., Chase Sapphire, Car Loan" : "e.g., John Doe, Dinner Split"} value={addForm.name} onChange={(e) => setAddForm({...addForm, name: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors" />
                   </div>
 
-                  {/* 🚀 FIXED: Added dynamic z-index here */}
-                  <div className={`relative ${isWalletOpen ? 'z-50' : ''}`}>
-                    <label className="block text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-400 mb-1">{addForm.type === 'liability' ? 'Deposit Loan Into' : 'Take Money From'}</label>
-                    <button type="button" onClick={() => setIsWalletOpen(!isWalletOpen)} className={`w-full flex justify-between items-center bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-left focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors ${!selectedWalletForAdd ? 'text-slate-400' : 'text-slate-900 dark:text-slate-200'}`}>
-                      <span className="truncate">{selectedWalletForAdd ? `${selectedWalletForAdd.name} (${currencySymbol}${Number(selectedWalletForAdd.balance).toLocaleString()})` : 'Select a wallet...'}</span>
-                      <ChevronDown size={16} className={`text-slate-400 shrink-0 transition-transform duration-200 ${isWalletOpen ? 'rotate-180' : ''}`} />
-                    </button>
-                    {isWalletOpen && (
-                      <>
-                        <div className="fixed inset-0 z-40" onClick={() => setIsWalletOpen(false)} />
-                        <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-48 overflow-y-auto custom-scrollbar">
-                          {wallets.length === 0 ? <div className="px-4 py-3 text-sm text-slate-500 text-center">No wallets found.</div> : wallets.map((w) => (
-                              <button key={w.id} type="button" onClick={() => { setAddForm({ ...addForm, wallet_id: w.id }); setIsWalletOpen(false); }} className={`w-full text-left px-4 py-3 text-sm transition-colors flex items-center justify-between ${addForm.wallet_id === w.id ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300'}`}>
-                                <span className="truncate pr-2">{w.name}</span>
-                                <span className="text-xs font-medium opacity-70 shrink-0">{currencySymbol}{Number(w.balance).toLocaleString()}</span>
-                              </button>
-                          ))}
-                        </div>
-                      </>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200/80 dark:border-white/10">
+                      <div className="pr-4">
+                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                          {addForm.type === 'liability' ? 'Did you receive the cash?' : 'Did you give out the cash?'}
+                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          {addForm.type === 'liability' ? 'If yes, adds funds to your wallet.' : 'If yes, deducts funds from your wallet.'}
+                        </p>
+                      </div>
+                      <div className="flex bg-slate-200/80 dark:bg-black/40 p-1 rounded-lg shrink-0">
+                        <button 
+                          type="button" 
+                          onClick={() => setAddForm({...addForm, affect_wallet: true})} 
+                          className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${addForm.affect_wallet ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+                        >
+                          Yes
+                        </button>
+                        <button 
+                          type="button" 
+                          onClick={() => setAddForm({...addForm, affect_wallet: false})} 
+                          className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${!addForm.affect_wallet ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+                        >
+                          No
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 🚀 FIXED: Added dynamic z-index here */}
+                    {addForm.affect_wallet && (
+                      <div className={`relative ${isWalletOpen ? 'z-50' : ''} mt-2`}>
+                        <label className="block text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-400 mb-1">{addForm.type === 'liability' ? 'Deposit Loan Into' : 'Take Money From'}</label>
+                        <button type="button" onClick={() => setIsWalletOpen(!isWalletOpen)} className={`w-full flex justify-between items-center bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-left focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors ${!selectedWalletForAdd ? 'text-slate-400' : 'text-slate-900 dark:text-slate-200'}`}>
+                          <span className="truncate">{selectedWalletForAdd ? `${selectedWalletForAdd.name} (${currencySymbol}${Number(selectedWalletForAdd.balance).toLocaleString()})` : 'Select a wallet...'}</span>
+                          <ChevronDown size={16} className={`text-slate-400 shrink-0 transition-transform duration-200 ${isWalletOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                        {isWalletOpen && (
+                          <>
+                            <div className="fixed inset-0 z-40" onClick={() => setIsWalletOpen(false)} />
+                            <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-48 overflow-y-auto custom-scrollbar">
+                              {wallets.length === 0 ? <div className="px-4 py-3 text-sm text-slate-500 text-center">No wallets found.</div> : wallets.map((w) => (
+                                  <button key={w.id} type="button" onClick={() => { setAddForm({ ...addForm, wallet_id: w.id }); setIsWalletOpen(false); }} className={`w-full text-left px-4 py-3 text-sm transition-colors flex items-center justify-between ${addForm.wallet_id === w.id ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300'}`}>
+                                    <span className="truncate pr-2">{w.name}</span>
+                                    <span className="text-xs font-medium opacity-70 shrink-0">{currencySymbol}{Number(w.balance).toLocaleString()}</span>
+                                  </button>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                        {wallets.length === 0 && <p className="text-xs text-rose-500 mt-1">You need to add a Wallet first to borrow/lend money!</p>}
+                      </div>
                     )}
-                    {wallets.length === 0 && <p className="text-xs text-rose-500 mt-1">You need to add a Wallet first to borrow/lend money!</p>}
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
+                  <div className="grid grid-cols-2 gap-4 mt-4">
+                    <div className="relative">
                       <label className="block text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-400 mb-1">Total Amount ({currencySymbol})</label>
                       <input 
                         required 
@@ -351,7 +391,7 @@ export default function DebtsPage() {
                         className={`w-full bg-slate-50 dark:bg-slate-950/50 border rounded-xl px-4 py-3 font-bold focus:outline-none focus:ring-1 transition-colors ${isAddInsufficient ? 'border-rose-500 focus:ring-rose-500 text-rose-600 dark:text-rose-400' : 'border-slate-200/80 dark:border-white/10 focus:ring-brand-500 focus:border-brand-500 text-slate-900 dark:text-slate-200'}`} 
                       />
                       {isAddInsufficient && (
-                        <p className="text-xs text-rose-500 font-semibold mt-2 animate-in slide-in-from-top-1 col-span-2 absolute">
+                        <p className="text-xs text-rose-500 font-semibold mt-2 animate-in slide-in-from-top-1 absolute w-full">
                           Insufficient funds in {selectedWalletForAdd?.name}
                         </p>
                       )}
@@ -388,7 +428,7 @@ export default function DebtsPage() {
                     </div>
                   </div>
                   
-                  <button type="submit" disabled={isAdding || wallets.length === 0 || !addForm.wallet_id || isAddInsufficient} className="w-full shrink-0 bg-brand-600 hover:bg-brand-500 text-white shadow-[0_8px_20px_-6px_rgb(var(--brand-500)/0.6)] border border-white/20 transition-all duration-300 hover:-translate-y-0.5 active:scale-95 font-bold py-3.5 rounded-xl mt-4 flex justify-center items-center gap-2 disabled:opacity-70 disabled:hover:translate-y-0">
+                  <button type="submit" disabled={isAdding || (addForm.affect_wallet && (wallets.length === 0 || !addForm.wallet_id || isAddInsufficient))} className="w-full shrink-0 bg-brand-600 hover:bg-brand-500 text-white shadow-[0_8px_20px_-6px_rgb(var(--brand-500)/0.6)] border border-white/20 transition-all duration-300 hover:-translate-y-0.5 active:scale-95 font-bold py-3.5 rounded-xl mt-4 flex justify-center items-center gap-2 disabled:opacity-70 disabled:hover:translate-y-0">
                     {isAdding ? <Loader2 className="animate-spin" size={20} /> : "Save Record"}
                   </button>
                 </form>
@@ -545,7 +585,7 @@ export default function DebtsPage() {
                     <div className="flex gap-2 mt-auto">
                       <button 
                         onClick={() => {
-                          setPaymentModal({ isOpen: true, id: debt.id, name: debt.name, remaining: debt.remaining_amount, wallet_id: wallets.length > 0 ? wallets[0].id : "" });
+                          setPaymentModal({ isOpen: true, id: debt.id, name: debt.name, remaining: debt.remaining_amount, wallet_id: wallets.length > 0 ? wallets[0].id : "", affect_wallet: true });
                           setPaymentAmount("");
                           setIsPaymentWalletOpen(false);
                         }}
@@ -596,31 +636,48 @@ export default function DebtsPage() {
                 <span className="font-bold text-brand-600 dark:text-brand-400">{paymentModal.name}</span>.
               </p>
 
-              {/* 🚀 FIXED: Added dynamic z-index here */}
-              <div className={`relative ${isPaymentWalletOpen ? 'z-50' : ''}`}>
-                <label className="block text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-400 mb-1">
-                  {debts.find(d => d.id === paymentModal.id)?.type === 'receivable' ? 'Deposit Into' : 'Pay From Wallet'}
-                </label>
-                <button type="button" onClick={() => setIsPaymentWalletOpen(!isPaymentWalletOpen)} className={`w-full flex justify-between items-center bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-left focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors ${!selectedWalletForPayment ? 'text-slate-400' : 'text-slate-900 dark:text-slate-200'}`}>
-                  <span className="truncate">{selectedWalletForPayment ? `${selectedWalletForPayment.name} (${currencySymbol}${Number(selectedWalletForPayment.balance).toLocaleString()})` : 'Select a wallet...'}</span>
-                  <ChevronDown size={16} className={`text-slate-400 shrink-0 transition-transform duration-200 ${isPaymentWalletOpen ? 'rotate-180' : ''}`} />
-                </button>
-                {isPaymentWalletOpen && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setIsPaymentWalletOpen(false)} />
-                    <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-48 overflow-y-auto custom-scrollbar">
-                      {wallets.length === 0 ? <div className="px-4 py-3 text-sm text-slate-500 text-center">No wallets found.</div> : wallets.map((w) => (
-                        <button key={w.id} type="button" onClick={() => { setPaymentModal({ ...paymentModal, wallet_id: w.id }); setIsPaymentWalletOpen(false); }} className={`w-full text-left px-4 py-3 text-sm transition-colors flex items-center justify-between ${paymentModal.wallet_id === w.id ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300'}`}>
-                          <span className="truncate pr-2">{w.name}</span>
-                          <span className="text-xs font-medium opacity-70 shrink-0">{currencySymbol}{Number(w.balance).toLocaleString()}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
+              <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200/80 dark:border-white/10 mb-4">
+                <div className="pr-4">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    {debts.find(d => d.id === paymentModal.id)?.type === 'receivable' ? 'Receive to wallet?' : 'Pay from wallet?'}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Select 'No' if this was forgiven or settled elsewhere.
+                  </p>
+                </div>
+                <div className="flex bg-slate-200/80 dark:bg-black/40 p-1 rounded-lg shrink-0">
+                  <button type="button" onClick={() => setPaymentModal({...paymentModal, affect_wallet: true})} className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${paymentModal.affect_wallet ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>Yes</button>
+                  <button type="button" onClick={() => setPaymentModal({...paymentModal, affect_wallet: false})} className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${!paymentModal.affect_wallet ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}>No</button>
+                </div>
               </div>
 
-              <div className="relative">
+              {/* 🚀 FIXED: Added dynamic z-index here */}
+              {paymentModal.affect_wallet && (
+                <div className={`relative ${isPaymentWalletOpen ? 'z-50' : ''}`}>
+                  <label className="block text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-400 mb-1">
+                    {debts.find(d => d.id === paymentModal.id)?.type === 'receivable' ? 'Deposit Into' : 'Pay From Wallet'}
+                  </label>
+                  <button type="button" onClick={() => setIsPaymentWalletOpen(!isPaymentWalletOpen)} className={`w-full flex justify-between items-center bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-left focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors ${!selectedWalletForPayment ? 'text-slate-400' : 'text-slate-900 dark:text-slate-200'}`}>
+                    <span className="truncate">{selectedWalletForPayment ? `${selectedWalletForPayment.name} (${currencySymbol}${Number(selectedWalletForPayment.balance).toLocaleString()})` : 'Select a wallet...'}</span>
+                    <ChevronDown size={16} className={`text-slate-400 shrink-0 transition-transform duration-200 ${isPaymentWalletOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {isPaymentWalletOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsPaymentWalletOpen(false)} />
+                      <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-48 overflow-y-auto custom-scrollbar">
+                        {wallets.length === 0 ? <div className="px-4 py-3 text-sm text-slate-500 text-center">No wallets found.</div> : wallets.map((w) => (
+                          <button key={w.id} type="button" onClick={() => { setPaymentModal({ ...paymentModal, wallet_id: w.id }); setIsPaymentWalletOpen(false); }} className={`w-full text-left px-4 py-3 text-sm transition-colors flex items-center justify-between ${paymentModal.wallet_id === w.id ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300'}`}>
+                            <span className="truncate pr-2">{w.name}</span>
+                            <span className="text-xs font-medium opacity-70 shrink-0">{currencySymbol}{Number(w.balance).toLocaleString()}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              <div className="relative mt-4">
                 <label className="block text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-400 mb-1">Amount ({currencySymbol})</label>
                 <input 
                   required autoFocus type="text" inputMode="decimal" placeholder="0.00" 
@@ -630,13 +687,13 @@ export default function DebtsPage() {
                 />
                 
                 {((parseFloat(paymentAmount) || 0) > paymentModal.remaining) && (
-                  <p className="text-xs text-rose-500 font-semibold mt-2 animate-in slide-in-from-top-1">
+                  <p className="text-xs text-rose-500 font-semibold mt-2 animate-in slide-in-from-top-1 absolute w-full">
                     Cannot exceed remaining balance of {currencySymbol}{paymentModal.remaining.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                   </p>
                 )}
                 
                 {isPayInsufficient && (
-                  <p className="text-xs text-rose-500 font-semibold mt-2 animate-in slide-in-from-top-1">
+                  <p className="text-xs text-rose-500 font-semibold mt-2 animate-in slide-in-from-top-1 absolute w-full">
                     Insufficient funds in {selectedWalletForPayment?.name}
                   </p>
                 )}
@@ -644,8 +701,8 @@ export default function DebtsPage() {
 
               <button 
                 type="submit" 
-                disabled={isPaying || !paymentAmount || !paymentModal.wallet_id || (parseFloat(paymentAmount) || 0) > paymentModal.remaining || isPayInsufficient} 
-                className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white shadow-[0_8px_20px_-6px_rgba(16,185,129,0.6)] font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 hover:-translate-y-0.5 transition-all duration-300 active:scale-95 disabled:opacity-70 disabled:hover:translate-y-0 disabled:shadow-none mt-4"
+                disabled={isPaying || !paymentAmount || (paymentModal.affect_wallet && !paymentModal.wallet_id) || (parseFloat(paymentAmount) || 0) > paymentModal.remaining || isPayInsufficient} 
+                className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white shadow-[0_8px_20px_-6px_rgba(16,185,129,0.6)] font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 hover:-translate-y-0.5 transition-all duration-300 active:scale-95 disabled:opacity-70 disabled:hover:translate-y-0 disabled:shadow-none mt-6"
               >
                 {isPaying ? <Loader2 className="animate-spin" size={20} /> : "Confirm Amount"}
               </button>

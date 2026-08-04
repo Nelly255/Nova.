@@ -20,6 +20,7 @@ export default function ToolsHubPage() {
   // SHARE & SAVE STATE
   const [copied, setCopied] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [saveText, setSaveText] = useState("Save");
 
   // 🚀 Core Theme Applier Function
   const applyThemeClass = (isDark: boolean) => {
@@ -129,7 +130,14 @@ export default function ToolsHubPage() {
 
   const handleSaveToggle = () => {
     setIsSaved(true);
-    alert("Press Ctrl+D (Windows) or Cmd+D (Mac) to bookmark this page, or use 'Add to Home Screen' on your mobile device.");
+    const isMac = typeof window !== "undefined" && navigator.userAgent.toUpperCase().indexOf('MAC') >= 0;
+    
+    // Smooth inline UI change instead of an alert
+    setSaveText(isMac ? "Press Cmd+D" : "Press Ctrl+D");
+    
+    setTimeout(() => {
+      setSaveText("Saved");
+    }, 3000);
   };
 
   const allTools = [
@@ -422,8 +430,8 @@ export default function ToolsHubPage() {
                   : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
               }`}
             >
-              <Bookmark size={18} fill={isSaved ? "currentColor" : "none"} />
-              <span className="hidden sm:inline">{isSaved ? "Saved" : "Save"}</span>
+              <Bookmark size={18} fill={isSaved ? "currentColor" : "none"} className={saveText !== "Save" && saveText !== "Saved" ? "animate-bounce" : ""} />
+              <span className="hidden sm:inline">{saveText}</span>
             </button>
           </div>
         </div>

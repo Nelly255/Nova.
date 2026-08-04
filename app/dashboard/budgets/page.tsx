@@ -167,10 +167,9 @@ export default function BudgetsPage() {
             <Wallet size={32} className="md:w-10 md:h-10" />
           </div>
           <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2 transition-colors">No Budgets Set</h2>
-          <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 max-w-md mx-auto mb-8 transition-colors">
+          <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 max-w-md mx-auto transition-colors">
             You haven't allocated any funds yet. Create your first budget to start tracking your remaining balances here.
           </p>
-          <CreateBudgetModal />
         </div>
       ) : (
         <>
