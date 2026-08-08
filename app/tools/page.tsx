@@ -490,7 +490,7 @@ export default function ToolsHubPage() {
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 md:gap-4 text-sm text-slate-500 pt-8 border-t border-slate-200 dark:border-white/5">
           <span>© {new Date().getFullYear()} Nova Financial. All rights reserved.</span>
           <div className="flex items-center gap-2 font-medium bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-full border border-emerald-100 dark:border-emerald-500/20 w-fit">
-            <Shield size={14} /> Bank-Grade Security
+            <Shield size={14} /> Encrypted & Secure
           </div>
         </div>
       </footer>

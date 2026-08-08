@@ -12,9 +12,11 @@ const headerFont = Plus_Jakarta_Sans({ subsets: ["latin"] });
 const bodyFont = Inter({ subsets: ["latin"] });
 
 export default function WelcomePage() {
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  // Initialize with light, but we will quickly update it in the useEffect based on system/cloud
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const router = useRouter(); 
   const [hasActiveSession, setHasActiveSession] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   // 🚀 Core Theme Applier Function
   const applyThemeClass = (isDark: boolean) => {
@@ -26,8 +28,11 @@ export default function WelcomePage() {
     }
   };
 
-  // 🚀 Auth & Cloud Theme Sync Check
+  // 🚀 Auth & Cloud Theme Sync Check + System Auto-Detect
   useEffect(() => {
+    setIsMounted(true);
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
     const initializeUserAndTheme = async () => {
       // 1. Check for active Supabase session
       const { data: { session } } = await supabase.auth.getSession();
@@ -41,9 +46,8 @@ export default function WelcomePage() {
         if (cloudTheme) {
           // Cloud preference wins over everything else
           applyThemeClass(cloudTheme === 'dark');
-          // Update local cache so it doesn't flicker on next reload before DB fetch
           localStorage.setItem('app_theme', cloudTheme); 
-          return; // Exit early since cloud theme was applied
+          return; 
         }
       }
 
@@ -52,19 +56,18 @@ export default function WelcomePage() {
       if (savedTheme === 'dark' || savedTheme === 'light') {
         applyThemeClass(savedTheme === 'dark');
       } else {
-        // System preference
-        applyThemeClass(window.matchMedia('(prefers-color-scheme: dark)').matches);
+        // 🚀 Auto-pick System preference
+        applyThemeClass(mediaQuery.matches);
       }
     };
 
     initializeUserAndTheme();
 
-    // Listen for live OS changes (only applies if user hasn't hard-set a preference)
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleSystemChange = () => {
+    // Listen for live OS changes (adapts automatically if user hasn't hard-set a preference)
+    const handleSystemChange = (e: MediaQueryListEvent) => {
       const savedTheme = localStorage.getItem('app_theme');
-      if (!savedTheme || savedTheme === 'system') {
-        applyThemeClass(mediaQuery.matches);
+      if (!savedTheme) {
+        applyThemeClass(e.matches);
       }
     };
 
@@ -141,6 +144,9 @@ export default function WelcomePage() {
       colorClass: "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20"
     }
   ];
+
+  // Prevent hydration mismatch on theme icon before JS loads
+  if (!isMounted) return null;
 
   return (
     <main className={`min-h-screen bg-slate-50 dark:bg-[#0A0A0E] text-slate-900 dark:text-slate-50 flex flex-col relative overflow-hidden selection:bg-brand-500/30 transition-colors duration-500 ${bodyFont.className}`}>

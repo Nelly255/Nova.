@@ -17,7 +17,6 @@ const getSubIcon = (name: string) => {
   return <CreditCard size={24} />;
 };
 
-// 🚀 Helper for Wallet Icons
 const getWalletIcon = (type: string) => {
   const lower = (type || "").toLowerCase();
   if (lower.includes('mobile') || lower.includes('digital') || lower.includes('mpesa')) return <Smartphone size={18} />;
@@ -35,9 +34,7 @@ export default function SubscriptionsPage() {
   const [confirmPayment, setConfirmPayment] = useState<{isOpen: boolean, sub: any | null}>({ isOpen: false, sub: null });
   const [selectedWalletId, setSelectedWalletId] = useState<string | null>(null);
   
-  // 🚀 NEW: State for the Bank/M-Pesa Charge
   const [transactionCharge, setTransactionCharge] = useState<string>("");
-  
   const [isPaying, setIsPaying] = useState<string | null>(null);
   
   const [deleteTxModal, setDeleteTxModal] = useState({ isOpen: false, id: "", title: "", amount: "", charge_id: "" });
@@ -61,9 +58,6 @@ export default function SubscriptionsPage() {
     ]);
 
     if (!subsRes.error && subsRes.data) setSubscriptions(subsRes.data);
-    
-    // We also fetch Bank Charges here just so history ledger can display them if needed, 
-    // but primarily we just filter for Subscriptions in the view.
     if (!txRes.error && txRes.data) setHistory(txRes.data);
     
     if (!walletsRes.error && walletsRes.data) {
@@ -93,7 +87,6 @@ export default function SubscriptionsPage() {
     }
   };
 
-  // 🚀 UPGRADED: Bundles both transactions into ONE clean database request
   const executeLogPayment = async () => {
     if (!confirmPayment.sub || !selectedWalletId) return;
     
@@ -106,7 +99,6 @@ export default function SubscriptionsPage() {
     const selectedWallet = wallets.find(w => w.id === selectedWalletId);
     
     try {
-      // 1. Build an array of transactions to log at the exact same time
       const transactionsToLog = [
         {
           title: `${confirmPayment.sub.name} Subscription`,
@@ -118,7 +110,6 @@ export default function SubscriptionsPage() {
         }
       ];
 
-      // 2. If there is a fee, push it into the array payload
       if (chargeAmount > 0) {
         transactionsToLog.push({
           title: `Fee: ${confirmPayment.sub.name}`,
@@ -130,11 +121,9 @@ export default function SubscriptionsPage() {
         });
       }
 
-      // 3. Send BOTH to Supabase in one single hit
       const { error: txError } = await supabase.from("transactions").insert(transactionsToLog);
       if (txError) throw txError;
 
-      // 4. Update Wallet Balance (Sub Amount + Charge Amount)
       const newBalance = Number(selectedWallet.balance) - totalDeduction;
       const { error: accError } = await supabase
         .from("accounts")
@@ -144,7 +133,7 @@ export default function SubscriptionsPage() {
       if (accError) throw accError;
 
       setConfirmPayment({ isOpen: false, sub: null });
-      setTransactionCharge(""); // Reset charge state
+      setTransactionCharge("");
       fetchSubsAndHistory(); 
       window.dispatchEvent(new Event("transactionUpdated")); 
     } catch (error) {
@@ -155,15 +144,12 @@ export default function SubscriptionsPage() {
     }
   };
 
-  // 🚀 UPGRADED: Deletes payment AND refunds Wallet safely
   const confirmDeleteTx = async () => {
     setIsUpdatingTx(true);
     try {
-      // Find original transaction
       const { data: txData } = await supabase.from("transactions").select("*").eq("id", deleteTxModal.id).single();
       
       if (txData && txData.account_id) {
-        // Refund the exact amount of the specific transaction
         const { data: accData } = await supabase.from("accounts").select("balance").eq("id", txData.account_id).single();
         if (accData) {
           const restoredBalance = Number(accData.balance) + Number(txData.amount);
@@ -171,7 +157,6 @@ export default function SubscriptionsPage() {
         }
       }
 
-      // Delete the transaction
       const { error } = await supabase.from("transactions").delete().eq("id", deleteTxModal.id);
       if (error) throw error;
       
@@ -187,8 +172,6 @@ export default function SubscriptionsPage() {
   };
 
   const totalMonthly = subscriptions.reduce((acc, sub) => acc + Number(sub.amount), 0);
-  const totalYearly = totalMonthly * 12; 
-
   const today = new Date().getDate();
   
   const isPaidInMonth = (subName: string, monthStr: string) => {
@@ -270,14 +253,17 @@ export default function SubscriptionsPage() {
   );
 
   return (
-    <div className="p-8 md:p-10 max-w-6xl mx-auto space-y-8 pb-20 bg-transparent min-h-screen relative">
+    <div className="p-4 sm:p-6 md:p-10 max-w-6xl mx-auto space-y-6 md:space-y-8 pb-20 bg-transparent min-h-screen relative overflow-x-hidden md:overflow-x-visible">
       
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 relative z-50">
+      {/* 🚀 UPGRADED: Stacked Left-Aligned Header Matching Savings Goals Page */}
+      <header className="space-y-4 relative z-[100] w-full text-left">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 transition-colors">Subscriptions</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1 transition-colors">Manage your recurring monthly bills.</p>
         </div>
-        <AddSubscriptionModal />
+        <div className="flex justify-start">
+          <AddSubscriptionModal />
+        </div>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -396,7 +382,7 @@ export default function SubscriptionsPage() {
                     <button 
                       onClick={() => {
                         setConfirmPayment({ isOpen: true, sub });
-                        setTransactionCharge(""); // Reset fee field on open
+                        setTransactionCharge("");
                       }}
                       className="w-full py-2.5 rounded-xl font-bold flex justify-center items-center gap-2 text-sm transition-all active:scale-95 bg-white/80 text-slate-700 hover:bg-white border-slate-200 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 dark:border-white/10 border backdrop-blur-md shadow-sm"
                     >
@@ -494,9 +480,6 @@ export default function SubscriptionsPage() {
         )}
       </div>
 
-      {/* ============================================== */}
-      {/* 🚀 UPGRADED: CONFIRM PAYMENT MODAL (WITH BANK CHARGE) */}
-      {/* ============================================== */}
       {confirmPayment.isOpen && confirmPayment.sub && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6">
           <div className="absolute inset-0 bg-slate-900/10 dark:bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setConfirmPayment({ isOpen: false, sub: null })} />
@@ -510,7 +493,6 @@ export default function SubscriptionsPage() {
                 Paying <span className="font-bold text-slate-700 dark:text-slate-300">{currencySymbol}{confirmPayment.sub.amount.toLocaleString()}</span> for <span className="font-bold text-slate-700 dark:text-slate-300">{confirmPayment.sub.name}</span>.
               </p>
 
-              {/* 🚀 NEW: Bank Charge Input Field */}
               <div className="text-left mb-6 relative">
                 <label className="text-[10px] uppercase tracking-widest font-black text-slate-500 mb-2 block">
                   Txn / Bank Charge (Optional)
@@ -529,7 +511,6 @@ export default function SubscriptionsPage() {
                 </div>
               </div>
 
-              {/* WALLET SELECTION UI */}
               <div className="text-left mb-8 text-slate-900 dark:text-slate-100">
                 <label className="text-[10px] uppercase tracking-widest font-black text-slate-500 mb-3 block">
                   Select Payment Wallet
@@ -577,9 +558,6 @@ export default function SubscriptionsPage() {
         </div>
       )}
 
-      {/* ============================================== */}
-      {/* DELETE HISTORY PAYMENT MODAL */}
-      {/* ============================================== */}
       {deleteTxModal.isOpen && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6">
           <div className="absolute inset-0 bg-slate-900/10 dark:bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setDeleteTxModal({ isOpen: false, id: "", title: "", amount: "", charge_id: "" })} />

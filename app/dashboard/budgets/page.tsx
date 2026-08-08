@@ -73,7 +73,6 @@ export default function BudgetsPage() {
       .filter(t => t.category === b.name)
       .reduce((acc, t) => acc + Number(t.amount), 0);
 
-    // 🚀 NEW: Check history for this specific month/year combination
     const periodKey = `${selectedYear}-${selectedMonth}`;
     const periodLimit = b.history && b.history[periodKey] !== undefined
       ? Number(b.history[periodKey])
@@ -82,12 +81,11 @@ export default function BudgetsPage() {
     return {
       ...b,
       spent: spent,
-      active_limit: periodLimit, // We now use this for all calculations instead of limit_amount
+      active_limit: periodLimit, 
       icon: iconMap[b.name] || iconMap["Default"]
     };
   });
 
-  // 🚀 UPDATED: Calculate totals using the active_limit for the selected month
   const totalBudgeted = activeBudgets.reduce((acc, b) => acc + Number(b.active_limit), 0);
   const totalSpent = activeBudgets.reduce((acc, b) => acc + b.spent, 0);
   const totalRemaining = Math.max(totalBudgeted - totalSpent, 0);
@@ -100,7 +98,7 @@ export default function BudgetsPage() {
   return (
     <div className="p-6 md:p-10 max-w-6xl mx-auto space-y-6 md:space-y-8 pb-32 bg-transparent min-h-screen relative transition-colors duration-300">
       
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 relative z-[100]">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 relative z-30">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100 transition-colors">Budgets</h1>
           <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1 transition-colors">Keep your spending in check this month.</p>
@@ -152,7 +150,8 @@ export default function BudgetsPage() {
             )}
           </div>
 
-          <div className="relative z-40 shrink-0 flex items-center [&_button]:h-[42px]">
+          {/* 🚀 FIX: Added z-50 to ensure the popup stays above the budget cards below it */}
+          <div className="relative shrink-0 flex items-center z-50 [&_button]:h-[42px]">
             <CreateBudgetModal />
           </div>
 
@@ -238,7 +237,6 @@ export default function BudgetsPage() {
         </>
       )}
 
-      {/* 🚀 NEW: We must pass the currently selected period to the Edit Modal */}
       {budgetToEdit && (
         <EditBudgetModal 
           budget={budgetToEdit}
@@ -292,7 +290,6 @@ export default function BudgetsPage() {
 // Sub-component
 function DetailedBudgetCard({ budget, currencySymbol, onEdit, onDelete }: any) {
   const Icon = budget.icon;
-  // 🚀 UPDATED: Calculate percentage and values based on active_limit
   const percentage = budget.active_limit > 0 ? (budget.spent / budget.active_limit) * 100 : 0;
   const isOver = percentage >= 100;
   
@@ -328,7 +325,6 @@ function DetailedBudgetCard({ budget, currencySymbol, onEdit, onDelete }: any) {
           <div className="truncate">
             <h3 className="text-base font-bold text-slate-900 dark:text-slate-200 transition-colors truncate">{budget.name}</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 transition-colors">
-              {/* 🚀 UPDATED: Show the active_limit */}
               {currencySymbol}{Number(budget.active_limit).toLocaleString(undefined, { maximumFractionDigits: 0 })} Limit
             </p>
           </div>
@@ -353,7 +349,6 @@ function DetailedBudgetCard({ budget, currencySymbol, onEdit, onDelete }: any) {
           ></div>
         </div>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 text-right transition-colors">
-          {/* 🚀 UPDATED: Math logic uses active_limit */}
           {isOver ? "Over budget" : `${currencySymbol}${Number(budget.active_limit - budget.spent).toLocaleString(undefined, { maximumFractionDigits: 0 })} left`}
         </p>
       </div>

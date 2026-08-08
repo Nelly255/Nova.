@@ -96,7 +96,7 @@ export default function CreateBudgetModal() {
   };
 
   return (
-    <div className="relative">
+    <div className="relative z-50">
       <button 
         onClick={() => setIsOpen(!isOpen)}
         className="bg-brand-600 hover:bg-brand-500 text-white shadow-[0_8px_20px_-6px_rgb(var(--brand-500)/0.6)] border border-white/20 transition-all duration-300 hover:-translate-y-0.5 active:scale-95 px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 text-sm"
@@ -106,9 +106,14 @@ export default function CreateBudgetModal() {
 
       {isOpen && (
         <>
-          <div className="fixed inset-0 z-40 bg-slate-900/10 dark:bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => { setIsOpen(false); setErrorMsg(""); setIsCategoryOpen(false); }} />
+          {/* Restored blurred backdrop */}
+          <div 
+            className="fixed inset-0 z-40 bg-slate-900/20 dark:bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" 
+            onClick={() => { setIsOpen(false); setErrorMsg(""); setIsCategoryOpen(false); }} 
+          />
 
-          <div className="fixed left-4 right-4 top-24 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-3 z-50 sm:w-96 glass-card rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] overflow-visible animate-in fade-in zoom-in-95 origin-top sm:origin-top-right duration-200 flex flex-col max-h-[85vh]">
+          {/* Responsive Modal Container: Centered on mobile, Absolute dropdown on desktop */}
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-32px)] max-w-sm sm:absolute sm:top-full sm:right-0 sm:left-auto sm:translate-x-0 sm:translate-y-0 sm:mt-3 sm:w-96 z-50 glass-card rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] overflow-visible animate-in fade-in zoom-in-95 origin-center sm:origin-top-right duration-200 flex flex-col max-h-[85vh] bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200/80 dark:border-white/10">
             <div className="flex justify-between items-center p-6 border-b border-zinc-200/80 dark:border-white/5 transition-colors shrink-0">
               <h3 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 transition-colors">Set New Budget</h3>
               <button onClick={() => { setIsOpen(false); setErrorMsg(""); setIsCategoryOpen(false); }} className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-white/5">

@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 export default function AddSubscriptionModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [warning, setWarning] = useState(""); // 🚀 NEW: State to hold our duplicate warning
+  const [warning, setWarning] = useState("");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -33,11 +33,10 @@ export default function AddSubscriptionModal() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setWarning(""); // Clear any old warnings
+    setWarning("");
     setIsLoading(true);
 
-    // 🚀 THE VAULT GUARD: Check for duplicate subscription names before saving
-    const { data: existingSubs, error: checkError } = await supabase
+    const { data: existingSubs } = await supabase
       .from("subscriptions")
       .select("id")
       .ilike("name", formData.name);
@@ -45,12 +44,11 @@ export default function AddSubscriptionModal() {
     if (existingSubs && existingSubs.length > 0) {
       setIsLoading(false);
       setWarning(`A subscription named "${formData.name}" already exists. Please choose a different name.`);
-      return; // Stop the function here so it doesn't save!
+      return;
     }
 
     const amountNum = parseFloat(formData.amount);
 
-    // Only insert the subscription (Removed the hidden auto-transaction code!)
     const { error: subError } = await supabase.from("subscriptions").insert([
       {
         name: formData.name,
@@ -73,41 +71,43 @@ export default function AddSubscriptionModal() {
   };
 
   return (
-    <div className="relative">
-      
-      {/* UPGRADED: Solid Brand Trigger Button */}
+    <>
+      {/* UPGRADED: Removed margin-left so it sits flush on the left edge */}
       <button 
         onClick={() => { setIsOpen(!isOpen); setWarning(""); }}
-        className="relative z-50 bg-brand-600 hover:bg-brand-500 text-white shadow-[0_8px_20px_-6px_rgb(var(--brand-500)/0.6)] border border-white/20 transition-all duration-300 hover:-translate-y-0.5 active:scale-95 px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 text-sm"
+        className="w-fit bg-brand-600 hover:bg-brand-500 text-white shadow-[0_8px_20px_-6px_rgb(var(--brand-500)/0.6)] border border-white/20 transition-all duration-300 hover:-translate-y-0.5 active:scale-95 px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 text-sm"
       >
         <Plus size={18} /> Add Subscription
       </button>
 
       {isOpen && (
-        <>
-          {/* The Blur Overlay */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop Blur Overlay */}
           <div 
-            className="fixed inset-0 z-40 bg-zinc-900/10 dark:bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
+            className="fixed inset-0 bg-zinc-900/30 dark:bg-black/60 backdrop-blur-md animate-in fade-in duration-200"
             onClick={() => setIsOpen(false)}
           />
 
-          {/* UPGRADED: Popover anchored to the right, now scrollable on small screens */}
-          <div className="absolute right-0 top-full mt-3 z-50 w-[calc(100vw-4rem)] sm:w-96 glass-card rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] overflow-hidden animate-in fade-in zoom-in-95 origin-top-right duration-200 flex flex-col max-h-[75vh]">
+          {/* Centered Modal Card */}
+          <div className="relative z-10 w-full max-w-md glass-card rounded-[2.5rem] shadow-[0_25px_70px_-15px_rgba(0,0,0,0.35)] overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[85vh] border border-white/20 dark:border-white/10">
             
-            {/* Added shrink-0 so header doesn't squish */}
-            <div className="flex justify-between items-center p-6 border-b border-zinc-200/80 dark:border-white/5 transition-colors shrink-0">
-              <h3 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 transition-colors">New Subscription</h3>
-              <button onClick={() => setIsOpen(false)} className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-white/5">
+            {/* Header */}
+            <div className="flex justify-between items-center p-6 border-b border-zinc-200/80 dark:border-white/5 shrink-0">
+              <h3 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+                New Subscription
+              </h3>
+              <button 
+                onClick={() => setIsOpen(false)} 
+                className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors p-1.5 rounded-full hover:bg-zinc-100 dark:hover:bg-white/5"
+              >
                 <X size={20} />
               </button>
             </div>
 
-            {/* Added overflow-y-auto for scrollability */}
+            {/* Form */}
             <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
-              
-              {/* 🚀 NEW: The Inline Warning Box */}
               {warning && (
-                <div className="p-3 mb-4 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-start gap-3 animate-in fade-in zoom-in-95 duration-200">
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-start gap-3 animate-in fade-in zoom-in-95 duration-200">
                   <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={18} />
                   <p className="text-sm text-amber-700 dark:text-amber-400 font-medium leading-tight">
                     {warning}
@@ -116,7 +116,9 @@ export default function AddSubscriptionModal() {
               )}
 
               <div>
-                <label className="block text-sm font-semibold tracking-wide text-zinc-700 dark:text-zinc-400 mb-1 transition-colors">Service Name</label>
+                <label className="block text-sm font-semibold tracking-wide text-zinc-700 dark:text-zinc-400 mb-1">
+                  Service Name
+                </label>
                 <input 
                   required
                   type="text" 
@@ -124,7 +126,7 @@ export default function AddSubscriptionModal() {
                   value={formData.name}
                   onChange={(e) => {
                     setFormData({ ...formData, name: e.target.value });
-                    setWarning(""); // Clear warning when they start typing again
+                    setWarning("");
                   }}
                   className="w-full bg-zinc-50 dark:bg-zinc-950/50 border border-zinc-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-zinc-900 dark:text-zinc-200 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
                 />
@@ -132,7 +134,9 @@ export default function AddSubscriptionModal() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold tracking-wide text-zinc-700 dark:text-zinc-400 mb-1 transition-colors">Monthly Cost</label>
+                  <label className="block text-sm font-semibold tracking-wide text-zinc-700 dark:text-zinc-400 mb-1">
+                    Monthly Cost
+                  </label>
                   <input 
                     required
                     type="text" 
@@ -144,7 +148,9 @@ export default function AddSubscriptionModal() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold tracking-wide text-zinc-700 dark:text-zinc-400 mb-1 transition-colors">Billing Day</label>
+                  <label className="block text-sm font-semibold tracking-wide text-zinc-700 dark:text-zinc-400 mb-1">
+                    Billing Day
+                  </label>
                   <input 
                     required
                     type="number" 
@@ -158,7 +164,6 @@ export default function AddSubscriptionModal() {
                 </div>
               </div>
 
-              {/* UPGRADED: Solid Brand Submit Button */}
               <button 
                 type="submit" 
                 disabled={isLoading}
@@ -169,8 +174,8 @@ export default function AddSubscriptionModal() {
             </form>
 
           </div>
-        </>
+        </div>
       )}
-    </div>
+    </>
   );
 }
