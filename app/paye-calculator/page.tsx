@@ -51,7 +51,7 @@ export default function DashboardPAYECalculator() {
     } else if (taxableIncome <= 760000) {
       paye = 20000 + (taxableIncome - 520000) * 0.20;
     } else if (taxableIncome <= 1000000) {
-      paye = 680000 + (taxableIncome - 760000) * 0.25;
+      paye = 68000 + (taxableIncome - 760000) * 0.25;
     } else {
       paye = 128000 + (taxableIncome - 1000000) * 0.30;
     }

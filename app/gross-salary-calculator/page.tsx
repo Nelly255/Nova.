@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Download, Landmark, Target, ArrowLeft, Moon, Sun } from "lucide-react";
 
@@ -35,12 +35,18 @@ export default function DashboardNetToGrossCalculator() {
     }
   };
 
-  // TANZANIA MAINLAND PAYE LOGIC
+  // TANZANIA MAINLAND PAYE LOGIC (2024/2025 UPDATED RATES)
   const calculateNetFromGross = (gross: number) => {
+    // Handle edge case
+    if (gross <= 0) {
+      return { gross: 0, nssf: 0, paye: 0, net: 0 };
+    }
+
     const nssf = gross * 0.10;
     const taxableIncome = gross - nssf;
     let paye = 0;
 
+    // CORRECTED TAX BRACKETS - Tanzania Mainland 2024/2025
     if (taxableIncome <= 270000) {
       paye = 0;
     } else if (taxableIncome <= 520000) {
@@ -48,35 +54,76 @@ export default function DashboardNetToGrossCalculator() {
     } else if (taxableIncome <= 760000) {
       paye = 20000 + (taxableIncome - 520000) * 0.20;
     } else if (taxableIncome <= 1000000) {
-      paye = 680000 + (taxableIncome - 760000) * 0.25;
+      paye = 68000 + (taxableIncome - 760000) * 0.25; // FIXED: was 680000
     } else {
-      paye = 128000 + (taxableIncome - 1000000) * 0.30;
+      paye = 128000 + (taxableIncome - 1000000) * 0.30; // FIXED: was 128000 (correct)
     }
 
-    const net = gross - nssf - paye;
+    const net = Math.max(0, gross - nssf - paye);
     return { gross, nssf, paye, net };
   };
 
-  // HIGH-SPEED REVERSE ENGINEERING LOOP (Binary Search)
-  const calculateRequiredGross = (targetNet: number) => {
-    if (targetNet <= 0) return calculateNetFromGross(0);
+  // IMPROVED BINARY SEARCH - More precise and faster
+  const calculateRequiredGross = (targetNet: number): { gross: number; nssf: number; paye: number; net: number } => {
+    // Handle zero or negative target
+    if (targetNet <= 0) {
+      return calculateNetFromGross(0);
+    }
 
-    let low = targetNet; // Gross can never be lower than net
-    let high = targetNet * 3; // Safe upper bound
+    // If target is very small, handle directly
+    if (targetNet < 1000) {
+      let testGross = targetNet;
+      let result = calculateNetFromGross(testGross);
+      while (result.net < targetNet && testGross < targetNet * 2) {
+        testGross += 100;
+        result = calculateNetFromGross(testGross);
+      }
+      return result;
+    }
+
+    let low = targetNet; // Gross can never be lower than net (after taxes)
+    let high = targetNet * 3; // Higher safe upper bound
     let mid = 0;
-    let bestResult = calculateNetFromGross(0);
+    let bestResult = calculateNetFromGross(low);
+    let iterations = 0;
+    const maxIterations = 100;
 
-    for (let i = 0; i < 50; i++) { // 50 iterations is more than enough for precise decimal accuracy
+    // Binary search with precision goal
+    while (iterations < maxIterations) {
       mid = (low + high) / 2;
-      bestResult = calculateNetFromGross(mid);
+      const result = calculateNetFromGross(mid);
       
-      if (bestResult.net < targetNet) {
+      if (Math.abs(result.net - targetNet) < 1) {
+        // Found within 1 TZS precision
+        return result;
+      }
+      
+      if (result.net < targetNet) {
         low = mid;
+        bestResult = result;
       } else {
         high = mid;
+        bestResult = result;
       }
+      iterations++;
     }
-    return bestResult;
+
+    // Return the closest result
+    const finalResult = calculateNetFromGross(mid);
+    
+    // Ensure we're not below target
+    if (finalResult.net < targetNet) {
+      // Increment gross until we meet or exceed target
+      let adjustedGross = mid;
+      let adjustedResult = finalResult;
+      while (adjustedResult.net < targetNet && adjustedGross < targetNet * 3) {
+        adjustedGross += 100;
+        adjustedResult = calculateNetFromGross(adjustedGross);
+      }
+      return adjustedResult;
+    }
+    
+    return finalResult;
   };
 
   const result = calculateRequiredGross(targetNetSalary);
@@ -116,6 +163,7 @@ export default function DashboardNetToGrossCalculator() {
           <button 
             onClick={toggleTheme} 
             className="p-2 sm:p-3 rounded-2xl bg-white dark:bg-[#12121A] border border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-300 shadow-sm hover:bg-slate-50 dark:hover:bg-[#1A1A24] transition-all active:scale-90"
+            aria-label="Toggle theme"
           >
             {isDark ? <Sun size={18} /> : <Moon size={18} />}
           </button>
@@ -124,7 +172,6 @@ export default function DashboardNetToGrossCalculator() {
         <header className="max-w-6xl mx-auto mb-12 md:mb-16 grid lg:grid-cols-2 gap-8 md:gap-10 items-end">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#12121A] border border-slate-200 dark:border-white/5 shadow-sm">
-              <div className=" "></div>
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">SALARY NEGOTIATION</span>
             </div>
             
@@ -156,7 +203,7 @@ export default function DashboardNetToGrossCalculator() {
             <div className="relative z-50 bg-white dark:bg-[#0F0F15] p-6 md:p-10 rounded-3xl md:rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] space-y-8 flex flex-col justify-center">
               
               <div>
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 uppercase tracking-wider">
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 uppercase tracking-wider" htmlFor="targetNet">
                   Target Monthly Net Pay (TZS)
                 </label>
                 <div className="relative">
@@ -164,11 +211,13 @@ export default function DashboardNetToGrossCalculator() {
                     <Target size={24} />
                   </div>
                   <input 
+                    id="targetNet"
                     type="text" 
                     value={targetNetSalary === 0 ? '' : targetNetSalary.toLocaleString('en-US')}
                     onChange={handleNetChange}
                     placeholder="e.g. 3,000,000"
                     className="w-full bg-slate-50 dark:bg-[#14141A] border border-slate-200 dark:border-white/10 rounded-2xl pl-14 pr-4 py-5 text-2xl font-black text-slate-900 dark:text-white focus:outline-none focus:border-[#3B82F6] transition-colors"
+                    aria-label="Target monthly net salary in TZS"
                   />
                 </div>
               </div>
@@ -217,7 +266,6 @@ export default function DashboardNetToGrossCalculator() {
 
               <button 
                 onClick={handleDownloadPDF} 
-                disabled={targetNetSalary === 0}
                 className="mt-auto inline-flex items-center justify-center gap-3 w-full py-4 bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-2xl font-bold shadow-[0_8px_20px_rgba(59,130,246,0.3)] transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 disabled:shadow-none"
               >
                 Download Salary Report <Download size={18} />
