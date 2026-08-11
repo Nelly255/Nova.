@@ -192,8 +192,8 @@ export default function ToolsHubPage() {
     {
       href: "/gross-salary-calculator",
       icon: <Target size={22} />,
-      title: "Gross Salary Target",
-      description: "Reverse-engineer your dream net salary for negotiations.",
+      title: "Gross Salary Calculator",
+      description: "Enter your target net pay and we'll work backwards to show you the gross salary you need..",
       category: "Income",
       colorClass: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border-blue-100 dark:border-blue-500/20"
     },

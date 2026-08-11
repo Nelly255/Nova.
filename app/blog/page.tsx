@@ -75,7 +75,7 @@ export default function BlogIndexPage() {
         <header className="max-w-6xl mx-auto w-full mb-20 grid lg:grid-cols-2 gap-10 items-end">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#12121A] border border-slate-200 dark:border-white/5 shadow-sm">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#8438FF] shadow-[0_0_8px_#8438FF] animate-pulse"></div>
+              <div className=""></div>
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">NOVA JOURNAL</span>
             </div>
             
@@ -214,10 +214,10 @@ export default function BlogIndexPage() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500">
             <div className="flex items-center gap-2">
               <Activity size={16} className="text-[#8438FF]" />
-              <span className="font-bold text-slate-900 dark:text-white">Nova Financial.</span> © {new Date().getFullYear()}
+              <span className="font-bold text-slate-900 dark:text-white">Nova Intelligent Wealth Management.</span> © {new Date().getFullYear()}
             </div>
             <div className="flex items-center gap-6">
-              <span className="flex items-center gap-2 font-medium"><Shield size={14} className="text-emerald-500"/> Bank-Grade Security</span>
+              <span className="flex items-center gap-2 font-medium"><Shield size={14} className="text-emerald-500"/> Encrypted And Secure</span>
             </div>
           </div>
         </footer>

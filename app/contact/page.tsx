@@ -127,7 +127,7 @@ export default function ContactPage() {
         <header className="max-w-6xl mx-auto w-full mb-20 grid lg:grid-cols-2 gap-10 items-end">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-brand-50 dark:bg-[#12121A] border border-brand-100 dark:border-white/5 shadow-sm">
-              <div className="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(var(--brand-500),0.8)] animate-pulse"></div>
+              <div className=""></div>
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">CONTACT US</span>
             </div>
             
@@ -147,7 +147,7 @@ export default function ContactPage() {
               & <span className="text-slate-900 dark:text-white font-bold">Support your journey.</span>
             </p>
             <p className="text-xs sm:text-sm font-semibold text-slate-400 dark:text-slate-500 leading-relaxed max-w-md">
-              Have a question about Nova? Want to partner with us? Reach out directly via WhatsApp or Email, and our team in Arusha will assist you immediately.
+              Have a question about Nova? Want to partner with us? Reach out directly via WhatsApp or Email, and our team will assist you immediately.
             </p>
           </div>
         </header>
@@ -181,7 +181,7 @@ export default function ContactPage() {
                 <div>
                   <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">WhatsApp</h3>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">Direct chat with our team.</p>
-                  <a href="https://wa.me/255787468830" target="_blank" rel="noopener noreferrer" className="text-base font-semibold text-[#25D366] hover:underline">+255 787 468 8830</a>
+                  <a href="https://wa.me/255769306016" target="_blank" rel="noopener noreferrer" className="text-base font-semibold text-[#25D366] hover:underline">+255 769 306 016</a>
                 </div>
               </div>
 
@@ -251,10 +251,10 @@ export default function ContactPage() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500">
             <div className="flex items-center gap-2">
               <Activity size={16} className="text-brand-600 dark:text-brand-400" />
-              <span className="font-bold text-slate-900 dark:text-white">Nova Financial.</span> © {new Date().getFullYear()}
+              <span className="font-bold text-slate-900 dark:text-white">Nova Intelligent Wealth Management.</span> © {new Date().getFullYear()}
             </div>
             <div className="flex items-center gap-6">
-              <span className="flex items-center gap-2 font-medium"><Shield size={14} className="text-emerald-500"/> Bank-Grade Security</span>
+              <span className="flex items-center gap-2 font-medium"><Shield size={14} className="text-emerald-500"/> Encrypted And Secure</span>
             </div>
           </div>
         </footer>

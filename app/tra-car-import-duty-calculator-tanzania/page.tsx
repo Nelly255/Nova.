@@ -203,16 +203,16 @@ export default function ImportCalculator() {
         <header className="max-w-6xl mx-auto mb-16 grid lg:grid-cols-2 gap-10 items-end">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#12121A] border border-slate-200 dark:border-white/5 shadow-sm">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#8438FF] shadow-[0_0_8px_#8438FF] animate-pulse"></div>
+              <div className=""></div>
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">TRA IMPORT CALC</span>
             </div>
             
             <h1 className="flex flex-col">
               <span style={{ fontFamily: "'Dancing Script', cursive" }} className="text-[4rem] sm:text-5xl md:text-[5.5rem] font-bold text-slate-800 dark:text-slate-200 leading-[0.8] mb-2 pl-1">
-                Clear your
+                See What
               </span>
               <span className="text-[3.5rem] sm:text-5xl md:text-[6.5rem] font-[900] tracking-[-0.04em] text-[#8438FF] leading-[0.85] mt-1 md:mt-0">
-                Dream Car.
+                You'll pay.
               </span>
             </h1>
           </div>

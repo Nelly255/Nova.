@@ -1,7 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Calculator, Wallet } from "lucide-react";
+import { 
+  ArrowLeft, 
+  ArrowRight, 
+  Calculator, 
+  Wallet,
+  CheckCircle2,
+  Clock,
+  FileText,
+  AlertTriangle,
+  ShieldCheck,
+  HelpCircle
+} from "lucide-react";
 import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 
 const headerFont = Plus_Jakarta_Sans({ subsets: ["latin"] });
@@ -9,7 +20,7 @@ const bodyFont = Inter({ subsets: ["latin"] });
 
 export default function PayeGuideBlogPost() {
   const publishDate = "May 14, 2026";
-  const readTime = "4 min read";
+  const readTime = "7 min read";
 
   return (
     <main className={`min-h-screen bg-slate-50 dark:bg-[#0A0A0E] text-slate-900 dark:text-slate-50 pb-24 ${bodyFont.className}`}>
@@ -28,7 +39,7 @@ export default function PayeGuideBlogPost() {
                 "name": "Nova Wealth Management",
                 "url": "https://nova.co.tz"
             }],
-            "description": "Learn exactly how Pay As You Earn (PAYE) and NSSF deductions work in Tanzania, and calculate your exact take-home pay."
+            "description": "Learn exactly how Pay As You Earn (PAYE) and NSSF deductions work in Tanzania, understand the latest 2026 TRA brackets, and calculate your exact take-home pay."
           })
         }}
       />
@@ -71,7 +82,7 @@ export default function PayeGuideBlogPost() {
             <Wallet className="text-emerald-500" /> What is PAYE?
           </h2>
           <p>
-            PAYE (Pay As You Earn) is the income tax deducted directly from an employee's salary by their employer. In Tanzania, it operates on a progressive scale. This means you aren't taxed a flat rate on your entire income; instead, the tax rate increases as your income moves into higher brackets.
+            PAYE (Pay As You Earn) is the mandatory income tax deducted directly from an employee's salary by their employer and remitted to the Tanzania Revenue Authority (TRA). In Tanzania, it operates on a progressive scale. This means you aren't taxed a flat rate on your entire income; instead, the tax rate increases as your income moves into higher brackets.
           </p>
           
           <div className="bg-slate-100 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-200 dark:border-white/5 my-8">
@@ -81,7 +92,127 @@ export default function PayeGuideBlogPost() {
             </p>
           </div>
 
-          <h3 className={`${headerFont.className} text-2xl mb-4 text-slate-900 dark:text-white`}>
+          <div className="not-prose bg-slate-100 dark:bg-slate-800/50 p-6 rounded-2xl border border-slate-200 dark:border-white/5 space-y-2 my-8">
+            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-sm uppercase tracking-wider">
+              <ShieldCheck size={18} />
+              Privacy-First Calculation Model
+            </div>
+            <p className="text-sm text-slate-600 dark:text-slate-400 m-0">
+              The Nova PAYE Calculator operates entirely within your browser. Nothing you type is uploaded, logged, or saved.
+            </p>
+          </div>
+
+          <h2 className={`${headerFont.className} text-3xl mt-12 mb-6 text-slate-900 dark:text-white`}>
+            How to Calculate PAYE Manually (2026 Brackets)
+          </h2>
+          
+          <p>
+            Once you take the gross monthly pay and subtract the employee NSSF contribution (10%), you apply the resulting taxable pay to the current TRA bands in order:
+          </p>
+          
+          <ul className="space-y-4 mb-8 mt-6 list-none pl-0">
+            <li className="flex items-start gap-3">
+              <CheckCircle2 className="text-emerald-500 mt-1 shrink-0" size={24} />
+              <span className="text-slate-700 dark:text-slate-300">Nothing on the first <strong>270,000 TZS</strong></span>
+            </li>
+            <li className="flex items-start gap-3">
+              <CheckCircle2 className="text-emerald-500 mt-1 shrink-0" size={24} />
+              <span className="text-slate-700 dark:text-slate-300"><strong>8%</strong> on the slice from 270,001 to 520,000 TZS</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <CheckCircle2 className="text-emerald-500 mt-1 shrink-0" size={24} />
+              <span className="text-slate-700 dark:text-slate-300"><strong>20%</strong> from 520,001 to 760,000 TZS</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <CheckCircle2 className="text-emerald-500 mt-1 shrink-0" size={24} />
+              <span className="text-slate-700 dark:text-slate-300"><strong>25%</strong> from 760,001 to 1,000,000 TZS</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <CheckCircle2 className="text-emerald-500 mt-1 shrink-0" size={24} />
+              <span className="text-slate-700 dark:text-slate-300"><strong>30%</strong> on everything above 1,000,000 TZS</span>
+            </li>
+          </ul>
+
+          <h2 className={`${headerFont.className} text-3xl mt-16 mb-6 text-slate-900 dark:text-white`}>
+            Filing & Payment Deadlines for Employers
+          </h2>
+          
+          <div className="not-prose space-y-6 my-8">
+            <div className="bg-slate-100 dark:bg-slate-800/50 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-white/5">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 rounded-xl bg-teal-100 dark:bg-teal-500/20 flex items-center justify-center text-teal-600 dark:text-teal-400">
+                  <Clock size={24} />
+                </div>
+                <h3 className={`${headerFont.className} text-xl font-bold text-slate-900 dark:text-white m-0`}>Monthly Remittance</h3>
+              </div>
+              <p className="m-0 text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
+                File and pay PAYE by the <strong>7th day</strong> of the following month via the TRA online portal. Ensure all NSSF adjustments are calculated prior to final submission.
+              </p>
+            </div>
+
+            <div className="bg-slate-100 dark:bg-slate-800/50 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-white/5">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                  <FileText size={24} />
+                </div>
+                <h3 className={`${headerFont.className} text-xl font-bold text-slate-900 dark:text-white m-0`}>Annual Return</h3>
+              </div>
+              <p className="m-0 text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
+                Employers are required to fully reconcile their payroll figures via the Form ITX 215 employer return by <strong>31 March</strong> each year.
+              </p>
+            </div>
+
+            <div className="bg-slate-100 dark:bg-slate-800/50 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-white/5">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-12 h-12 rounded-xl bg-rose-100 dark:bg-rose-500/20 flex items-center justify-center text-rose-600 dark:text-rose-400">
+                  <AlertTriangle size={24} />
+                </div>
+                <h3 className={`${headerFont.className} text-xl font-bold text-slate-900 dark:text-white m-0`}>Penalties</h3>
+              </div>
+              <p className="m-0 text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
+                A penalty of <strong>10%</strong> of the unpaid tax plus interest at the Bank of Tanzania statutory rate automatically applies to late payments.
+              </p>
+            </div>
+          </div>
+
+          <h2 className={`${headerFont.className} text-3xl mt-12 mb-6 text-slate-900 dark:text-white`}>
+            Common Payroll Mistakes
+          </h2>
+
+          <ul>
+            <li><strong>Calculating PAYE on gross instead of taxable income:</strong> As mentioned above, NSSF must be subtracted first.</li>
+            <li><strong>Treating allowances as tax-free:</strong> Most cash allowances (transport, lunch, airtime) are subject to PAYE. Only specific, verified non-cash benefits are exempt.</li>
+            <li><strong>Forgetting the SDL (4%):</strong> Skills Development Levy is paid by the employer on gross emoluments—this is entirely separate from PAYE.</li>
+            <li><strong>Not grossing up bonuses:</strong> Bonuses are subject to PAYE in the month they are paid, often pushing the employee into a higher tax bracket for that specific month.</li>
+          </ul>
+
+          <h2 className={`${headerFont.className} text-3xl mt-12 mb-6 text-slate-900 dark:text-white`}>
+            Frequently Asked Questions
+          </h2>
+
+          <div className="not-prose space-y-4 my-8">
+            <div className="p-6 rounded-2xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 space-y-2">
+              <h3 className="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2 m-0">
+                <HelpCircle size={18} className="text-emerald-500" />
+                What is the actual PAYE threshold in Tanzania?
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400 m-0">
+                TZS 270,000 of monthly <em>taxable</em> income. Below that, no PAYE is due. Because NSSF comes off first, a gross salary of up to TZS 300,000 typically falls entirely within the tax-free band.
+              </p>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 space-y-2">
+              <h3 className="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2 m-0">
+                <HelpCircle size={18} className="text-emerald-500" />
+                How much is PAYE on a salary of 1,000,000 in Tanzania?
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400 m-0">
+                On a gross of TZS 1,000,000 with the statutory 10% NSSF, taxable pay is TZS 900,000. Applying the brackets, PAYE amounts to TZS 103,000, leaving roughly TZS 797,000 net (before NHIF or other deductions).
+              </p>
+            </div>
+          </div>
+
+          <h3 className={`${headerFont.className} text-2xl mt-12 mb-4 text-slate-900 dark:text-white`}>
             Why Manual Calculation is Difficult
           </h3>
           <p>

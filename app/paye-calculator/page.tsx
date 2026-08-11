@@ -49,11 +49,11 @@ export default function DashboardPAYECalculator() {
     } else if (taxableIncome <= 520000) {
       paye = (taxableIncome - 270000) * 0.08;
     } else if (taxableIncome <= 760000) {
-      paye = 20000 + (taxableIncome - 520000) * 0.09;
+      paye = 20000 + (taxableIncome - 520000) * 0.20;
     } else if (taxableIncome <= 1000000) {
-      paye = 41600 + (taxableIncome - 760000) * 0.20;
+      paye = 680000 + (taxableIncome - 760000) * 0.25;
     } else {
-      paye = 89600 + (taxableIncome - 1000000) * 0.25;
+      paye = 128000 + (taxableIncome - 1000000) * 0.30;
     }
 
     const netSalary = gross - nssf - paye;
@@ -122,7 +122,7 @@ export default function DashboardPAYECalculator() {
         <header className="max-w-6xl mx-auto mb-10 md:mb-12 grid lg:grid-cols-2 gap-8 md:gap-10 items-end">
           <div className="space-y-4 md:space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-[#12121A] border border-emerald-100 dark:border-white/5 shadow-sm">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#10B981] shadow-[0_0_8px_#10B981] animate-pulse"></div>
+              <div className=""></div>
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600 dark:text-slate-400">NOVA TOOLS</span>
             </div>
             

@@ -226,7 +226,7 @@ export default function DepreciationCalculator() {
         <header className="mb-12 md:mb-20 grid lg:grid-cols-2 gap-8 md:gap-10 items-end">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#12121A] border border-slate-200 dark:border-white/5 shadow-sm">
-              <div className="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgb(var(--brand-500))]"></div>
+              <div className=""></div>
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">NOVA TOOLS</span>
             </div>
             

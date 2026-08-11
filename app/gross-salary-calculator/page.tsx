@@ -46,11 +46,11 @@ export default function DashboardNetToGrossCalculator() {
     } else if (taxableIncome <= 520000) {
       paye = (taxableIncome - 270000) * 0.08;
     } else if (taxableIncome <= 760000) {
-      paye = 20000 + (taxableIncome - 520000) * 0.09;
+      paye = 20000 + (taxableIncome - 520000) * 0.20;
     } else if (taxableIncome <= 1000000) {
-      paye = 41600 + (taxableIncome - 760000) * 0.20;
+      paye = 680000 + (taxableIncome - 760000) * 0.25;
     } else {
-      paye = 89600 + (taxableIncome - 1000000) * 0.25;
+      paye = 128000 + (taxableIncome - 1000000) * 0.30;
     }
 
     const net = gross - nssf - paye;
@@ -124,7 +124,7 @@ export default function DashboardNetToGrossCalculator() {
         <header className="max-w-6xl mx-auto mb-12 md:mb-16 grid lg:grid-cols-2 gap-8 md:gap-10 items-end">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#12121A] border border-slate-200 dark:border-white/5 shadow-sm">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] shadow-[0_0_8px_#3B82F6] animate-pulse"></div>
+              <div className=" "></div>
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">SALARY NEGOTIATION</span>
             </div>
             
@@ -133,18 +133,18 @@ export default function DashboardNetToGrossCalculator() {
                 Know your
               </span>
               <span className="text-[3.5rem] sm:text-5xl md:text-[6.5rem] font-[900] tracking-[-0.04em] text-[#3B82F6] leading-[0.85] mt-1 md:mt-0">
-                True Value.
+                Salary With Tax.
               </span>
             </h1>
           </div>
           
           <div className="lg:pl-10 lg:border-l-2 border-slate-200 dark:border-white/10">
             <p className="text-lg sm:text-xl md:text-2xl font-medium text-slate-500 dark:text-slate-400 leading-tight mb-4">
-              Reverse-engineer your <br />
-              <span className="text-slate-900 dark:text-white font-bold">Dream Salary.</span>
+              Start with what you want to take home. <br />
+              <span className="text-slate-900 dark:text-white font-bold">Your Expected Salary.</span>
             </p>
             <p className="text-xs sm:text-sm font-semibold text-slate-400 dark:text-slate-500 leading-relaxed max-w-md">
-              Need a specific amount of money in your pocket? Enter your Target Net Pay, and we will reverse-calculate the exact Gross Salary you need to demand from HR to cover all taxes.
+             Enter your target net pay and we'll work backwards to show you the gross salary you need.
             </p>
           </div>
         </header>
@@ -174,7 +174,7 @@ export default function DashboardNetToGrossCalculator() {
               </div>
 
               <div className="p-5 bg-blue-50 dark:bg-blue-500/5 rounded-2xl border border-blue-100 dark:border-blue-500/10 text-sm text-blue-800 dark:text-blue-400 font-medium">
-                This tool automatically calculates the hidden tax burden, providing the exact gross figure required to satisfy NSSF (10%) and TRA PAYE brackets.
+                This tool automatically calculates the hidden tax burden, providing the exact gross figure required to satisfy NSSF (10%) and TRA (PAYE).
               </div>
 
             </div>
@@ -232,7 +232,7 @@ export default function DashboardNetToGrossCalculator() {
       <div className="hidden print:block max-w-3xl mx-auto p-8 bg-white text-black">
         <div className="border-b-2 border-black pb-6 mb-8">
           <h1 className="text-5xl font-black tracking-tighter mb-2">Nova.</h1>
-          <h2 className="text-xl font-bold uppercase tracking-widest text-slate-500">Gross Salary Target Report</h2>
+          <h2 className="text-xl font-bold uppercase tracking-widest text-slate-500">Gross Salary Report</h2>
         </div>
 
         <div className="mb-10">
