@@ -44,6 +44,19 @@ html.dark {
   --card-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
 }
 
+/* 🚀 PATCHED: Force background color on html and body elements */
+html, body {
+  background-color: var(--background);
+  color: var(--foreground);
+  min-height: 100%;
+}
+
+/* 🚀 PATCHED: Set explicit background on html element */
+html {
+  background-color: var(--background);
+}
+
+/* 🚀 PATCHED: Set body background with proper inheritance */
 body {
   background-color: var(--background);
   color: var(--foreground);
@@ -56,12 +69,23 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* 🚀 PATCHED: Added explicit dark mode background colors */
+html.dark,
+html.dark body {
+  background-color: #050507 !important; /* Force dark background */
+}
+
 html.dark body {
   /* 🚀 PATCHED: Dimmer mesh gradient using correct syntax */
   background-image: 
     radial-gradient(at 0% 0%, rgb(var(--brand-500) / 0.10) 0px, transparent 50%),
     radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.10) 0px, transparent 50%),
     radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.10) 0px, transparent 50%);
+}
+
+/* 🚀 PATCHED: Additional specificity for dark mode */
+.dark body {
+  background-color: #050507 !important;
 }
 
 /* Wrapped in the components layer so Tailwind respects it! */
