@@ -5,7 +5,8 @@ import { supabase } from "@/lib/supabase";
 import { 
   CreditCard, Home, Car, GraduationCap, Building, 
   PlusCircle, Trash2, TrendingDown, Target, X, Loader2, ChevronDown, 
-  ArrowUpRight, Users, Briefcase, Wallet, ChevronLeft, ChevronRight, CheckCircle2
+  ArrowUpRight, Users, Briefcase, Wallet, ChevronLeft, ChevronRight, CheckCircle2,
+  History
 } from "lucide-react";
 
 const DEBT_CATEGORIES = ["Credit Card", "Car Loan", "Student Loan", "Mortgage", "Personal Loan"];
@@ -16,11 +17,12 @@ const ITEMS_PER_PAGE = 6;
 export default function DebtsPage() {
   const [debts, setDebts] = useState<any[]>([]);
   const [wallets, setWallets] = useState<any[]>([]);
+  const [historyLogs, setHistoryLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currencySymbol, setCurrencySymbol] = useState("TSh ");
 
   const [activeTab, setActiveTab] = useState<'liability' | 'receivable'>('liability');
-  const [statusFilter, setStatusFilter] = useState<'ongoing' | 'completed'>('ongoing');
+  const [statusFilter, setStatusFilter] = useState<'ongoing' | 'completed' | 'history'>('ongoing');
   const [currentPage, setCurrentPage] = useState(1);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -47,9 +49,10 @@ export default function DebtsPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const [debtsRes, walletsRes] = await Promise.all([
+    const [debtsRes, walletsRes, txRes] = await Promise.all([
       supabase.from("debts").select("*").order("created_at", { ascending: false }),
-      supabase.from("accounts").select("*").eq('user_id', user.id).order('created_at', { ascending: false })
+      supabase.from("accounts").select("*").eq('user_id', user.id).order('created_at', { ascending: false }),
+      supabase.from("transactions").select("*").in('category', ['Debt Repayment', 'Debt Paydown', 'Loan Received', 'Loan Given']).order('date', { ascending: false })
     ]);
 
     if (debtsRes.data) {
@@ -61,10 +64,12 @@ export default function DebtsPage() {
         (statusFilter === 'ongoing' ? Number(d.remaining_amount) > 0 : Number(d.remaining_amount) <= 0)
       );
       const maxPages = Math.ceil(currentFiltered.length / ITEMS_PER_PAGE);
-      if (currentPage > maxPages && maxPages > 0) setCurrentPage(maxPages);
+      if (statusFilter !== 'history' && currentPage > maxPages && maxPages > 0) setCurrentPage(maxPages);
     }
     
     if (walletsRes.data) setWallets(walletsRes.data);
+    if (txRes.data) setHistoryLogs(txRes.data);
+    
     setLoading(false);
   };
 
@@ -110,7 +115,7 @@ export default function DebtsPage() {
     setCurrentPage(1);
   };
 
-  const handleStatusChange = (status: 'ongoing' | 'completed') => {
+  const handleStatusChange = (status: 'ongoing' | 'completed' | 'history') => {
     setStatusFilter(status);
     setCurrentPage(1);
   };
@@ -268,9 +273,17 @@ export default function DebtsPage() {
     return statusFilter === 'ongoing' ? !isPaidOff : isPaidOff;
   });
 
-  const totalPages = Math.ceil(filteredDebts.length / ITEMS_PER_PAGE);
+  const filteredHistory = historyLogs.filter(tx => {
+    if (activeTab === 'liability') return ['Debt Paydown', 'Loan Received'].includes(tx.category);
+    return ['Debt Repayment', 'Loan Given'].includes(tx.category);
+  });
+
+  const currentListLength = statusFilter === 'history' ? filteredHistory.length : filteredDebts.length;
+  const totalPages = Math.ceil(currentListLength / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  
   const paginatedDebts = filteredDebts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const paginatedHistory = filteredHistory.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const isLiabilityTab = activeTab === 'liability';
   const themeColor = isLiabilityTab ? 'rose' : 'emerald';
@@ -352,7 +365,6 @@ export default function DebtsPage() {
                       </div>
                     </div>
 
-                    {/* 🚀 FIXED: Added dynamic z-index here */}
                     {addForm.affect_wallet && (
                       <div className={`relative ${isWalletOpen ? 'z-50' : ''} mt-2`}>
                         <label className="block text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-400 mb-1">{addForm.type === 'liability' ? 'Deposit Loan Into' : 'Take Money From'}</label>
@@ -397,7 +409,6 @@ export default function DebtsPage() {
                       )}
                     </div>
                     
-                    {/* 🚀 FIXED: Added dynamic z-index here */}
                     <div className={`relative ${isCategoryOpen ? 'z-50' : ''}`}>
                       <label className="block text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-400 mb-1">Category</label>
                       <button type="button" onClick={() => setIsCategoryOpen(!isCategoryOpen)} className="w-full flex justify-between items-center bg-slate-50 dark:bg-slate-950/50 border border-slate-200/80 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-slate-200 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors">
@@ -493,11 +504,12 @@ export default function DebtsPage() {
         </div>
       </div>
 
-      {/* Sub-Tab Navigation (Ongoing vs Completed) & Grid */}
+      {/* Sub-Tab Navigation (Ongoing vs Completed vs History) & Grid */}
       <div className="mt-10">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            {statusFilter === 'ongoing' ? (isLiabilityTab ? 'Active Liabilities' : 'Pending Receivables') : 'Settled Records'}
+            {statusFilter === 'ongoing' ? (isLiabilityTab ? 'Active Liabilities' : 'Pending Receivables') 
+            : statusFilter === 'completed' ? 'Settled Records' : 'Payment History'}
           </h3>
           
           <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl w-fit border border-slate-200 dark:border-white/10">
@@ -513,92 +525,125 @@ export default function DebtsPage() {
             >
               Completed
             </button>
+            <button 
+              onClick={() => handleStatusChange('history')} 
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${statusFilter === 'history' ? 'bg-white dark:bg-slate-800 shadow text-slate-900 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            >
+              History
+            </button>
           </div>
         </div>
 
         {loading ? (
           <div className="flex justify-center py-12"><Loader2 className="animate-spin text-brand-500" size={32} /></div>
-        ) : paginatedDebts.length === 0 ? (
+        ) : (statusFilter === 'history' ? paginatedHistory.length === 0 : paginatedDebts.length === 0) ? (
           <div className="glass-card p-12 md:p-16 text-center rounded-[2rem] flex flex-col items-center transition-colors">
             <div className="w-16 h-16 rounded-2xl bg-slate-100/80 dark:bg-white/5 flex items-center justify-center text-slate-400 mb-4 backdrop-blur-sm border border-slate-200/50 dark:border-white/5">
-              {statusFilter === 'ongoing' && allDebtsInCurrentTab.length > 0 ? (
+              {statusFilter === 'history' ? (
+                <History size={32} />
+              ) : statusFilter === 'ongoing' && allDebtsInCurrentTab.length > 0 ? (
                 <CheckCircle2 size={32} className="text-emerald-500" />
               ) : (
                 isLiabilityTab ? <CreditCard size={32} /> : <Wallet size={32} />
               )}
             </div>
             <h3 className="text-xl font-bold text-slate-900 dark:text-slate-200 transition-colors">
-              {statusFilter === 'ongoing' && allDebtsInCurrentTab.length > 0 
-                ? "All caught up! 🎉" 
-                : statusFilter === 'completed'
-                  ? "No settled records yet"
-                  : isLiabilityTab ? "Debt Free! (For now)" : "No Pending Debts"
+              {statusFilter === 'history' 
+                ? "No transaction history yet" 
+                : statusFilter === 'ongoing' && allDebtsInCurrentTab.length > 0 
+                  ? "All caught up! 🎉" 
+                  : statusFilter === 'completed'
+                    ? "No settled records yet"
+                    : isLiabilityTab ? "Debt Free! (For now)" : "No Pending Debts"
               }
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 transition-colors">
-              {statusFilter === 'ongoing' && allDebtsInCurrentTab.length > 0
-                ? `You have completely settled all your ${isLiabilityTab ? 'debts' : 'receivables'}. Check the Completed tab!`
-                : statusFilter === 'completed'
-                  ? "Records will appear here once they are fully paid off."
-                  : isLiabilityTab ? "Add your first credit card or loan to start tracking your paydown." : "Add a record if someone owes you money."
+              {statusFilter === 'history'
+                ? `Log payments or ${isLiabilityTab ? 'loans received' : 'funds lent'} to see your history here.`
+                : statusFilter === 'ongoing' && allDebtsInCurrentTab.length > 0
+                  ? `You have completely settled all your ${isLiabilityTab ? 'debts' : 'receivables'}. Check the Completed tab!`
+                  : statusFilter === 'completed'
+                    ? "Records will appear here once they are fully paid off."
+                    : isLiabilityTab ? "Add your first credit card or loan to start tracking your paydown." : "Add a record if someone owes you money."
               }
             </p>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-in fade-in duration-500">
-              {paginatedDebts.map((debt) => {
-                const isPaidOff = Number(debt.remaining_amount) <= 0;
-                const progress = ((debt.total_amount - debt.remaining_amount) / debt.total_amount) * 100;
-                const cardColor = isLiabilityTab ? (isPaidOff ? 'emerald' : 'rose') : (isPaidOff ? 'slate' : 'emerald');
-
-                return (
-                  <div key={debt.id} className={`glass-card p-6 rounded-[2rem] relative group flex flex-col justify-between transition-all duration-300 ${isPaidOff ? 'opacity-70 hover:opacity-100' : 'hover:bg-white/40 dark:hover:bg-white/5 border border-transparent hover:border-slate-200/50 dark:hover:border-white/10'}`}>
-                    
-                    <button onClick={() => setDeleteModal({ isOpen: true, id: debt.id, name: debt.name })} className="absolute top-4 right-4 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 bg-white/50 dark:bg-black/20 hover:bg-rose-100 dark:hover:bg-rose-500/10 p-2 rounded-lg opacity-100 md:opacity-0 group-hover:opacity-100 transition-all z-10 backdrop-blur-md"><Trash2 size={16} /></button>
-
-                    <div>
-                      <div className="flex items-center gap-4 mb-6">
-                        <div className={`w-12 h-12 md:w-14 md:h-14 shrink-0 rounded-2xl border flex items-center justify-center shadow-sm backdrop-blur-sm transition-colors bg-${cardColor}-50/80 dark:bg-${cardColor}-500/10 border-${cardColor}-200/50 dark:border-${cardColor}-500/20 text-${cardColor}-500`}>
-                          {getCategoryIcon(debt.category)}
-                        </div>
-                        <div className="truncate pr-8">
-                          <h3 className={`text-base md:text-lg font-bold transition-colors truncate ${isPaidOff ? 'text-slate-700 dark:text-slate-300 line-through decoration-slate-400/50 decoration-2' : 'text-slate-900 dark:text-slate-200'}`}>{debt.name}</h3>
-                          <p className="text-[10px] md:text-xs font-semibold text-slate-500 dark:text-slate-400 transition-colors">{debt.interest_rate}% APR • {debt.category}</p>
-                        </div>
+            {statusFilter === 'history' ? (
+              <div className="space-y-4 animate-in fade-in duration-500">
+                {paginatedHistory.map((tx) => (
+                  <div key={tx.id} className="glass-card p-4 md:p-6 rounded-2xl flex justify-between items-center hover:bg-white/40 dark:hover:bg-white/5 transition-colors border border-slate-200/50 dark:border-white/5">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center border shadow-sm ${tx.type === 'income' ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200/50 text-emerald-500' : 'bg-rose-50 dark:bg-rose-500/10 border-rose-200/50 text-rose-500'}`}>
+                        {tx.type === 'income' ? <ArrowUpRight size={20} /> : <TrendingDown size={20} />}
                       </div>
-
-                      <div className="flex justify-between items-end mb-2">
-                        <div>
-                          <p className="text-[10px] md:text-xs font-medium text-slate-500 dark:text-slate-400 mb-0.5">{isPaidOff ? 'Total Settled' : 'Remaining Balance'}</p>
-                          <span className={`text-2xl md:text-3xl font-extrabold transition-colors break-words ${isPaidOff ? 'text-emerald-500' : 'text-slate-900 dark:text-white'}`}>
-                            {currencySymbol}{isPaidOff ? Number(debt.total_amount).toLocaleString(undefined, { maximumFractionDigits: 0 }) : Number(debt.remaining_amount).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="h-2 md:h-2.5 w-full bg-slate-100/80 dark:bg-slate-950/50 rounded-full overflow-hidden border border-slate-200/50 dark:border-white/5 mb-6 transition-colors shadow-inner">
-                        <div className={`h-full transition-all duration-1000 ease-out bg-${cardColor}-500 shadow-[0_0_10px_rgba(0,0,0,0.2)]`} style={{ width: `${progress}%` }}></div>
+                      <div>
+                        <h3 className="text-sm md:text-base font-bold text-slate-900 dark:text-slate-200">{tx.title}</h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{new Date(tx.date).toLocaleDateString()} • {tx.category}</p>
                       </div>
                     </div>
-
-                    <div className="flex gap-2 mt-auto">
-                      <button 
-                        onClick={() => {
-                          setPaymentModal({ isOpen: true, id: debt.id, name: debt.name, remaining: debt.remaining_amount, wallet_id: wallets.length > 0 ? wallets[0].id : "", affect_wallet: true });
-                          setPaymentAmount("");
-                          setIsPaymentWalletOpen(false);
-                        }}
-                        disabled={isPaidOff}
-                        className={`flex-1 py-3 rounded-xl font-bold flex justify-center items-center gap-2 text-sm md:text-base transition-all ${isPaidOff ? 'bg-slate-100/50 text-slate-600 border border-slate-200/50 dark:bg-white/5 dark:text-slate-400 dark:border-white/10' : 'bg-white/80 text-slate-700 hover:bg-white border-slate-200 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 dark:border-white/10 border shadow-sm active:scale-95'}`}
-                      >
-                        {isPaidOff ? (isLiabilityTab ? "Debt Crushed! 🎉" : "Fully Collected! ✅") : <>{isLiabilityTab ? "Log Payment" : "Log Receipt"}</>}
-                      </button>
+                    <div className={`text-lg font-bold ${tx.type === 'income' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                      {tx.type === 'income' ? '+' : '-'}{currencySymbol}{Number(tx.amount).toLocaleString()}
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-in fade-in duration-500">
+                {paginatedDebts.map((debt) => {
+                  const isPaidOff = Number(debt.remaining_amount) <= 0;
+                  const progress = ((debt.total_amount - debt.remaining_amount) / debt.total_amount) * 100;
+                  const cardColor = isLiabilityTab ? (isPaidOff ? 'emerald' : 'rose') : (isPaidOff ? 'slate' : 'emerald');
+
+                  return (
+                    <div key={debt.id} className={`glass-card p-6 rounded-[2rem] relative group flex flex-col justify-between transition-all duration-300 ${isPaidOff ? 'opacity-70 hover:opacity-100' : 'hover:bg-white/40 dark:hover:bg-white/5 border border-transparent hover:border-slate-200/50 dark:hover:border-white/10'}`}>
+                      
+                      <button onClick={() => setDeleteModal({ isOpen: true, id: debt.id, name: debt.name })} className="absolute top-4 right-4 text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 bg-white/50 dark:bg-black/20 hover:bg-rose-100 dark:hover:bg-rose-500/10 p-2 rounded-lg opacity-100 md:opacity-0 group-hover:opacity-100 transition-all z-10 backdrop-blur-md"><Trash2 size={16} /></button>
+
+                      <div>
+                        <div className="flex items-center gap-4 mb-6">
+                          <div className={`w-12 h-12 md:w-14 md:h-14 shrink-0 rounded-2xl border flex items-center justify-center shadow-sm backdrop-blur-sm transition-colors bg-${cardColor}-50/80 dark:bg-${cardColor}-500/10 border-${cardColor}-200/50 dark:border-${cardColor}-500/20 text-${cardColor}-500`}>
+                            {getCategoryIcon(debt.category)}
+                          </div>
+                          <div className="truncate pr-8">
+                            <h3 className={`text-base md:text-lg font-bold transition-colors truncate ${isPaidOff ? 'text-slate-700 dark:text-slate-300 line-through decoration-slate-400/50 decoration-2' : 'text-slate-900 dark:text-slate-200'}`}>{debt.name}</h3>
+                            <p className="text-[10px] md:text-xs font-semibold text-slate-500 dark:text-slate-400 transition-colors">{debt.interest_rate}% APR • {debt.category}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-end mb-2">
+                          <div>
+                            <p className="text-[10px] md:text-xs font-medium text-slate-500 dark:text-slate-400 mb-0.5">{isPaidOff ? 'Total Settled' : 'Remaining Balance'}</p>
+                            <span className={`text-2xl md:text-3xl font-extrabold transition-colors break-words ${isPaidOff ? 'text-emerald-500' : 'text-slate-900 dark:text-white'}`}>
+                              {currencySymbol}{isPaidOff ? Number(debt.total_amount).toLocaleString(undefined, { maximumFractionDigits: 0 }) : Number(debt.remaining_amount).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="h-2 md:h-2.5 w-full bg-slate-100/80 dark:bg-slate-950/50 rounded-full overflow-hidden border border-slate-200/50 dark:border-white/5 mb-6 transition-colors shadow-inner">
+                          <div className={`h-full transition-all duration-1000 ease-out bg-${cardColor}-500 shadow-[0_0_10px_rgba(0,0,0,0.2)]`} style={{ width: `${progress}%` }}></div>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 mt-auto">
+                        <button 
+                          onClick={() => {
+                            setPaymentModal({ isOpen: true, id: debt.id, name: debt.name, remaining: debt.remaining_amount, wallet_id: wallets.length > 0 ? wallets[0].id : "", affect_wallet: true });
+                            setPaymentAmount("");
+                            setIsPaymentWalletOpen(false);
+                          }}
+                          disabled={isPaidOff}
+                          className={`flex-1 py-3 rounded-xl font-bold flex justify-center items-center gap-2 text-sm md:text-base transition-all ${isPaidOff ? 'bg-slate-100/50 text-slate-600 border border-slate-200/50 dark:bg-white/5 dark:text-slate-400 dark:border-white/10' : 'bg-white/80 text-slate-700 hover:bg-white border-slate-200 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 dark:border-white/10 border shadow-sm active:scale-95'}`}
+                        >
+                          {isPaidOff ? (isLiabilityTab ? "Debt Crushed! 🎉" : "Fully Collected! ✅") : <>{isLiabilityTab ? "Log Payment" : "Log Receipt"}</>}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
@@ -622,7 +667,6 @@ export default function DebtsPage() {
       {paymentModal.isOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/10 dark:bg-black/40 backdrop-blur-sm animate-in fade-in" onClick={() => setPaymentModal({...paymentModal, isOpen: false})} />
-          {/* 🚀 FIXED: Changed overflow-hidden to overflow-visible so the dropdown list isn't clipped */}
           <div className="relative z-10 w-full max-w-sm glass-card rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] overflow-visible animate-in zoom-in-95">
             <div className="flex justify-between items-center p-6 border-b border-slate-200/80 dark:border-white/5">
               <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
@@ -651,7 +695,6 @@ export default function DebtsPage() {
                 </div>
               </div>
 
-              {/* 🚀 FIXED: Added dynamic z-index here */}
               {paymentModal.affect_wallet && (
                 <div className={`relative ${isPaymentWalletOpen ? 'z-50' : ''}`}>
                   <label className="block text-sm font-semibold tracking-wide text-slate-700 dark:text-slate-400 mb-1">

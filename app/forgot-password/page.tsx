@@ -79,20 +79,21 @@ export default function ForgotPassword() {
           </span>
         </Link>
         <Link href="/login" className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors">
-          <ArrowLeft size={16} /> <span>Back to Login</span>
+          <ArrowLeft size={16} /> <span className="hidden sm:inline">Back to Login</span>
         </Link>
       </header>
 
-      <div className="flex-1 flex items-center justify-center p-6 z-10">
-        <div className="w-full max-w-md bg-white/90 dark:bg-slate-900/60 backdrop-blur-2xl border border-slate-200/50 dark:border-white/10 p-8 sm:p-10 rounded-[2.5rem] shadow-2xl dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] relative overflow-hidden">
+      {/* Cardless Form Container */}
+      <div className="flex-1 flex items-center justify-center p-6 z-10 py-12">
+        <div className="w-full max-w-[400px] relative overflow-hidden animate-in fade-in duration-500">
           
-          <div className="text-center mb-8">
+          <div className="text-center mb-10">
             <h1 className={`${headerFont.className} text-3xl font-extrabold text-slate-900 dark:text-white mb-2 tracking-tight`}>Reset Password</h1>
             <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Enter your email and we'll send you a link to reset your password.</p>
           </div>
 
           {errorMsg && (
-            <div className="mb-6 flex items-start gap-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 p-4 rounded-xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="mb-8 flex items-start gap-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 p-4 rounded-xl animate-in fade-in zoom-in-95 duration-200">
               <AlertCircle size={18} className="shrink-0 mt-0.5" />
               <p className="text-sm font-medium leading-snug">{errorMsg}</p>
             </div>
@@ -109,17 +110,17 @@ export default function ForgotPassword() {
               </p>
               <Link 
                 href="/login"
-                className="w-full flex justify-center items-center gap-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-200 text-white dark:text-slate-900 font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95"
+                className="w-full flex justify-center items-center gap-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 text-white font-bold py-4 rounded-xl transition-all active:scale-[0.98]"
               >
                 Return to Login
               </Link>
             </div>
           ) : (
-            <form className="space-y-4" onSubmit={handleResetPassword}>
+            <form className="space-y-6" onSubmit={handleResetPassword}>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Email Address</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-wider">Email Address</label>
+                <div className="relative flex items-center">
+                  <div className="absolute left-0 flex items-center pointer-events-none text-slate-400">
                     <Mail size={18} />
                   </div>
                   <input 
@@ -127,7 +128,7 @@ export default function ForgotPassword() {
                     placeholder="john@example.com" 
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all font-medium"
+                    className="w-full bg-transparent border-0 border-b-2 border-slate-200 dark:border-slate-800 rounded-none pl-9 py-2.5 text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-700 focus:outline-none focus:border-slate-900 dark:focus:border-white focus:ring-0 transition-all font-medium [&:-webkit-autofill]:[transition:background-color_9999s_ease-in-out_0s] [&:-webkit-autofill]:[-webkit-text-fill-color:inherit]"
                     required
                   />
                 </div>
@@ -136,7 +137,7 @@ export default function ForgotPassword() {
               <button 
                 type="submit"
                 disabled={isLoading || !email}
-                className="w-full flex justify-center items-center gap-2 bg-brand-600 dark:bg-brand-500 hover:bg-brand-700 dark:hover:bg-brand-400 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-brand-500/30 hover:-translate-y-0.5 active:scale-95 transition-all mt-6 disabled:opacity-70 disabled:hover:translate-y-0"
+                className="w-full flex justify-center items-center gap-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 text-white font-bold py-4 rounded-xl transition-all active:scale-[0.98] mt-8 disabled:opacity-70"
               >
                 {isLoading ? <Loader2 className="animate-spin" size={20} /> : "Send Reset Link"}
               </button>

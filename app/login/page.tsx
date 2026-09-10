@@ -25,7 +25,7 @@ export default function LogIn() {
   const [theme, setTheme] = useState('dark');
   const [showPassword, setShowPassword] = useState(false);
 
-  // 🚀 NEW: Stashed Email State
+  // Stashed Email State
   const [lockedEmail, setLockedEmail] = useState<string | null>(null);
 
   const [email, setEmail] = useState("");
@@ -57,11 +57,11 @@ export default function LogIn() {
 
     applyTheme();
 
-    // 🚀 NEW: Check for an auto-logout email stash on mount
+    // Check for an auto-logout email stash on mount
     const stashedEmail = localStorage.getItem("nova_locked_email");
     if (stashedEmail) {
       setLockedEmail(stashedEmail);
-      setEmail(stashedEmail); // Prefill the email state so handleLogin works perfectly
+      setEmail(stashedEmail); 
     }
   }, []);
 
@@ -82,7 +82,6 @@ export default function LogIn() {
         return;
       }
 
-      // If successful, clear the lock so it doesn't persist forever
       localStorage.removeItem("nova_locked_email");
 
       router.refresh();
@@ -114,7 +113,6 @@ export default function LogIn() {
     }
   };
 
-  // 🚀 NEW: Function to clear the stashed email if the user wants to log in as someone else
   const handleClearLock = () => {
     localStorage.removeItem("nova_locked_email");
     setLockedEmail(null);
@@ -142,36 +140,35 @@ export default function LogIn() {
       </header>
 
       <div className="flex-1 flex items-center justify-center p-6 z-10 py-12">
-        <div className="w-full max-w-md bg-white/90 dark:bg-slate-900/60 backdrop-blur-2xl border border-slate-200/50 dark:border-white/10 p-8 sm:p-10 rounded-[2.5rem] shadow-2xl dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] relative overflow-hidden">
+        <div className="w-full max-w-[400px] relative overflow-hidden">
           
           {errorMsg && (
-            <div className="mb-6 flex items-center gap-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 p-4 rounded-xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="mb-8 flex items-center gap-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 p-4 rounded-xl animate-in fade-in zoom-in-95 duration-200">
               <AlertCircle size={18} className="shrink-0" />
               <p className="text-sm font-medium leading-snug">{errorMsg}</p>
             </div>
           )}
 
-          {/* 🚀 NEW: Conditional Rendering based on lockedEmail */}
           {lockedEmail ? (
             <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500">
-              <div className="flex flex-col items-center mb-6">
-                <div className="w-20 h-20 bg-brand-50 dark:bg-brand-500/10 rounded-full flex items-center justify-center border border-brand-200 dark:border-brand-500/20 mb-4 shadow-sm">
-                  <Lock size={32} className="text-brand-600 dark:text-brand-400" />
+              <div className="flex flex-col items-center mb-8">
+                <div className="w-20 h-20 bg-transparent rounded-full flex items-center justify-center border border-slate-200 dark:border-slate-800 mb-4">
+                  <Lock size={32} className="text-slate-400 dark:text-slate-500" />
                 </div>
                 <p className="text-slate-500 dark:text-slate-400 text-xs font-bold mb-1 uppercase tracking-widest">Session Locked</p>
-                <h2 className="text-lg font-extrabold text-slate-900 dark:text-white tracking-tight">{lockedEmail}</h2>
+                <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">{lockedEmail}</h2>
               </div>
 
-              <form className="space-y-4" onSubmit={handleLogin}>
+              <form className="space-y-6" onSubmit={handleLogin}>
                 <div>
-                  <div className="flex justify-between items-center mb-1.5">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Password</label>
-                    <Link href="/forgot-password" className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 transition-colors">
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Password</label>
+                    <Link href="/forgot-password" className="text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
                       Forgot password?
                     </Link>
                   </div>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                  <div className="relative flex items-center">
+                    <div className="absolute left-0 flex items-center pointer-events-none text-slate-400">
                       <Lock size={18} />
                     </div>
                     <input 
@@ -179,14 +176,14 @@ export default function LogIn() {
                       placeholder="••••••••" 
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-white/10 rounded-xl pl-11 pr-11 py-3.5 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all font-medium"
+                      className="w-full bg-transparent border-0 border-b-2 border-slate-200 dark:border-slate-800 rounded-none pl-9 pr-10 py-2.5 text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-700 focus:outline-none focus:border-slate-900 dark:focus:border-white focus:ring-0 transition-all font-medium [&:-webkit-autofill]:[transition:background-color_9999s_ease-in-out_0s] [&:-webkit-autofill]:[-webkit-text-fill-color:#0f172a] dark:[&:-webkit-autofill]:[-webkit-text-fill-color:#ffffff]"
                       required
                       autoFocus
                     />
                     <button 
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                      className="absolute right-0 pr-2 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
                     >
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
@@ -196,13 +193,13 @@ export default function LogIn() {
                 <button 
                   type="submit" 
                   disabled={isLoading}
-                  className="w-full flex justify-center items-center gap-2 bg-brand-600 hover:bg-brand-500 text-white font-bold py-4 rounded-xl shadow-[0_8px_20px_-6px_rgb(var(--brand-500)/0.6)] hover:-translate-y-0.5 active:scale-95 transition-all mt-6 disabled:opacity-70 disabled:hover:translate-y-0"
+                  className="w-full flex justify-center items-center gap-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 text-white font-bold py-4 rounded-xl transition-all mt-8 disabled:opacity-70 disabled:hover:translate-y-0"
                 >
                   {isLoading ? <Loader2 className="animate-spin" size={20} /> : "Unlock Vault"}
                 </button>
               </form>
 
-              <div className="mt-8 text-center border-t border-slate-200 dark:border-white/10 pt-6">
+              <div className="mt-10 text-center">
                 <button 
                   type="button"
                   onClick={handleClearLock} 
@@ -214,36 +211,35 @@ export default function LogIn() {
             </div>
           ) : (
             
-            /* ORIGINAL LOGIN FORM */
             <div className="animate-in fade-in duration-500">
-              <div className="text-center mb-8">
+              <div className="text-center mb-10">
                 <h1 className={`${headerFont.className} text-3xl font-extrabold text-slate-900 dark:text-white mb-2 tracking-tight`}>Welcome back</h1>
                 <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Log in to access your financial vault.</p>
               </div>
 
-              <div className="mb-6">
+              <div className="mb-8">
                 <button 
                   type="button"
                   onClick={handleGoogleLogin}
                   disabled={isGoogleLoading || isLoading}
-                  className="w-full flex justify-center items-center gap-3 bg-white dark:bg-black/20 hover:bg-slate-50 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 font-bold py-3.5 rounded-xl shadow-sm transition-all active:scale-95 disabled:opacity-70 disabled:hover:bg-white dark:disabled:hover:bg-black/20 disabled:active:scale-100"
+                  className="w-full flex justify-center items-center gap-3 bg-transparent border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 text-slate-700 dark:text-slate-200 font-bold py-3.5 rounded-xl transition-all active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100"
                 >
                   {isGoogleLoading ? <Loader2 className="animate-spin text-slate-400" size={20} /> : <GoogleIcon />}
                   <span>Continue with Google</span>
                 </button>
               </div>
 
-              <div className="flex items-center gap-4 mb-6">
-                <div className="h-px flex-1 bg-slate-200 dark:bg-white/10"></div>
+              <div className="flex items-center gap-4 mb-8">
+                <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800"></div>
                 <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Or</span>
-                <div className="h-px flex-1 bg-slate-200 dark:bg-white/10"></div>
+                <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800"></div>
               </div>
 
-              <form className="space-y-4" onSubmit={handleLogin}>
+              <form className="space-y-6" onSubmit={handleLogin}>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Email Address</label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-wider">Email Address</label>
+                  <div className="relative flex items-center">
+                    <div className="absolute left-0 flex items-center pointer-events-none text-slate-400">
                       <Mail size={18} />
                     </div>
                     <input 
@@ -251,21 +247,21 @@ export default function LogIn() {
                       placeholder="john@example.com" 
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-white/10 rounded-xl pl-11 pr-4 py-3.5 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all font-medium"
+                      className="w-full bg-transparent border-0 border-b-2 border-slate-200 dark:border-slate-800 rounded-none pl-9 pr-4 py-2.5 text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-700 focus:outline-none focus:border-slate-900 dark:focus:border-white focus:ring-0 transition-all font-medium [&:-webkit-autofill]:[transition:background-color_9999s_ease-in-out_0s] [&:-webkit-autofill]:[-webkit-text-fill-color:#0f172a] dark:[&:-webkit-autofill]:[-webkit-text-fill-color:#ffffff]"
                       required
                     />
                   </div>
                 </div>
 
                 <div>
-                  <div className="flex justify-between items-center mb-1.5">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Password</label>
-                    <Link href="/forgot-password" className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 transition-colors">
+                  <div className="flex justify-between items-center mb-3">
+                    <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Password</label>
+                    <Link href="/forgot-password" className="text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
                       Forgot password?
                     </Link>
                   </div>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                  <div className="relative flex items-center">
+                    <div className="absolute left-0 flex items-center pointer-events-none text-slate-400">
                       <Lock size={18} />
                     </div>
                     <input 
@@ -273,13 +269,13 @@ export default function LogIn() {
                       placeholder="••••••••" 
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-white/10 rounded-xl pl-11 pr-11 py-3.5 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all font-medium"
+                      className="w-full bg-transparent border-0 border-b-2 border-slate-200 dark:border-slate-800 rounded-none pl-9 pr-10 py-2.5 text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-700 focus:outline-none focus:border-slate-900 dark:focus:border-white focus:ring-0 transition-all font-medium [&:-webkit-autofill]:[transition:background-color_9999s_ease-in-out_0s] [&:-webkit-autofill]:[-webkit-text-fill-color:#0f172a] dark:[&:-webkit-autofill]:[-webkit-text-fill-color:#ffffff]"
                       required
                     />
                     <button 
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                      className="absolute right-0 pr-2 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
                     >
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
@@ -289,15 +285,15 @@ export default function LogIn() {
                 <button 
                   type="submit" 
                   disabled={isLoading || isGoogleLoading}
-                  className="w-full flex justify-center items-center gap-2 bg-brand-600 hover:bg-brand-500 text-white font-bold py-4 rounded-xl shadow-[0_8px_20px_-6px_rgb(var(--brand-500)/0.6)] hover:-translate-y-0.5 active:scale-95 transition-all mt-6 disabled:opacity-70 disabled:hover:translate-y-0"
+                  className="w-full flex justify-center items-center gap-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 text-white font-bold py-4 rounded-xl transition-all active:scale-[0.98] mt-8 disabled:opacity-70"
                 >
-                  {isLoading ? <Loader2 className="animate-spin" size={20} /> : "Sign In with Email"}
+                  {isLoading ? <Loader2 className="animate-spin" size={20} /> : "Sign In"}
                 </button>
               </form>
 
-              <p className="mt-8 text-center text-sm font-medium text-slate-500 dark:text-slate-400">
+              <p className="mt-10 text-center text-sm font-medium text-slate-500 dark:text-slate-400">
                 Don't have an account?{" "}
-                <Link href="/signup" className="font-bold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 transition-colors">
+                <Link href="/signup" className="font-bold text-slate-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
                   Sign up here
                 </Link>
               </p>
