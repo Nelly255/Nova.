@@ -20,6 +20,22 @@ const getRelativeTime = (timestamp: string) => {
   return date.toLocaleDateString();
 };
 
+// Priority Sorting Logic: Unread first, then Priority (Danger > Warning > Success > Info), then Newest
+const sortNotifications = (notifs: any[]) => {
+  const getPriority = (type: string) => {
+    if (type === 'danger') return 4;
+    if (type === 'warning') return 3;
+    if (type === 'success') return 2;
+    return 1;
+  };
+
+  return [...notifs].sort((a, b) => {
+    if (a.read !== b.read) return a.read ? 1 : -1;
+    if (getPriority(a.type) !== getPriority(b.type)) return getPriority(b.type) - getPriority(a.type);
+    return new Date(b.time).getTime() - new Date(a.time).getTime();
+  });
+};
+
 export default function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -38,15 +54,13 @@ export default function NotificationBell() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // 🚀 FIXED: Wrapped in useCallback so we can call it on mount AND when a payment is logged
   const generateNotifications = useCallback(async () => {
     const currentMonthStr = new Date().toISOString().slice(0, 7); 
     
-    // 🚀 THE FIX: Removed the category filter! "Subscription" isn't in your master list.
-    // Now it checks ALL expenses for the month to see if the name matches!
+    // Fetch subscriptions and ALL expense data for the current month
     const [subsRes, txRes] = await Promise.all([
       supabase.from("subscriptions").select("*"),
-      supabase.from("transactions").select("title, type").eq("type", "expense").like("date", `${currentMonthStr}%`)
+      supabase.from("transactions").select("*").eq("type", "expense").like("date", `${currentMonthStr}%`)
     ]);
 
     const currentDate = new Date();
@@ -58,20 +72,31 @@ export default function NotificationBell() {
     const savedHistory = localStorage.getItem("nova_notif_history");
     let historyItems = savedHistory ? JSON.parse(savedHistory) : [];
 
-    // SMART CHECK: Looks at all expenses this month to see if the description contains the sub name
+    // STRICT PURGE: Instantly remove ANY notification that isn't from the current month
+    historyItems = historyItems.filter((n: any) => {
+      if (!n.time) return false;
+      return n.time.startsWith(currentMonthStr);
+    });
+
+    // SMART CHECK: Looks across all possible transaction fields to see if the sub was paid this month
     const isPaidThisMonth = (subName: string) => {
       if (!subName) return false;
-      return txs.some(tx => tx.title.toLowerCase().includes(subName.toLowerCase()));
+      const lowerSub = subName.toLowerCase();
+      return txs.some(tx => {
+        const textToSearch = `${tx.title || ''} ${tx.description || ''} ${tx.narration || ''} ${tx.name || ''}`.toLowerCase();
+        return textToSearch.includes(lowerSub);
+      });
     };
 
     if (subs.length > 0) {
       subs.forEach(sub => {
-        const subAlertPrefix = `sub-alert-${sub.id}-${currentMonthStr}`;
+        const baseSubPrefix = `sub-alert-${sub.id}`;
+        const currentMonthPrefix = `${baseSubPrefix}-${currentMonthStr}`;
 
-        // 🚀 SMART CLEANUP: If they paid it under ANY category, delete the nagging notification instantly!
+        // CRITICAL CLEANUP: If paid, permanently remove ALL alerts for this sub
         if (isPaidThisMonth(sub.name)) {
-          historyItems = historyItems.filter((n: any) => !n.id.startsWith(subAlertPrefix));
-          return; // Skip generating new alerts for this sub
+          historyItems = historyItems.filter((n: any) => !n.id.startsWith(baseSubPrefix));
+          return; 
         }
 
         const daysUntilDue = sub.billing_date - today;
@@ -93,32 +118,33 @@ export default function NotificationBell() {
         }
 
         if (alertState && notifProps) {
-          const specificId = `${subAlertPrefix}-${alertState}`;
-          
+          const specificId = `${currentMonthPrefix}-${alertState}`;
           const alreadyExists = historyItems.some((n: any) => n.id === specificId);
 
           if (!alreadyExists) {
-            // Remove older alerts for this exact sub so they don't stack up
-            historyItems = historyItems.filter((n: any) => !n.id.startsWith(subAlertPrefix));
+            // Remove older alerts for this specific sub to prevent stacking (e.g., clearing "due tomorrow" for "due today")
+            historyItems = historyItems.filter((n: any) => !n.id.startsWith(baseSubPrefix));
             
-            historyItems = [{
+            historyItems.push({
               id: specificId,
               ...notifProps,
               time: getCurrentTime(), 
               read: false,
               isPersistent: true 
-            }, ...historyItems];
+            });
           }
         }
       });
     }
 
+    // Handle Monthly Budget Reminder
+    const yearMonthId = `budget-reminder-${currentDate.getFullYear()}-${currentDate.getMonth()}`;
+    
     if (today === 1) {
-      const yearMonthId = `budget-reminder-${currentDate.getFullYear()}-${currentDate.getMonth()}`;
       const hasBudgetReminder = historyItems.some((n: any) => n.id === yearMonthId);
       
       if (!hasBudgetReminder) {
-        const budgetNotif = {
+        historyItems.push({
           id: yearMonthId,
           type: "info",
           title: "Happy New Month! 🎯",
@@ -126,35 +152,33 @@ export default function NotificationBell() {
           time: getCurrentTime(),
           read: false,
           isPersistent: true 
-        };
-        historyItems = [budgetNotif, ...historyItems];
+        });
       }
     }
 
     const hasGeneratedWelcome = localStorage.getItem("has_generated_welcome_notif");
     if (!hasGeneratedWelcome) {
-      const welcomeNotif = {
+      historyItems.push({
         id: "welcome",
-        type: "info",
+        type: "success",
         title: "Welcome to Nova.",
         message: "Your financial dashboard is ready to go.",
         time: getCurrentTime(), 
         read: false,
         isPersistent: true
-      };
-      historyItems = [welcomeNotif, ...historyItems];
+      });
       localStorage.setItem("has_generated_welcome_notif", "true");
     }
 
-    localStorage.setItem("nova_notif_history", JSON.stringify(historyItems));
-    setNotifications(historyItems);
+    // Sort by priority and trim to 15 maximum to prevent bloat
+    const sortedAndTrimmed = sortNotifications(historyItems).slice(0, 15);
+    localStorage.setItem("nova_notif_history", JSON.stringify(sortedAndTrimmed));
+    setNotifications(sortedAndTrimmed);
   }, []);
 
-  // 1. Run on load AND listen to transaction updates
   useEffect(() => {
     generateNotifications();
     
-    // 🚀 FIXED: Now Nova listens for transactions and instantly cleans up overdue spams
     window.addEventListener("transactionUpdated", generateNotifications);
     window.addEventListener("subscriptionUpdated", generateNotifications);
     
@@ -164,7 +188,6 @@ export default function NotificationBell() {
     };
   }, [generateNotifications]);
 
-  // 2. Custom Local Event Listener
   useEffect(() => {
     const handleCustomNotification = (event: Event) => {
       const customEvent = event as CustomEvent;
@@ -178,18 +201,17 @@ export default function NotificationBell() {
       };
       
       setNotifications(prev => {
-        const updatedList = [newNotif, ...prev];
-        const persistentOnly = updatedList.filter(n => n.isPersistent).slice(0, 10);
+        const sortedAndTrimmed = sortNotifications([...prev, newNotif]).slice(0, 15);
+        const persistentOnly = sortedAndTrimmed.filter(n => n.isPersistent);
         localStorage.setItem("nova_notif_history", JSON.stringify(persistentOnly));
         
-        return updatedList;
+        return sortedAndTrimmed;
       });
     };
     window.addEventListener('newNotification', handleCustomNotification);
     return () => window.removeEventListener('newNotification', handleCustomNotification);
   }, []);
 
-  // 3. Supabase Real-Time Listener
   useEffect(() => {
     const channel = supabase
       .channel('schema-db-changes')
@@ -213,10 +235,10 @@ export default function NotificationBell() {
             if (prev.some(n => n.message.includes(newSub.name) && n.time === newNotif.time)) {
               return prev;
             }
-            const updatedList = [newNotif, ...prev];
-            const persistentOnly = updatedList.filter(n => n.isPersistent).slice(0, 10);
+            const sortedAndTrimmed = sortNotifications([...prev, newNotif]).slice(0, 15);
+            const persistentOnly = sortedAndTrimmed.filter(n => n.isPersistent);
             localStorage.setItem("nova_notif_history", JSON.stringify(persistentOnly));
-            return updatedList;
+            return sortedAndTrimmed;
           });
         }
       )
@@ -227,14 +249,14 @@ export default function NotificationBell() {
     };
   }, []);
 
-  // Click Handlers
   const handleNotificationClick = (id: string, type: string) => {
     setNotifications((prev) => {
       const updated = prev.map((n) => n.id === id ? { ...n, read: true } : n);
-      const persistentOnly = updated.filter(n => n.isPersistent);
+      const sorted = sortNotifications(updated);
+      const persistentOnly = sorted.filter(n => n.isPersistent);
       localStorage.setItem("nova_notif_history", JSON.stringify(persistentOnly));
       
-      return updated;
+      return sorted;
     });
     
     if (type === "warning" || type === "danger" || id.startsWith("sub-") || id.startsWith("realtime-sub-")) {
@@ -249,9 +271,10 @@ export default function NotificationBell() {
   const markAllAsRead = () => {
     setNotifications(prev => {
       const updated = prev.map(n => ({ ...n, read: true }));
-      const persistentOnly = updated.filter(n => n.isPersistent);
+      const sorted = sortNotifications(updated);
+      const persistentOnly = sorted.filter(n => n.isPersistent);
       localStorage.setItem("nova_notif_history", JSON.stringify(persistentOnly));
-      return updated;
+      return sorted;
     });
   };
 

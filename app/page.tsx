@@ -147,6 +147,18 @@ export default function WelcomePage() {
   return (
     <main className={`min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 flex flex-col relative overflow-hidden selection:bg-brand-500/30 transition-colors duration-500 ${bodyFont.className}`}>
       
+      {/* Floating Animation Styles */}
+      <style>{`
+        @keyframes float {
+          0% { transform: translateY(0px); }
+          50% { transform: translateY(-12px); }
+          100% { transform: translateY(0px); }
+        }
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
+      `}</style>
+
       {/* Background Glow Effects */}
       <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-brand-600/5 dark:bg-brand-600/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
       <div className="absolute top-[20%] right-[-5%] w-[500px] h-[500px] bg-purple-500/5 dark:bg-purple-500/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
@@ -232,34 +244,36 @@ export default function WelcomePage() {
             />
           </div>
 
-          {/* Clean, glassy UI snippet - Fixed for proper dark mode contrast */}
-          <div className="absolute bottom-6 right-2 sm:right-6 lg:top-[40%] lg:bottom-auto lg:-right-4 z-20">
-            <div className="bg-white/70 dark:bg-slate-900/80 backdrop-blur-xl border border-white/60 dark:border-slate-700/50 p-4 rounded-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] flex flex-col gap-3.5 w-56 transition-all duration-300 hover:scale-[1.02]">
-              <div className="flex items-center justify-between border-b border-slate-200/30 dark:border-slate-700/50 pb-1.5">
-                <span className="text-slate-600 dark:text-slate-400 text-[11px] font-semibold uppercase tracking-wider">Recent</span>
-                <span className="text-slate-600 dark:text-slate-400 text-[10px] font-medium">Today</span>
-              </div>
+          {/* Upgraded Graph UI Card matching the vector illustration style */}
+          <div className="absolute bottom-6 right-2 sm:right-6 lg:top-[38%] lg:bottom-auto lg:-right-6 z-20 animate-float">
+            <div className="bg-white dark:bg-[#1A1E29] border border-slate-100 dark:border-slate-800/80 p-5 rounded-[24px] shadow-[0_24px_60px_-12px_rgba(79,70,229,0.15)] dark:shadow-[0_24px_60px_-12px_rgba(0,0,0,0.6)] flex flex-col gap-5 w-[260px]">
               
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200/50 dark:border-slate-700 shrink-0 shadow-sm">
-                  <Home size={15} className="text-slate-700 dark:text-slate-300" />
+              {/* Mini Bar Chart Header */}
+              <div className="flex items-end justify-between border-b border-slate-100 dark:border-slate-800 pb-5">
+                <div>
+                  <span className="text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-1.5 block">Total Balance</span>
+                  <span className={`${headerFont.className} text-xl font-extrabold text-slate-900 dark:text-white leading-none block`}>TSh 4.2M</span>
                 </div>
-                <div className="flex flex-col flex-1 min-w-0">
-                  <span className="text-xs font-bold text-slate-900 dark:text-white truncate leading-tight">Luku Token</span>
-                  <span className="text-[10px] text-slate-600 dark:text-slate-400 font-medium">Utilities</span>
+                
+                {/* CSS Bar Graph mimicking vector graphics */}
+                <div className="flex items-end gap-1.5 h-12">
+                  <div className="w-2 h-4 bg-slate-100 dark:bg-slate-800 rounded-full"></div>
+                  <div className="w-2 h-7 bg-slate-100 dark:bg-slate-800 rounded-full"></div>
+                  <div className="w-2 h-5 bg-brand-200 dark:bg-brand-500/30 rounded-full"></div>
+                  <div className="w-2 h-10 bg-brand-500 dark:bg-brand-400 rounded-full shadow-[0_0_12px_rgba(99,102,241,0.5)]"></div>
                 </div>
-                <span className={`${headerFont.className} text-xs font-bold text-slate-800 dark:text-slate-200 shrink-0`}>-20k</span>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center border border-emerald-100 dark:border-emerald-500/20 shrink-0 shadow-sm">
-                  <Wallet size={15} className="text-emerald-600 dark:text-emerald-400" />
+              {/* Singular Recent Highlight */}
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center shrink-0">
+                  <Wallet size={16} className="text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div className="flex flex-col flex-1 min-w-0">
-                  <span className="text-xs font-bold text-slate-900 dark:text-white truncate leading-tight">Salary</span>
-                  <span className="text-[10px] text-slate-600 dark:text-slate-400 font-medium">Income</span>
+                  <span className="text-sm font-bold text-slate-900 dark:text-white truncate">Salary Deposit</span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Just now</span>
                 </div>
-                <span className={`${headerFont.className} text-xs font-bold text-emerald-600 dark:text-emerald-400 shrink-0`}>+1.2M</span>
+                <span className={`${headerFont.className} text-sm font-extrabold text-emerald-600 dark:text-emerald-400 shrink-0`}>+1.2M</span>
               </div>
             </div>
           </div>

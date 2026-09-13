@@ -171,7 +171,7 @@ export default function SignUp() {
                   placeholder="John Doe" 
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-transparent border-0 border-b-2 border-slate-200 dark:border-slate-800 rounded-none pl-9 pr-4 py-2.5 text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-700 focus:outline-none focus:border-slate-900 dark:focus:border-white focus:ring-0 transition-all font-medium [&:-webkit-autofill]:[transition:background-color_9999s_ease-in-out_0s] [-webkit-text-fill-color:#0f172a] dark:[&:-webkit-autofill]:[-webkit-text-fill- color:#ffffff]"
+                  className="w-full bg-transparent border-0 border-b-2 border-slate-200 dark:border-slate-800 rounded-none pl-9 pr-4 py-2.5 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-slate-900 dark:focus:border-white focus:ring-0 transition-all font-medium [&:-webkit-autofill]:[transition:background-color_9999s_ease-in-out_0s] [&:-webkit-autofill]:[-webkit-text-fill-color:#0f172a] dark:[&:-webkit-autofill]:[-webkit-text-fill-color:#ffffff]"
                   required
                   autoFocus
                 />
@@ -189,7 +189,7 @@ export default function SignUp() {
                   placeholder="john@example.com" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-transparent border-0 border-b-2 border-slate-200 dark:border-slate-800 rounded-none pl-9 pr-4 py-2.5 text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-700 focus:outline-none focus:border-slate-900 dark:focus:border-white focus:ring-0 transition-all font-medium [&:-webkit-autofill]:[transition:background-color_9999s_ease-in-out_0s] [&:-webkit-autofill]:[-webkit-text-fill-color:#0f172a] dark:[&:-webkit-autofill]:[-webkit-text-fill-color:#ffffff]"
+                  className="w-full bg-transparent border-0 border-b-2 border-slate-200 dark:border-slate-800 rounded-none pl-9 pr-4 py-2.5 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-slate-900 dark:focus:border-white focus:ring-0 transition-all font-medium [&:-webkit-autofill]:[transition:background-color_9999s_ease-in-out_0s] [&:-webkit-autofill]:[-webkit-text-fill-color:#0f172a] dark:[&:-webkit-autofill]:[-webkit-text-fill-color:#ffffff]"
                   required
                 />
               </div>
@@ -206,7 +206,7 @@ export default function SignUp() {
                   placeholder="••••••••" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-transparent border-0 border-b-2 border-slate-200 dark:border-slate-800 rounded-none pl-9 pr-10 py-2.5 text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-700 focus:outline-none focus:border-slate-900 dark:focus:border-white focus:ring-0 transition-all font-medium [&:-webkit-autofill]:[transition:background-color_9999s_ease-in-out_0s] [&:-webkit-autofill]:[-webkit-text-fill-color:inherit]"
+                  className="w-full bg-transparent border-0 border-b-2 border-slate-200 dark:border-slate-800 rounded-none pl-9 pr-10 py-2.5 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-slate-900 dark:focus:border-white focus:ring-0 transition-all font-medium [&:-webkit-autofill]:[transition:background-color_9999s_ease-in-out_0s] [&:-webkit-autofill]:[-webkit-text-fill-color:#0f172a] dark:[&:-webkit-autofill]:[-webkit-text-fill-color:#ffffff]"
                   required
                   minLength={6}
                 />

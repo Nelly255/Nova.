@@ -170,9 +170,9 @@ export default function CategoryChart({
         </div>
       </div>
 
-      {/* Category Statement Modal - Mobile Layout Fix */}
+      {/* Category Statement Modal - Desktop Only (Hidden on Mobile) */}
       {selectedCategory && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[100] hidden md:flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-[#18181b] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] border border-slate-100 dark:border-white/10 ring-1 ring-black/5">
             
             {/* Modal Header */}

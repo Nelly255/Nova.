@@ -214,7 +214,7 @@ export default function LogIn() {
             <div className="animate-in fade-in duration-500">
               <div className="text-center mb-10">
                 <h1 className={`${headerFont.className} text-3xl font-extrabold text-slate-900 dark:text-white mb-2 tracking-tight`}>Welcome back</h1>
-                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Log in to access your financial vault.</p>
+                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Log in to access your Nova Account.</p>
               </div>
 
               <div className="mb-8">
