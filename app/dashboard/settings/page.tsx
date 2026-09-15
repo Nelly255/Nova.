@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { 
   Save, Globe, Wallet, Download, FileSpreadsheet, Loader2, CheckCircle2, 
-  FileText, ArrowRight, CalendarDays, Moon, Sun, Laptop, Palette, Trash2, X, AlertTriangle, Check
+  FileText, ArrowRight, CalendarDays, Moon, Sun, Laptop, Palette, Trash2, X, AlertTriangle, Check, UserX
 } from "lucide-react"; 
 
 // 🚀 PREMIUM COLOR PALETTES
@@ -51,9 +51,15 @@ export default function SettingsPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
+  // Wipe Data States
   const [showWipeModal, setShowWipeModal] = useState(false);
   const [isWiping, setIsWiping] = useState(false);
   const [wipeSuccess, setWipeSuccess] = useState(false);
+
+  // Delete Account States
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
 
   const [toast, setToast] = useState<{message: string, type: 'error' | 'success'} | null>(null);
 
@@ -155,6 +161,45 @@ export default function SettingsPage() {
       console.error("Failed to wipe data:", error);
       setIsWiping(false);
       showToast("Something went wrong while deleting your data. Please try again.");
+    }
+  };
+
+  const executeDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      // 1. Wipe all user data
+      await Promise.all([
+        supabase.from("transactions").delete().not('id', 'is', null),
+        supabase.from("assets").delete().not('id', 'is', null),
+        supabase.from("subscriptions").delete().not('id', 'is', null),
+        supabase.from("budgets").delete().not('id', 'is', null),
+        supabase.from("savings_goals").delete().not('id', 'is', null),
+        supabase.from("debts").delete().not('id', 'is', null)
+      ]);
+      await supabase.from("accounts").delete().not('id', 'is', null);
+
+      // 2. Delete user auth record via RPC (Supabase client cannot do this natively without admin key)
+      const { error: rpcError } = await supabase.rpc('delete_user_account');
+      
+      if (rpcError) {
+        console.warn("RPC delete_user_account failed. Ensure the function is created in Supabase SQL editor.", rpcError);
+      }
+
+      // 3. Sign out to clear the session locally
+      await supabase.auth.signOut();
+      
+      setIsDeleting(false);
+      setDeleteSuccess(true);
+
+      // 4. Redirect to login or home page
+      setTimeout(() => {
+        window.location.href = '/'; 
+      }, 2000);
+
+    } catch (error) {
+      console.error("Failed to delete account:", error);
+      setIsDeleting(false);
+      showToast("Something went wrong while deleting your account. Please try again.");
     }
   };
 
@@ -790,17 +835,36 @@ export default function SettingsPage() {
       {/* DANGER ZONE */}
       {/* ========================================= */}
       <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-2xl border border-rose-500/20 dark:border-rose-500/10 rounded-[2rem] p-6 md:p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-2xl dark:shadow-black/50 transition-colors">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div>
-            <h2 className="text-lg font-bold text-rose-600 dark:text-rose-400 mb-1">Danger Zone</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Permanently wipe all financial data, goals, and assets. This cannot be undone.</p>
+        <div className="flex flex-col gap-6">
+          
+          {/* Clear Data Section */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-6 border-b border-rose-500/10 dark:border-rose-500/20">
+            <div>
+              <h2 className="text-lg font-bold text-rose-600 dark:text-rose-400 mb-1">Clear Data</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Permanently wipe all financial data, goals, and assets. Your account remains active.</p>
+            </div>
+            <button 
+              onClick={handleClearData}
+              className="w-full md:w-auto flex justify-center items-center gap-2 py-2.5 px-6 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 dark:text-rose-400 font-bold rounded-xl transition-all active:scale-95 whitespace-nowrap"
+            >
+              <Trash2 size={18} /> Clear Data
+            </button>
           </div>
-          <button 
-            onClick={handleClearData}
-            className="w-full md:w-auto flex justify-center items-center gap-2 py-3 px-6 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl shadow-md shadow-rose-500/20 transition-all active:scale-95 whitespace-nowrap"
-          >
-            <Trash2 size={18} /> Clear All Data
-          </button>
+
+          {/* Delete Account Section */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div>
+              <h2 className="text-lg font-bold text-rose-600 dark:text-rose-400 mb-1">Delete Account</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Permanently delete your account and wipe all associated data from our servers.</p>
+            </div>
+            <button 
+              onClick={() => { setShowDeleteModal(true); setDeleteSuccess(false); }}
+              className="w-full md:w-auto flex justify-center items-center gap-2 py-3 px-6 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl shadow-md shadow-rose-500/20 transition-all active:scale-95 whitespace-nowrap"
+            >
+              <UserX size={18} /> Delete Account
+            </button>
+          </div>
+
         </div>
       </div>
 
@@ -815,7 +879,7 @@ export default function SettingsPage() {
       </div>
 
       {/* ============================================== */}
-      {/* CUSTOM DANGER MODAL */}
+      {/* CUSTOM WIPE DATA MODAL */}
       {/* ============================================== */}
       {showWipeModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
@@ -863,6 +927,63 @@ export default function SettingsPage() {
                     className="flex-1 py-3.5 flex items-center justify-center gap-2 rounded-xl font-bold text-white bg-rose-500 hover:bg-rose-600 shadow-[0_4px_14px_rgba(244,63,94,0.4)] transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-70 disabled:hover:translate-y-0"
                   >
                     {isWiping ? <Loader2 size={18} className="animate-spin" /> : "Yes, Wipe Data"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ============================================== */}
+      {/* CUSTOM DELETE ACCOUNT MODAL */}
+      {/* ============================================== */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0 bg-slate-900/10 dark:bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => !isDeleting && setShowDeleteModal(false)} />
+          <div className="relative z-10 w-full max-w-sm bg-white/80 dark:bg-slate-900/90 backdrop-blur-xl border border-white/50 dark:border-white/10 rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] overflow-hidden animate-in zoom-in-95 duration-200">
+            {!isDeleting && !deleteSuccess && (
+              <button 
+                onClick={() => setShowDeleteModal(false)} 
+                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-white/10"
+              >
+                <X size={20} />
+              </button>
+            )}
+            
+            {deleteSuccess ? (
+              <div className="p-6 text-center pt-8 pb-10 animate-in fade-in zoom-in duration-300">
+                <div className="w-20 h-20 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-5 border border-emerald-200 dark:border-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.2)]">
+                  <CheckCircle2 size={40} />
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">Account Deleted</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  Your account and all associated data have been permanently removed.
+                </p>
+              </div>
+            ) : (
+              <div className="p-6 text-center pt-8">
+                <div className="w-16 h-16 rounded-full bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto mb-4 border border-rose-200 dark:border-rose-500/30">
+                  <UserX size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">Delete Account?</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">
+                  Are you <span className="font-bold text-slate-700 dark:text-slate-300">ABSOLUTELY sure?</span> This will permanently erase your account, login details, and all financial data from our servers.
+                </p>
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => setShowDeleteModal(false)} 
+                    disabled={isDeleting}
+                    className="flex-1 py-3.5 rounded-xl font-bold text-slate-700 bg-white/80 border border-slate-200 hover:bg-white dark:text-slate-300 dark:border-white/5 dark:bg-white/5 dark:hover:bg-white/10 transition-colors active:scale-95 shadow-sm disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={executeDeleteAccount} 
+                    disabled={isDeleting}
+                    className="flex-1 py-3.5 flex items-center justify-center gap-2 rounded-xl font-bold text-white bg-rose-500 hover:bg-rose-600 shadow-[0_4px_14px_rgba(244,63,94,0.4)] transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-70 disabled:hover:translate-y-0"
+                  >
+                    {isDeleting ? <Loader2 size={18} className="animate-spin" /> : "Delete Account"}
                   </button>
                 </div>
               </div>
