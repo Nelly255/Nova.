@@ -81,7 +81,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
           <Activity size={40} className="text-brand-600 dark:text-brand-400 animate-pulse relative z-10" />
         </div>
         <h1 className={`${headerFont.className} text-xl font-bold text-slate-900 dark:text-white tracking-widest uppercase animate-pulse`}>
-          Log In...
+          Loading...
         </h1>
       </div>
     );

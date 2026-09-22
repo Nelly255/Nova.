@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/lib/supabase";
-import { Plus, Wallet, Smartphone, Landmark, Banknote, CreditCard, ArrowRight, Loader2, TrendingUp, Download, FileText, X, FileDown, Trash2, Lightbulb, AlertTriangle, ArrowLeftRight, ChevronLeft, ChevronRight, Info } from "lucide-react";
+import { Plus, Wallet, Smartphone, Landmark, Banknote, CreditCard, ArrowRight, Loader2, TrendingUp, Download, FileText, X, FileDown, Trash2, Lightbulb, AlertTriangle, ArrowLeftRight, ChevronLeft, ChevronRight, Info, Pencil } from "lucide-react";
 import AddWalletModal from "@/components/AddWalletModal"; 
 import ContraTransferModal from "@/components/ContraTransferModal";
 
@@ -67,6 +67,12 @@ export default function WalletsPage() {
   const [walletToDelete, setWalletToDelete] = useState<{ id: string, name: string } | null>(null);
   const [deleteErrorMsg, setDeleteErrorMsg] = useState<string | null>(null); 
   const [showProTip, setShowProTip] = useState(false);
+
+  // Edit Wallet State
+  const [editWalletModalOpen, setEditWalletModalOpen] = useState(false);
+  const [walletToEdit, setWalletToEdit] = useState<any>(null);
+  const [editWalletName, setEditWalletName] = useState("");
+  const [isUpdatingWallet, setIsUpdatingWallet] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -148,6 +154,36 @@ export default function WalletsPage() {
       setDeleteErrorMsg("Something went wrong trying to delete the wallet.");
     } finally {
       setProcessingWalletId(null);
+    }
+  };
+
+  const initiateEditWallet = (account: any) => {
+    setWalletToEdit(account);
+    setEditWalletName(account.name);
+    setEditWalletModalOpen(true);
+  };
+
+  const updateWallet = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!walletToEdit || !editWalletName.trim()) return;
+    setIsUpdatingWallet(true);
+    try {
+      const { error } = await supabase
+        .from('accounts')
+        .update({ name: editWalletName.trim() })
+        .eq('id', walletToEdit.id);
+      
+      if (!error) {
+        await fetchData();
+        window.dispatchEvent(new Event("transactionUpdated")); // Also trigger global update for consistency
+        setEditWalletModalOpen(false);
+      } else {
+        setDeleteErrorMsg("Failed to update wallet name.");
+      }
+    } catch (error) {
+      setDeleteErrorMsg("Something went wrong updating the wallet.");
+    } finally {
+      setIsUpdatingWallet(false);
     }
   };
 
@@ -442,6 +478,11 @@ export default function WalletsPage() {
                       </div>
                       
                       <div className="flex items-center gap-1.5">
+                        <button onClick={() => initiateEditWallet(account)} className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 transition-colors text-white tooltip-trigger group/edit relative" aria-label="Edit Wallet">
+                          <Pencil size={14} />
+                          <span className="absolute -top-8 right-0 bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover/edit:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">Edit</span>
+                        </button>
+
                         <button onClick={() => { setSelectedWalletForStatement(account); setStatementModalOpen(true); }} className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 transition-colors text-white tooltip-trigger group/btn relative" aria-label="Generate Statement">
                           <Download size={14} />
                           <span className="absolute -top-8 right-0 bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">Statement</span>
@@ -490,6 +531,30 @@ export default function WalletsPage() {
       )}
 
       {/* MODALS */}
+      {/* Edit Wallet Modal */}
+      {mounted && editWalletModalOpen && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => !isUpdatingWallet && setEditWalletModalOpen(false)} />
+          <div className="relative z-10 w-full max-w-sm bg-white dark:bg-slate-900 backdrop-blur-xl border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 p-6 md:p-8">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">Edit Wallet</h3>
+              {!isUpdatingWallet && <button onClick={() => setEditWalletModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"><X size={20} /></button>}
+            </div>
+            <form onSubmit={updateWallet} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Wallet Name</label>
+                <input type="text" value={editWalletName} onChange={(e) => setEditWalletName(e.target.value)} required className="w-full bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors" placeholder="e.g. Main M-Pesa" />
+              </div>
+              <div className="flex gap-3 mt-6">
+                <button type="button" onClick={() => setEditWalletModalOpen(false)} disabled={isUpdatingWallet} className="flex-1 py-3.5 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 dark:text-slate-300 dark:bg-white/5 dark:hover:bg-white/10 transition-colors active:scale-95 shadow-sm disabled:opacity-50">Cancel</button>
+                <button type="submit" disabled={isUpdatingWallet || !editWalletName.trim()} className="flex-1 py-3.5 flex items-center justify-center gap-2 rounded-xl font-bold text-white bg-brand-600 hover:bg-brand-700 shadow-[0_4px_14px_rgba(var(--brand-500)/0.4)] transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-70 disabled:hover:translate-y-0">{isUpdatingWallet ? <Loader2 size={18} className="animate-spin" /> : "Save Changes"}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      , document.body)}
+
+      {/* Statement Modal */}
       {mounted && statementModalOpen && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setStatementModalOpen(false)} />
@@ -519,6 +584,7 @@ export default function WalletsPage() {
         </div>
       , document.body)}
 
+      {/* Delete Confirmation Modal */}
       {mounted && walletToDelete && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
           <div className="absolute inset-0 bg-slate-900/10 dark:bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => !processingWalletId && setWalletToDelete(null)} />
@@ -537,6 +603,7 @@ export default function WalletsPage() {
         </div>
       , document.body)}
 
+      {/* Error Modal */}
       {mounted && deleteErrorMsg && createPortal(
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm animate-in fade-in" onClick={() => setDeleteErrorMsg(null)} />
