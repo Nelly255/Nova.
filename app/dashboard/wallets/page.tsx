@@ -409,9 +409,16 @@ export default function WalletsPage() {
             {paginatedAccounts.map((account) => {
               const branding = getWalletBranding(account.provider);
               const Icon = branding.icon;
+              const hasCustomColor = Boolean(account.color);
+              const bgClass = hasCustomColor ? '' : `bg-gradient-to-br ${branding.bg}`;
+              const customStyle = hasCustomColor ? { backgroundColor: account.color } : {};
               
               return (
-                <div key={account.id} className={`group relative overflow-hidden rounded-3xl p-5 text-white shadow-md hover:shadow-lg transition-all hover:-translate-y-1 duration-300 bg-gradient-to-br ${branding.bg}`}>
+                <div 
+                  key={account.id} 
+                  className={`group relative overflow-hidden rounded-3xl p-5 text-white shadow-md hover:shadow-lg transition-all hover:-translate-y-1 duration-300 ${bgClass}`}
+                  style={customStyle}
+                >
                   <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-2xl transform translate-x-8 -translate-y-8"></div>
                   <div className="absolute bottom-0 left-0 w-16 h-16 bg-black/10 rounded-full blur-xl transform -translate-x-4 translate-y-4"></div>
                   
@@ -489,7 +496,12 @@ export default function WalletsPage() {
           <div className="relative bg-white dark:bg-[#0F0F15] rounded-[2rem] w-full max-w-md p-6 md:p-8 shadow-2xl border border-slate-200 dark:border-white/10 animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${getWalletBranding(selectedWalletForStatement?.provider || '').bg} flex items-center justify-center text-white shadow-inner`}><FileText size={18} /></div>
+                <div 
+                  className={`w-10 h-10 rounded-full flex items-center justify-center text-white shadow-inner ${!selectedWalletForStatement?.color ? 'bg-gradient-to-br ' + getWalletBranding(selectedWalletForStatement?.provider || '').bg : ''}`}
+                  style={selectedWalletForStatement?.color ? { backgroundColor: selectedWalletForStatement.color } : {}}
+                >
+                  <FileText size={18} />
+                </div>
                 <div><h3 className="font-bold text-slate-900 dark:text-white leading-tight">Generate Statement</h3><p className="text-xs text-slate-500">{selectedWalletForStatement?.name}</p></div>
               </div>
               <button onClick={() => setStatementModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"><X size={20} /></button>
