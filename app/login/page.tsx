@@ -195,7 +195,7 @@ export default function LogIn() {
                   disabled={isLoading}
                   className="w-full flex justify-center items-center gap-2 bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 text-white font-bold py-4 rounded-xl transition-all mt-8 disabled:opacity-70 disabled:hover:translate-y-0"
                 >
-                  {isLoading ? <Loader2 className="animate-spin" size={20} /> : "Unlock Vault"}
+                  {isLoading ? <Loader2 className="animate-spin" size={20} /> : "Log In"}
                 </button>
               </form>
 
